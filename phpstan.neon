@@ -1,0 +1,16 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 8
+    paths:
+        - app/
+        - database/
+        - tests/
+    ignoreErrors:
+        -
+            identifier: missingType.generics
+            reportUnmatched: false
+        -
+            identifier: missingType.iterableValue
+            reportUnmatched: false
