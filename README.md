@@ -1,58 +1,98 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel 13 Starter
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Opinionated starter template for Laravel 13 applications built with Livewire 4 and Flux UI Pro, shipped with a Docker-based development environment and a CI pipeline that enforces lint, static analysis, and test coverage.
 
-## About Laravel
+## Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **PHP** 8.4
+- **Laravel** 13
+- **Livewire** 4
+- **Flux UI Pro** 2 (requires a license — see below)
+- **Tailwind CSS** 4 + Vite
+- **MySQL** 8.0 and **Redis** (separate containers for app and tests)
+- **PHPUnit** 12, **Larastan/PHPStan** 3, **Laravel Pint** 1
+- **Laravel Boost** for AI-assisted development
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requirements
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Docker and Docker Compose
+- A Flux UI Pro license — the `auth.json` file must be populated before running `composer install`. See [Flux Pro installation](https://fluxui.dev/docs/installation).
+- `laravel-13-start.localhost` resolves automatically on macOS; on Linux add an entry to `/etc/hosts`.
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Quick Start
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+make setup
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+This target copies `.env.example` to `.env`, boots the containers, installs composer and npm dependencies, generates the app key, runs migrations, and builds frontend assets. The app will be available at http://laravel-13-start.localhost.
 
-## Contributing
+To run Vite in dev mode instead of a one-shot build:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+make npm-dev
+```
 
-## Code of Conduct
+## Make Targets
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+All commands run inside the `laravel-13-start-app` container.
 
-## Security Vulnerabilities
+### Containers
+- `make up` / `make down` / `make restart` — start, stop, restart the stack
+- `make bash` — interactive shell in the app container
+- `make tinker` — `php artisan tinker`
+- `make app-logs` — tail the app container logs
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Database
+- `make migrate` / `make fresh` / `make seed` / `make refresh`
+- `make migrate-test` / `make fresh-test` / `make refresh-test` — same commands against the isolated test MySQL container
+
+### Frontend
+- `make npm` — install npm dependencies
+- `make npm-dev` — run Vite dev server
+- `make npm-build` — production build
+
+### Quality
+- `make lint` / `make lint-fix` — Pint
+- `make stan` — PHPStan / Larastan
+- `make test` — PHPUnit (optionally `make test filter=testName`)
+- `make test-unit` / `make test-feature`
+- `make check` — lint + stan + test
+
+## Docker Services
+
+Defined in `docker-compose.yml`:
+
+| Service | Container | Purpose |
+| --- | --- | --- |
+| `traefik` | `laravel-13-start-traefik` | Reverse proxy, exposes the app at `laravel-13-start.localhost` |
+| `app` | `laravel-13-start-app` | PHP 8.4 application container (built from `.docker/Dockerfile`) |
+| `worker` | `laravel-13-start-worker` | Queue worker |
+| `mysql` / `test-mysql` | `laravel-13-start-mysql` / `-test-mysql` | Application and tmpfs-backed test databases |
+| `redis` / `test-redis` | `laravel-13-start-redis` / `-test-redis` | Application and test Redis instances |
+
+Xdebug is available by setting `XDEBUG_MODE` in `.env`.
+
+## CI Pipeline
+
+`.github/workflows/ci.yml` runs on every push and is organized into parallel jobs:
+
+1. **Build image** — builds the `ci` target of `.docker/Dockerfile`, pushes/caches it against a branch tag, and shares it with downstream jobs via the GitHub Actions cache.
+2. **Code style** — `composer lint` (Pint in `--test` mode).
+3. **Static analysis** — `composer stan` (PHPStan with result cache restored from the `main` branch).
+4. **Tests** — `php artisan migrate` followed by `php artisan test --coverage --min=80` against MySQL and Redis service containers. **Builds fail if coverage drops below 80%.**
+5. **Docker push** — publishes the image to GHCR once all checks pass.
+6. **Cleanup** — deletes the per-run image cache entry.
+
+Required secrets: `COMPOSER_AUTH` (for Flux Pro) and `GITHUB_TOKEN` (provided by Actions).
+
+## Project Layout Notes
+
+- `.docker/` — Dockerfile (multi-stage: `development`, `ci`, etc.), entrypoint, Apache/PHP/supervisor config.
+- `CLAUDE.md` — guidelines for AI coding agents; includes Laravel Boost rules and the Docker command convention.
+- `boost.json` — Laravel Boost configuration.
+- `phpstan.neon`, `pint.json`, `phpunit.xml` — quality-tool configuration.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT.
