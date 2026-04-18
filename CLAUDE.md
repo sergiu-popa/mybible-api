@@ -167,7 +167,7 @@ This application runs in Docker. All commands (linting, static analysis, tests, 
 
 ## Local Domain
 
-The application is available at `http://mybible-api.localhost` when containers are running.
+The application is available at `http://api.mybible.local` when containers are running.
 
 ## Running Commands
 

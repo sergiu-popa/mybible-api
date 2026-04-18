@@ -13,7 +13,7 @@ JSON-only Laravel 13 API, shipped with a Docker-based development environment an
 ## Requirements
 
 - Docker and Docker Compose
-- `mybible-api.localhost` resolves automatically on macOS; on Linux add an entry to `/etc/hosts`.
+- `api.mybible.local` must resolve locally — add an entry to `/etc/hosts` (`127.0.0.1 api.mybible.local`).
 
 ## Quick Start
 
@@ -21,7 +21,7 @@ JSON-only Laravel 13 API, shipped with a Docker-based development environment an
 make setup
 ```
 
-This target copies `.env.example` to `.env`, boots the containers, installs composer dependencies, generates the app key, and runs migrations. The API is available at http://mybible-api.localhost.
+This target copies `.env.example` to `.env`, boots the containers, installs composer dependencies, generates the app key, and runs migrations. The API is available at http://api.mybible.local.
 
 ## Make Targets
 
@@ -50,7 +50,7 @@ Defined in `docker-compose.yml`:
 
 | Service | Container | Purpose |
 | --- | --- | --- |
-| `traefik` | `mybible-api-traefik` | Reverse proxy, exposes the API at `mybible-api.localhost` |
+| `traefik` | `mybible-api-traefik` | Reverse proxy, exposes the API at `api.mybible.local` |
 | `app` | `mybible-api-app` | PHP 8.4 application container (built from `.docker/Dockerfile`) |
 | `worker` | `mybible-api-worker` | Queue worker |
 | `mysql` / `test-mysql` | `mybible-api-mysql` / `-test-mysql` | Application and tmpfs-backed test databases |

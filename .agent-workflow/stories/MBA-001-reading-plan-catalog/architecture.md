@@ -133,7 +133,13 @@ out without a negative-scoped exception.
 | Method | Path | Controller | Form Request | Resource | Auth |
 |---|---|---|---|---|---|
 | GET | `/reading-plans` | `ListReadingPlansController` | `ListReadingPlansRequest` | `ReadingPlanResource` (collection, paginated) | `api-key` |
-| GET | `/reading-plans/{plan:slug}` | `ShowReadingPlanController` | `ShowReadingPlanRequest` | `ReadingPlanResource` (with days + fragments) | `api-key` |
+| GET | `/reading-plans/{slug}` | `ShowReadingPlanController` | `ShowReadingPlanRequest` | `ReadingPlanResource` (with days + fragments) | `api-key` |
+
+The show endpoint uses a plain `{slug}` parameter rather than an implicit
+`{plan:slug}` binding so the controller can apply the `published()` scope
+(which is critical business logic — drafts must 404) when resolving the
+model. A manual `first()` + `ModelNotFoundException` throw keeps the 404
+path consistent with the JSON envelope rendered by the exception handler.
 
 ### Form Requests
 
@@ -152,13 +158,14 @@ Both Form Requests resolve `language` into a `Language` enum via a small
 - `ReadingPlanDayResource` — `{ id, position, fragments }`.
 - `ReadingPlanDayFragmentResource` — `{ id, position, type, content }`. For `html`, `content` is the language-resolved string. For `references`, `content` is the raw array of strings as stored (e.g. `["GEN.1-2", "MAT.5:27-48"]`).
 
-The `language` is read from the request via the Form Request helper and
-threaded into resources through `$request->input('language')` or a small
-container-bound helper. Recommended path: a tiny middleware
-`ResolveRequestLanguage` registered on the v1 group that resolves the
-`Language` enum once and binds it into the container as
-`reading-plans.language`. Resources read from the container, keeping nested
-resource children free of `$request` plumbing.
+The `language` is resolved once per request by the `ResolveRequestLanguage`
+middleware (registered via the `resolve-language` alias and applied only to
+the reading-plans route group). The middleware parses the `language` query
+parameter, produces a `Language` enum via `Language::fromRequest()`, and
+stores it on `$request->attributes` under the
+`ResolveRequestLanguage::ATTRIBUTE_KEY` key. Resources read the enum from
+request attributes with a `Language::En` fallback so a missing attribute
+never throws at render time.
 
 ---
 
@@ -179,9 +186,14 @@ resource children free of `$request` plumbing.
 |---|---|
 | Support unit | `LanguageResolverTest` (matched language, fallback to en, neither available); `LanguageEnumTest` (`fromRequest` valid/invalid/null). |
 | QueryBuilder | `ReadingPlanQueryBuilderTest::published_excludes_drafts_and_unpublished`. |
-| API Resources | `ReadingPlanResourceTest` (language resolution, fallback path, days only when loaded); `ReadingPlanDayFragmentResourceTest` (html resolution, references returned as raw array). |
-| Form Requests | `ListReadingPlansRequestTest`, `ShowReadingPlanRequestTest` (validation rules, language helper). |
-| HTTP feature | `ListReadingPlansTest` (returns published only, paginates, language filter, default per_page=15, max enforced, `401` when `X-Api-Key` is missing or unknown); `ShowReadingPlanTest` (full tree, language fallback per fragment, references returned as raw strings, 404 on unknown slug, `401` without a valid key). |
+| Middleware unit | `ResolveRequestLanguageTest` (supported value, unsupported falls back, missing, non-string input). |
+| HTTP feature | `ListReadingPlansTest` (returns published only, paginates, language filter, default per_page=15, max enforced, fallback for unsupported language, `401` when `X-Api-Key` is missing or unknown, shape assertion); `ShowReadingPlanTest` (full tree, language fallback per fragment, references returned as raw strings, 404 on unknown slug, 404 on draft, `401` without a valid key). |
+
+Resource-level and form-request-level behavior is exercised end-to-end by
+the feature tests; dedicated unit suites for `ReadingPlanResource`,
+`ReadingPlanDayFragmentResource`, `ListReadingPlansRequest`, and
+`ShowReadingPlanRequest` were intentionally dropped during implementation
+to avoid duplicating coverage.
 
 ---
 

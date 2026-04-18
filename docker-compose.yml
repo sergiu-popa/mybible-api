@@ -71,7 +71,7 @@ services:
       - '8080:8080'
     labels:
       - traefik.enable=true
-      - traefik.http.routers.web.rule=Host(`mybible-api.localhost`)
+      - traefik.http.routers.web.rule=Host(`api.mybible.local`)
       - traefik.http.routers.web.entrypoints=web
       - traefik.http.services.web.loadbalancer.server.port=8080
     environment:
