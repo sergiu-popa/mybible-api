@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureApiKeyOrSanctum;
 use App\Http\Middleware\EnsureValidApiKey;
 use App\Http\Middleware\ResolveRequestLanguage;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
@@ -39,6 +40,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             return response()->json(['message' => $e->getMessage()], 401);
+        });
+
+        $exceptions->render(function (AuthorizationException $e, Request $request) {
+            return response()->json([
+                'message' => $e->getMessage() !== '' ? $e->getMessage() : 'This action is unauthorized.',
+            ], 403);
         });
 
         $exceptions->render(function (ModelNotFoundException $e, Request $request) {

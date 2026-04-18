@@ -32,6 +32,10 @@ final class ReadingPlanResource extends JsonResource
             'thumbnail' => LanguageResolver::resolve($this->thumbnail, $language),
             'published_at' => $this->published_at?->toIso8601String(),
             'days' => ReadingPlanDayResource::collection($this->whenLoaded('days')),
+            'subscriptions' => $this->when(
+                $request->user() !== null && $this->relationLoaded('subscriptions'),
+                fn () => ReadingPlanSubscriptionResource::collection($this->subscriptions),
+            ),
         ];
     }
 }

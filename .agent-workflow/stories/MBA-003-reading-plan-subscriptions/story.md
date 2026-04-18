@@ -4,7 +4,7 @@
 Reading Plans — start a subscription and complete days
 
 ## Status
-`architected`
+`in-review`
 
 ## Description
 Build on the public catalog (MBA-001) and the auth foundation (MBA-002) to
