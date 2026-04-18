@@ -21,6 +21,8 @@ final class StartReadingPlanSubscriptionAction
                 'status' => SubscriptionStatus::Active,
             ]);
 
+            $data->plan->loadMissing('days');
+
             $now = now();
             $rows = [];
             foreach ($data->plan->days as $planDay) {

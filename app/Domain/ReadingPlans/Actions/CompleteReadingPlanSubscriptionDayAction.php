@@ -6,7 +6,7 @@ namespace App\Domain\ReadingPlans\Actions;
 
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscriptionDay;
 
-final class CompleteSubscriptionDayAction
+final class CompleteReadingPlanSubscriptionDayAction
 {
     public function execute(ReadingPlanSubscriptionDay $day): ReadingPlanSubscriptionDay
     {

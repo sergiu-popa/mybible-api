@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Domain\ReadingPlans\Actions;
 
-use App\Domain\ReadingPlans\Actions\CompleteSubscriptionDayAction;
+use App\Domain\ReadingPlans\Actions\CompleteReadingPlanSubscriptionDayAction;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscriptionDay;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
-final class CompleteSubscriptionDayActionTest extends TestCase
+final class CompleteReadingPlanSubscriptionDayActionTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -21,7 +21,7 @@ final class CompleteSubscriptionDayActionTest extends TestCase
 
         $day = ReadingPlanSubscriptionDay::factory()->pending()->create();
 
-        $result = $this->app->make(CompleteSubscriptionDayAction::class)->execute($day);
+        $result = $this->app->make(CompleteReadingPlanSubscriptionDayAction::class)->execute($day);
 
         $this->assertNotNull($result->completed_at);
         $this->assertSame('2026-05-01 12:00:00', $result->completed_at->toDateTimeString());
@@ -39,7 +39,7 @@ final class CompleteSubscriptionDayActionTest extends TestCase
 
         Carbon::setTestNow('2026-05-01 12:00:00');
 
-        $action = $this->app->make(CompleteSubscriptionDayAction::class);
+        $action = $this->app->make(CompleteReadingPlanSubscriptionDayAction::class);
         $result = $action->execute($day);
         $result = $action->execute($result->refresh());
 
