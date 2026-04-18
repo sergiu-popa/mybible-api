@@ -6,18 +6,17 @@ namespace Tests\Feature\Api\V1\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
+use Tests\Concerns\InteractsWithAuthentication;
 use Tests\TestCase;
 
 final class MeTest extends TestCase
 {
+    use InteractsWithAuthentication;
     use RefreshDatabase;
 
     public function test_it_returns_the_authenticated_user(): void
     {
-        $user = User::factory()->create();
-
-        Sanctum::actingAs($user);
+        $user = $this->givenAnAuthenticatedUser();
 
         $this->getJson(route('auth.me'))
             ->assertOk()

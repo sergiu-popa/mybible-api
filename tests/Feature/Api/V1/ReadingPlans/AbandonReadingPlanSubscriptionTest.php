@@ -6,21 +6,19 @@ namespace Tests\Feature\Api\V1\ReadingPlans;
 
 use App\Domain\ReadingPlans\Enums\SubscriptionStatus;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
+use Tests\Concerns\InteractsWithAuthentication;
 use Tests\TestCase;
 
 final class AbandonReadingPlanSubscriptionTest extends TestCase
 {
+    use InteractsWithAuthentication;
     use RefreshDatabase;
 
     public function test_it_flips_active_subscription_to_abandoned(): void
     {
-        $user = User::factory()->create();
+        $user = $this->givenAnAuthenticatedUser();
         $subscription = ReadingPlanSubscription::factory()->active()->create(['user_id' => $user->id]);
-
-        Sanctum::actingAs($user);
 
         $this->postJson(route('reading-plan-subscriptions.abandon', ['subscription' => $subscription->id]))
             ->assertOk()
@@ -34,10 +32,8 @@ final class AbandonReadingPlanSubscriptionTest extends TestCase
 
     public function test_it_is_idempotent_for_already_abandoned_subscription(): void
     {
-        $user = User::factory()->create();
+        $user = $this->givenAnAuthenticatedUser();
         $subscription = ReadingPlanSubscription::factory()->abandoned()->create(['user_id' => $user->id]);
-
-        Sanctum::actingAs($user);
 
         $this->postJson(route('reading-plan-subscriptions.abandon', ['subscription' => $subscription->id]))
             ->assertOk()
@@ -46,10 +42,8 @@ final class AbandonReadingPlanSubscriptionTest extends TestCase
 
     public function test_it_returns_422_when_subscription_is_completed(): void
     {
-        $user = User::factory()->create();
+        $user = $this->givenAnAuthenticatedUser();
         $subscription = ReadingPlanSubscription::factory()->completed()->create(['user_id' => $user->id]);
-
-        Sanctum::actingAs($user);
 
         $this->postJson(route('reading-plan-subscriptions.abandon', ['subscription' => $subscription->id]))
             ->assertUnprocessable()
@@ -62,7 +56,7 @@ final class AbandonReadingPlanSubscriptionTest extends TestCase
     {
         $subscription = ReadingPlanSubscription::factory()->active()->create();
 
-        Sanctum::actingAs(User::factory()->create());
+        $this->givenAnAuthenticatedUser();
 
         $this->postJson(route('reading-plan-subscriptions.abandon', ['subscription' => $subscription->id]))
             ->assertForbidden();

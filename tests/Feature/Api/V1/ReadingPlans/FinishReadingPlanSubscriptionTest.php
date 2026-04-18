@@ -5,25 +5,27 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1\ReadingPlans;
 
 use App\Domain\ReadingPlans\Enums\SubscriptionStatus;
-use App\Domain\ReadingPlans\Models\ReadingPlan;
 use App\Domain\ReadingPlans\Models\ReadingPlanDay;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
-use App\Domain\ReadingPlans\Models\ReadingPlanSubscriptionDay;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
+use Tests\Concerns\InteractsWithAuthentication;
+use Tests\Concerns\InteractsWithReadingPlans;
 use Tests\TestCase;
 
 final class FinishReadingPlanSubscriptionTest extends TestCase
 {
+    use InteractsWithAuthentication;
+    use InteractsWithReadingPlans;
     use RefreshDatabase;
 
     public function test_it_marks_subscription_completed_when_all_days_are_done(): void
     {
         Carbon::setTestNow('2026-05-10 14:30:00');
 
-        [$user, $subscription] = $this->seedSubscription([
+        [$user, $subscription] = $this->givenASubscriptionWhereDaysAreCompleted([
             1 => true,
             2 => true,
             3 => true,
@@ -49,7 +51,7 @@ final class FinishReadingPlanSubscriptionTest extends TestCase
 
     public function test_it_returns_422_with_pending_days_when_days_remain(): void
     {
-        [$user, $subscription] = $this->seedSubscription([
+        [$user, $subscription] = $this->givenASubscriptionWhereDaysAreCompleted([
             1 => true,
             2 => false,
             3 => true,
@@ -73,7 +75,7 @@ final class FinishReadingPlanSubscriptionTest extends TestCase
     {
         $originalCompletedAt = Carbon::parse('2026-04-01 09:00:00');
 
-        [$user, $subscription] = $this->seedSubscription([1 => true]);
+        [$user, $subscription] = $this->givenASubscriptionWhereDaysAreCompleted([1 => true]);
         $subscription->status = SubscriptionStatus::Completed;
         $subscription->completed_at = $originalCompletedAt;
         $subscription->save();
@@ -100,9 +102,9 @@ final class FinishReadingPlanSubscriptionTest extends TestCase
 
     public function test_it_returns_403_for_non_owner(): void
     {
-        [, $subscription] = $this->seedSubscription([1 => true]);
+        [, $subscription] = $this->givenASubscriptionWhereDaysAreCompleted([1 => true]);
 
-        Sanctum::actingAs(User::factory()->create());
+        $this->givenAnAuthenticatedUser();
 
         $this->postJson(route('reading-plan-subscriptions.finish', ['subscription' => $subscription->id]))
             ->assertForbidden();
@@ -110,7 +112,7 @@ final class FinishReadingPlanSubscriptionTest extends TestCase
 
     public function test_it_rejects_missing_sanctum_token(): void
     {
-        [, $subscription] = $this->seedSubscription([1 => true]);
+        [, $subscription] = $this->givenASubscriptionWhereDaysAreCompleted([1 => true]);
 
         $this->postJson(route('reading-plan-subscriptions.finish', ['subscription' => $subscription->id]))
             ->assertUnauthorized();
@@ -120,15 +122,11 @@ final class FinishReadingPlanSubscriptionTest extends TestCase
      * @param  array<int, bool>  $dayCompletion
      * @return array{0: User, 1: ReadingPlanSubscription}
      */
-    private function seedSubscription(array $dayCompletion): array
+    private function givenASubscriptionWhereDaysAreCompleted(array $dayCompletion): array
     {
-        $plan = ReadingPlan::factory()->published()->create();
         $user = User::factory()->create();
-
-        $subscription = ReadingPlanSubscription::factory()->active()->create([
-            'user_id' => $user->id,
-            'reading_plan_id' => $plan->id,
-        ]);
+        $plan = $this->givenAPublishedReadingPlan();
+        $subscription = $this->givenAnActiveSubscriptionTo($plan, $user);
 
         foreach ($dayCompletion as $position => $completed) {
             $planDay = ReadingPlanDay::factory()->create([
@@ -136,9 +134,7 @@ final class FinishReadingPlanSubscriptionTest extends TestCase
                 'position' => $position,
             ]);
 
-            ReadingPlanSubscriptionDay::factory()->create([
-                'reading_plan_subscription_id' => $subscription->id,
-                'reading_plan_day_id' => $planDay->id,
+            $this->givenASubscriptionDay($subscription, $planDay, [
                 'completed_at' => $completed ? Carbon::parse('2026-04-15 10:00:00') : null,
             ]);
         }

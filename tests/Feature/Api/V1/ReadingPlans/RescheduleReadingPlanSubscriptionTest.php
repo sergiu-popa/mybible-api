@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1\ReadingPlans;
 
-use App\Domain\ReadingPlans\Models\ReadingPlan;
 use App\Domain\ReadingPlans\Models\ReadingPlanDay;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscriptionDay;
@@ -12,17 +11,21 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
+use Tests\Concerns\InteractsWithAuthentication;
+use Tests\Concerns\InteractsWithReadingPlans;
 use Tests\TestCase;
 
 final class RescheduleReadingPlanSubscriptionTest extends TestCase
 {
+    use InteractsWithAuthentication;
+    use InteractsWithReadingPlans;
     use RefreshDatabase;
 
     public function test_it_reanchors_uncompleted_days_and_preserves_completed_ones(): void
     {
         Carbon::setTestNow('2026-05-04 08:00:00');
 
-        [$user, $subscription, $days] = $this->seedSubscription([
+        [$user, $subscription, $days] = $this->givenASubscriptionScheduledAs([
             1 => ['scheduled_date' => '2026-05-01', 'completed_at' => '2026-05-01 10:00:00'],
             2 => ['scheduled_date' => '2026-05-02', 'completed_at' => null],
             3 => ['scheduled_date' => '2026-05-03', 'completed_at' => null],
@@ -51,7 +54,7 @@ final class RescheduleReadingPlanSubscriptionTest extends TestCase
     {
         Carbon::setTestNow('2026-05-07 08:00:00');
 
-        [$user, $subscription, $days] = $this->seedSubscription(
+        [$user, $subscription, $days] = $this->givenASubscriptionScheduledAs(
             [
                 1 => ['scheduled_date' => '2026-05-04', 'completed_at' => '2026-05-04 08:00:00'],
                 2 => ['scheduled_date' => '2026-05-05', 'completed_at' => null],
@@ -87,7 +90,7 @@ final class RescheduleReadingPlanSubscriptionTest extends TestCase
     {
         Carbon::setTestNow('2026-05-04 08:00:00');
 
-        [$user, $subscription, $days] = $this->seedSubscription([
+        [$user, $subscription, $days] = $this->givenASubscriptionScheduledAs([
             1 => ['scheduled_date' => '2026-05-01', 'completed_at' => '2026-05-01 10:00:00'],
             2 => ['scheduled_date' => '2026-05-02', 'completed_at' => null],
         ]);
@@ -108,7 +111,7 @@ final class RescheduleReadingPlanSubscriptionTest extends TestCase
 
     public function test_it_rejects_missing_start_date(): void
     {
-        [$user, $subscription] = $this->seedSubscription([
+        [$user, $subscription] = $this->givenASubscriptionScheduledAs([
             1 => ['scheduled_date' => '2026-05-01', 'completed_at' => null],
         ]);
 
@@ -123,7 +126,7 @@ final class RescheduleReadingPlanSubscriptionTest extends TestCase
 
     public function test_it_rejects_non_date_start_date(): void
     {
-        [$user, $subscription] = $this->seedSubscription([
+        [$user, $subscription] = $this->givenASubscriptionScheduledAs([
             1 => ['scheduled_date' => '2026-05-01', 'completed_at' => null],
         ]);
 
@@ -141,7 +144,7 @@ final class RescheduleReadingPlanSubscriptionTest extends TestCase
     {
         Carbon::setTestNow('2026-05-04 08:00:00');
 
-        [$user, $subscription] = $this->seedSubscription([
+        [$user, $subscription] = $this->givenASubscriptionScheduledAs([
             1 => ['scheduled_date' => '2026-05-04', 'completed_at' => null],
         ]);
 
@@ -159,11 +162,11 @@ final class RescheduleReadingPlanSubscriptionTest extends TestCase
 
     public function test_it_returns_403_when_subscription_belongs_to_another_user(): void
     {
-        [, $subscription] = $this->seedSubscription([
+        [, $subscription] = $this->givenASubscriptionScheduledAs([
             1 => ['scheduled_date' => '2026-05-01', 'completed_at' => null],
         ]);
 
-        Sanctum::actingAs(User::factory()->create());
+        $this->givenAnAuthenticatedUser();
 
         $this->patchJson(
             route('reading-plan-subscriptions.reschedule', ['subscription' => $subscription->id]),
@@ -173,7 +176,7 @@ final class RescheduleReadingPlanSubscriptionTest extends TestCase
 
     public function test_it_rejects_missing_sanctum_token(): void
     {
-        [, $subscription] = $this->seedSubscription([
+        [, $subscription] = $this->givenASubscriptionScheduledAs([
             1 => ['scheduled_date' => '2026-05-01', 'completed_at' => null],
         ]);
 
@@ -185,7 +188,7 @@ final class RescheduleReadingPlanSubscriptionTest extends TestCase
 
     public function test_it_returns_404_for_a_soft_deleted_subscription(): void
     {
-        [$user, $subscription] = $this->seedSubscription([
+        [$user, $subscription] = $this->givenASubscriptionScheduledAs([
             1 => ['scheduled_date' => '2026-05-01', 'completed_at' => null],
         ]);
         $subscription->delete();
@@ -202,14 +205,11 @@ final class RescheduleReadingPlanSubscriptionTest extends TestCase
      * @param  array<int, array{scheduled_date: string, completed_at: string|null}>  $dayStates
      * @return array{0: User, 1: ReadingPlanSubscription, 2: array<int, ReadingPlanSubscriptionDay>}
      */
-    private function seedSubscription(array $dayStates, ?string $subscriptionStartDate = null): array
+    private function givenASubscriptionScheduledAs(array $dayStates, ?string $subscriptionStartDate = null): array
     {
-        $plan = ReadingPlan::factory()->published()->create();
         $user = User::factory()->create();
-
-        $subscription = ReadingPlanSubscription::factory()->active()->create([
-            'user_id' => $user->id,
-            'reading_plan_id' => $plan->id,
+        $plan = $this->givenAPublishedReadingPlan();
+        $subscription = $this->givenAnActiveSubscriptionTo($plan, $user, [
             'start_date' => $subscriptionStartDate ?? array_values($dayStates)[0]['scheduled_date'],
         ]);
 
@@ -220,9 +220,7 @@ final class RescheduleReadingPlanSubscriptionTest extends TestCase
                 'position' => $position,
             ]);
 
-            $days[$position] = ReadingPlanSubscriptionDay::factory()->create([
-                'reading_plan_subscription_id' => $subscription->id,
-                'reading_plan_day_id' => $planDay->id,
+            $days[$position] = $this->givenASubscriptionDay($subscription, $planDay, [
                 'scheduled_date' => $state['scheduled_date'],
                 'completed_at' => $state['completed_at'],
             ]);

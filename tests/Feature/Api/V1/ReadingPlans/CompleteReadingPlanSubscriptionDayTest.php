@@ -4,25 +4,27 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1\ReadingPlans;
 
-use App\Domain\ReadingPlans\Models\ReadingPlan;
-use App\Domain\ReadingPlans\Models\ReadingPlanDay;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscriptionDay;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\Sanctum;
+use Tests\Concerns\InteractsWithAuthentication;
+use Tests\Concerns\InteractsWithReadingPlans;
 use Tests\TestCase;
 
 final class CompleteReadingPlanSubscriptionDayTest extends TestCase
 {
+    use InteractsWithAuthentication;
+    use InteractsWithReadingPlans;
     use RefreshDatabase;
 
     public function test_it_marks_the_day_as_completed(): void
     {
         Carbon::setTestNow('2026-05-01 10:00:00');
 
-        [$user, $subscription, $day] = $this->seedSubscriptionAndDay();
+        [$user, $subscription, $day] = $this->givenASubscriptionWithAPendingDay();
 
         Sanctum::actingAs($user);
 
@@ -45,7 +47,7 @@ final class CompleteReadingPlanSubscriptionDayTest extends TestCase
     {
         Carbon::setTestNow('2026-05-01 10:00:00');
 
-        [$user, $subscription, $day] = $this->seedSubscriptionAndDay();
+        [$user, $subscription, $day] = $this->givenASubscriptionWithAPendingDay();
 
         $day->forceFill(['completed_at' => '2026-04-15 09:00:00'])->save();
 
@@ -71,9 +73,9 @@ final class CompleteReadingPlanSubscriptionDayTest extends TestCase
 
     public function test_it_returns_403_when_subscription_belongs_to_another_user(): void
     {
-        [, $subscription, $day] = $this->seedSubscriptionAndDay();
+        [, $subscription, $day] = $this->givenASubscriptionWithAPendingDay();
 
-        Sanctum::actingAs(User::factory()->create());
+        $this->givenAnAuthenticatedUser();
 
         $this->postJson(route('reading-plan-subscriptions.days.complete', [
             'subscription' => $subscription->id,
@@ -83,17 +85,13 @@ final class CompleteReadingPlanSubscriptionDayTest extends TestCase
 
     public function test_it_returns_404_when_the_day_belongs_to_another_subscription(): void
     {
-        [$user, $subscription] = $this->seedSubscriptionAndDay();
+        [$user, $subscription] = $this->givenASubscriptionWithAPendingDay();
 
-        $otherPlan = ReadingPlan::factory()->published()->create();
-        $otherPlanDay = ReadingPlanDay::factory()->create(['reading_plan_id' => $otherPlan->id, 'position' => 1]);
-        $otherSubscription = ReadingPlanSubscription::factory()->create([
-            'user_id' => $user->id,
-            'reading_plan_id' => $otherPlan->id,
-        ]);
-        $otherDay = ReadingPlanSubscriptionDay::factory()->pending()->create([
-            'reading_plan_subscription_id' => $otherSubscription->id,
-            'reading_plan_day_id' => $otherPlanDay->id,
+        $otherPlan = $this->givenAPublishedReadingPlanWithDays(1);
+        $otherDayOfPlan = $otherPlan->days()->firstOrFail();
+        $otherSubscription = $this->givenAnActiveSubscriptionTo($otherPlan, $user);
+        $otherDay = $this->givenASubscriptionDay($otherSubscription, $otherDayOfPlan, [
+            'completed_at' => null,
         ]);
 
         Sanctum::actingAs($user);
@@ -106,7 +104,7 @@ final class CompleteReadingPlanSubscriptionDayTest extends TestCase
 
     public function test_it_rejects_missing_sanctum_token(): void
     {
-        [, $subscription, $day] = $this->seedSubscriptionAndDay();
+        [, $subscription, $day] = $this->givenASubscriptionWithAPendingDay();
 
         $this->postJson(route('reading-plan-subscriptions.days.complete', [
             'subscription' => $subscription->id,
@@ -117,19 +115,15 @@ final class CompleteReadingPlanSubscriptionDayTest extends TestCase
     /**
      * @return array{0: User, 1: ReadingPlanSubscription, 2: ReadingPlanSubscriptionDay}
      */
-    private function seedSubscriptionAndDay(): array
+    private function givenASubscriptionWithAPendingDay(): array
     {
-        $plan = ReadingPlan::factory()->published()->create();
-        $planDay = ReadingPlanDay::factory()->create(['reading_plan_id' => $plan->id, 'position' => 1]);
+        $plan = $this->givenAPublishedReadingPlanWithDays(1);
+        $planDay = $plan->days()->firstOrFail();
 
         $user = User::factory()->create();
-        $subscription = ReadingPlanSubscription::factory()->create([
-            'user_id' => $user->id,
-            'reading_plan_id' => $plan->id,
-        ]);
-        $day = ReadingPlanSubscriptionDay::factory()->pending()->create([
-            'reading_plan_subscription_id' => $subscription->id,
-            'reading_plan_day_id' => $planDay->id,
+        $subscription = $this->givenAnActiveSubscriptionTo($plan, $user);
+        $day = $this->givenASubscriptionDay($subscription, $planDay, [
+            'completed_at' => null,
         ]);
 
         return [$user, $subscription, $day];

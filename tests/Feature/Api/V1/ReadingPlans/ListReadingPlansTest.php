@@ -6,16 +6,19 @@ namespace Tests\Feature\Api\V1\ReadingPlans;
 
 use App\Domain\ReadingPlans\Enums\ReadingPlanStatus;
 use App\Domain\ReadingPlans\Models\ReadingPlan;
-use App\Domain\ReadingPlans\Models\ReadingPlanDay;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscriptionDay;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\InteractsWithAuthentication;
+use Tests\Concerns\InteractsWithReadingPlans;
 use Tests\Concerns\WithApiKeyClient;
 use Tests\TestCase;
 
 final class ListReadingPlansTest extends TestCase
 {
+    use InteractsWithAuthentication;
+    use InteractsWithReadingPlans;
     use RefreshDatabase;
     use WithApiKeyClient;
 
@@ -190,34 +193,25 @@ final class ListReadingPlansTest extends TestCase
 
     public function test_it_returns_only_the_authenticated_users_subscriptions_with_progress(): void
     {
-        $plan = ReadingPlan::factory()->published()->create();
-        $day = ReadingPlanDay::factory()->create(['reading_plan_id' => $plan->id, 'position' => 1]);
+        $plan = $this->givenAPublishedReadingPlanWithDays(1);
+        $day = $plan->days()->firstOrFail();
 
-        $alice = User::factory()->create();
         $bob = User::factory()->create();
+        $alice = $this->givenAnAuthenticatedUser();
 
-        $aliceSubscription = ReadingPlanSubscription::factory()->create([
-            'user_id' => $alice->id,
-            'reading_plan_id' => $plan->id,
-        ]);
+        $aliceSubscription = $this->givenAnActiveSubscriptionTo($plan, $alice);
         ReadingPlanSubscriptionDay::factory()->completed()->create([
             'reading_plan_subscription_id' => $aliceSubscription->id,
             'reading_plan_day_id' => $day->id,
         ]);
 
-        $bobSubscription = ReadingPlanSubscription::factory()->create([
-            'user_id' => $bob->id,
-            'reading_plan_id' => $plan->id,
-        ]);
+        $bobSubscription = $this->givenAnActiveSubscriptionTo($plan, $bob);
         ReadingPlanSubscriptionDay::factory()->pending()->create([
             'reading_plan_subscription_id' => $bobSubscription->id,
             'reading_plan_day_id' => $day->id,
         ]);
 
-        $token = $alice->createToken('test')->plainTextToken;
-
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson(route('reading-plans.index'))
+        $response = $this->getJson(route('reading-plans.index'))
             ->assertOk();
 
         $response->assertJsonCount(1, 'data.0.subscriptions');

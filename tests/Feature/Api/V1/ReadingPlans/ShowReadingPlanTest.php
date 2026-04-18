@@ -12,11 +12,15 @@ use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscriptionDay;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\InteractsWithAuthentication;
+use Tests\Concerns\InteractsWithReadingPlans;
 use Tests\Concerns\WithApiKeyClient;
 use Tests\TestCase;
 
 final class ShowReadingPlanTest extends TestCase
 {
+    use InteractsWithAuthentication;
+    use InteractsWithReadingPlans;
     use RefreshDatabase;
     use WithApiKeyClient;
 
@@ -29,7 +33,7 @@ final class ShowReadingPlanTest extends TestCase
 
     public function test_it_returns_the_full_tree_for_a_published_plan(): void
     {
-        $plan = $this->seedPublishedPlan();
+        $plan = $this->givenABilingualPlanWithFragments();
 
         $response = $this->withHeader('X-Api-Key', 'mobile-valid-key')
             ->getJson(route('reading-plans.show', ['plan' => $plan->slug]));
@@ -44,7 +48,7 @@ final class ShowReadingPlanTest extends TestCase
 
     public function test_it_resolves_language_per_fragment_with_fallback(): void
     {
-        $plan = $this->seedPublishedPlan();
+        $plan = $this->givenABilingualPlanWithFragments();
 
         $response = $this->withHeader('X-Api-Key', 'mobile-valid-key')
             ->getJson(route('reading-plans.show', ['plan' => $plan->slug, 'language' => 'hu']));
@@ -58,7 +62,7 @@ final class ShowReadingPlanTest extends TestCase
 
     public function test_it_falls_back_to_english_for_an_unsupported_language(): void
     {
-        $plan = $this->seedPublishedPlan();
+        $plan = $this->givenABilingualPlanWithFragments();
 
         $this->withHeader('X-Api-Key', 'mobile-valid-key')
             ->getJson(route('reading-plans.show', ['plan' => $plan->slug, 'language' => 'fr']))
@@ -69,7 +73,7 @@ final class ShowReadingPlanTest extends TestCase
 
     public function test_it_returns_references_as_raw_strings(): void
     {
-        $plan = $this->seedPublishedPlan();
+        $plan = $this->givenABilingualPlanWithFragments();
 
         $this->withHeader('X-Api-Key', 'mobile-valid-key')
             ->getJson(route('reading-plans.show', ['plan' => $plan->slug]))
@@ -97,7 +101,7 @@ final class ShowReadingPlanTest extends TestCase
 
     public function test_it_rejects_requests_without_an_api_key(): void
     {
-        $plan = $this->seedPublishedPlan();
+        $plan = $this->givenABilingualPlanWithFragments();
 
         $this->getJson(route('reading-plans.show', ['plan' => $plan->slug]))
             ->assertUnauthorized();
@@ -109,7 +113,7 @@ final class ShowReadingPlanTest extends TestCase
 
     public function test_it_omits_subscriptions_on_api_key_only_requests(): void
     {
-        $plan = $this->seedPublishedPlan();
+        $plan = $this->givenABilingualPlanWithFragments();
         ReadingPlanSubscription::factory()->create(['reading_plan_id' => $plan->id]);
 
         $response = $this->withHeader('X-Api-Key', 'mobile-valid-key')
@@ -121,34 +125,25 @@ final class ShowReadingPlanTest extends TestCase
 
     public function test_it_surfaces_only_the_authenticated_users_subscriptions(): void
     {
-        $plan = $this->seedPublishedPlan();
+        $plan = $this->givenABilingualPlanWithFragments();
         $day = $plan->days()->orderBy('position')->firstOrFail();
 
-        $alice = User::factory()->create();
         $bob = User::factory()->create();
+        $alice = $this->givenAnAuthenticatedUser();
 
-        $aliceSubscription = ReadingPlanSubscription::factory()->create([
-            'user_id' => $alice->id,
-            'reading_plan_id' => $plan->id,
-        ]);
+        $aliceSubscription = $this->givenAnActiveSubscriptionTo($plan, $alice);
         ReadingPlanSubscriptionDay::factory()->completed()->create([
             'reading_plan_subscription_id' => $aliceSubscription->id,
             'reading_plan_day_id' => $day->id,
         ]);
 
-        $bobSubscription = ReadingPlanSubscription::factory()->create([
-            'user_id' => $bob->id,
-            'reading_plan_id' => $plan->id,
-        ]);
+        $bobSubscription = $this->givenAnActiveSubscriptionTo($plan, $bob);
         ReadingPlanSubscriptionDay::factory()->pending()->create([
             'reading_plan_subscription_id' => $bobSubscription->id,
             'reading_plan_day_id' => $day->id,
         ]);
 
-        $token = $alice->createToken('test')->plainTextToken;
-
-        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson(route('reading-plans.show', ['plan' => $plan->slug]))
+        $response = $this->getJson(route('reading-plans.show', ['plan' => $plan->slug]))
             ->assertOk();
 
         $response->assertJsonCount(1, 'data.subscriptions');
@@ -157,9 +152,9 @@ final class ShowReadingPlanTest extends TestCase
         $response->assertJsonPath('data.subscriptions.0.progress.total_days', 1);
     }
 
-    private function seedPublishedPlan(): ReadingPlan
+    private function givenABilingualPlanWithFragments(): ReadingPlan
     {
-        $plan = ReadingPlan::factory()->published()->create([
+        $plan = $this->givenAPublishedReadingPlan([
             'slug' => 'seven-days',
             'name' => ['en' => 'EN Name', 'ro' => 'RO Name'],
             'description' => ['en' => 'EN desc', 'ro' => 'RO desc'],
