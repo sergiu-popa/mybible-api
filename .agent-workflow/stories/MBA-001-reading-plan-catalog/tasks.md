@@ -51,12 +51,12 @@
 - [ ] 25. Create `ReadingPlanResource` (`{ id, slug, name, description, image, thumbnail, status, published_at, days? }` with language resolution; `days` only when relation loaded).
 - [ ] 26. Create `ListReadingPlansController` (invokable, paginated via `ReadingPlanQueryBuilder::published()`, default `per_page = 15`).
 - [ ] 27. Create `ShowReadingPlanController` (invokable, route-model bound on `slug`, eager-loads via `withDaysAndFragments()`).
-- [ ] 28. Register both routes in `routes/api.php` inside the existing `v1` group with named routes (`reading-plans.index`, `reading-plans.show`).
+- [ ] 28. Register both routes in `routes/api.php` inside the existing `v1` group with named routes (`reading-plans.index`, `reading-plans.show`), and apply the `api-key` middleware alias (registered in `bootstrap/app.php` by MBA-002) per-route.
 
 ## Tests — HTTP
 
-- [ ] 29. `tests/Feature/Api/V1/ReadingPlans/ListReadingPlansTest`: returns published only, default `per_page=15`, `per_page` cap at 100, language fallback when requested language missing, drafts/unpublished excluded.
-- [ ] 30. `tests/Feature/Api/V1/ReadingPlans/ShowReadingPlanTest`: full tree, language resolution + fallback per fragment, references returned as raw strings, 404 on unknown slug.
+- [ ] 29. `tests/Feature/Api/V1/ReadingPlans/ListReadingPlansTest`: returns published only, default `per_page=15`, `per_page` cap at 100, language fallback when requested language missing, drafts/unpublished excluded, `401` when `X-Api-Key` is missing or unknown.
+- [ ] 30. `tests/Feature/Api/V1/ReadingPlans/ShowReadingPlanTest`: full tree, language resolution + fallback per fragment, references returned as raw strings, 404 on unknown slug, `401` without a valid key.
 
 ## Polish
 

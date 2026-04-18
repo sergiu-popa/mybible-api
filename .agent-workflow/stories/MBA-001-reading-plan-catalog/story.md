@@ -13,11 +13,12 @@ content and Bible passage references. Plans are multilingual (`name`,
 language); Bible references are translation-agnostic and stored as global
 reference strings.
 
-This story delivers only the **public, read-only catalog**: the database tables
+This story delivers only the **read-only catalog**: the database tables
 for plans/days/fragments, the language-resolution layer, and the two read
-endpoints. No auth is required (the API key middleware lands in MBA-002 and is
-applied to these routes when it does). Subscriptions, day completion, and
-lifecycle are split into MBA-003 and MBA-004.
+endpoints. Both routes are gated by the `api-key` middleware delivered in
+MBA-002 (no user context needed — public catalog, app-level credential
+only). Subscriptions, day completion, and lifecycle are split into MBA-003
+and MBA-004.
 
 ## Acceptance Criteria
 
@@ -35,10 +36,11 @@ lifecycle are split into MBA-003 and MBA-004.
 6. Unknown plan slug returns `404` with the standard JSON error envelope.
 7. The `language` query parameter accepts any of the supported languages
    (`en`, `ro`, `hu`); other values fall through to the `en` fallback.
+8. Requests missing `X-Api-Key` or carrying an unknown key return `401`
+   with the standard JSON error envelope (enforced by the `api-key`
+   middleware from MBA-002).
 
 ### Out of acceptance criteria (deferred)
-- Auth: routes are public for now. When MBA-002 lands, the API-key middleware
-  is applied to both routes.
 - Subscription data on plan responses: deferred to MBA-003.
 
 ## Scope
@@ -55,7 +57,8 @@ lifecycle are split into MBA-003 and MBA-004.
 ### Out of Scope
 - Subscriptions and per-user data (MBA-003).
 - Reschedule, finish, abandon (MBA-004).
-- Auth (MBA-002).
+- User-context auth (`api-key-or-sanctum`) — catalog routes use the
+  app-level `api-key` middleware only.
 - Admin CRUD for creating/editing plans (separate story).
 - Caching, notifications, metrics dashboards.
 
@@ -87,7 +90,8 @@ in a future story.
 Clients should use `id` for any internal references they cache.
 
 ## Dependencies
-None. This story can ship independently.
+- MBA-002 (auth foundation) — required for the `api-key` middleware alias
+  applied to both catalog routes. MBA-002 has shipped.
 
 ## Mockups / References
 - Original combined feature spec: `reading-plan-feature-spec.md`.
