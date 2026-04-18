@@ -98,6 +98,25 @@ no `else`) **still applies**.
 - Do not add try/catch to controllers for framework exceptions — let the
   handler format them.
 
+### Middleware → Downstream Data Passing
+
+- When a middleware resolves per-request data that controllers, Form
+  Requests, or Resources need to read (e.g. a resolved `Language`, an
+  authenticated `ApiClient`), attach it to `$request->attributes` under a
+  named `public const ATTRIBUTE_KEY` on the middleware class.
+- Do **not** use `app()->instance(...)` or other container bindings for
+  this. Container-scoped state leaks request-scoped data into a
+  process-scoped container, and makes a downstream reader fail hard
+  (`BindingResolutionException`) if the middleware is ever omitted from a
+  route.
+- Downstream readers must use
+  `$request->attributes->get(MiddlewareClass::ATTRIBUTE_KEY, $default)`
+  so a missing middleware degrades to a sane default instead of throwing
+  at render time.
+- Precedents in this repo: `ResolveRequestLanguage` (attaches the
+  resolved `Language` under `ATTRIBUTE_KEY`) and `EnsureValidApiKey`
+  (attaches the matched api-key client name under `api_client`).
+
 ### Testing (replacing the Livewire testing guidance)
 
 | Layer | Tool | What to Test |
@@ -113,6 +132,16 @@ no `else`) **still applies**.
   `assertJsonPath` — not `assertSee`/`assertDontSee` (those are HTML).
 - For auth-protected endpoints (once auth is added), use
   `Sanctum::actingAs($user)` or equivalent.
+
+#### Test Helpers
+
+Shared test helpers live under `tests/Concerns/` as traits. When the same
+setUp boilerplate appears in a second feature test, extract it here
+rather than copying it a third time.
+
+| Trait | Purpose |
+|---|---|
+| `Tests\Concerns\WithApiKeyClient` | Configures the `api_keys.*` config and provides `apiKeyHeaders()` for feature tests hitting api-key-protected routes. Call `$this->setUpApiKeyClient()` from `setUp()`. |
 
 ---
 
