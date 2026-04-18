@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\ReadingPlans;
 
-use App\Domain\Shared\Enums\Language;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class ListReadingPlansRequest extends FormRequest
@@ -27,13 +26,6 @@ final class ListReadingPlansRequest extends FormRequest
             'language' => ['nullable', 'string'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:' . self::MAX_PER_PAGE],
         ];
-    }
-
-    public function language(): Language
-    {
-        $value = $this->query('language');
-
-        return Language::fromRequest(is_string($value) ? $value : null);
     }
 
     public function perPage(): int

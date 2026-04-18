@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domain\ReadingPlans\Exceptions;
 
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use RuntimeException;
 
-final class SubscriptionAlreadyCompletedException extends HttpException
+final class SubscriptionAlreadyCompletedException extends RuntimeException
 {
     public function __construct()
     {
-        parent::__construct(422, 'Cannot abandon a completed subscription.');
+        parent::__construct('Cannot abandon a completed subscription.');
     }
 }

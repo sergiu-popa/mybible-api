@@ -25,9 +25,28 @@ final class RescheduleReadingPlanSubscriptionAction
                 ->sortBy(fn ($day): int => $day->readingPlanDay->position)
                 ->values();
 
-            foreach ($uncompleted as $index => $day) {
-                $day->scheduled_date = Carbon::instance($data->startDate->addDays($index));
-                $day->save();
+            if ($uncompleted->isNotEmpty()) {
+                $now = now();
+                $rows = [];
+                foreach ($uncompleted as $index => $day) {
+                    $rows[] = [
+                        'reading_plan_subscription_id' => $day->reading_plan_subscription_id,
+                        'reading_plan_day_id' => $day->reading_plan_day_id,
+                        'scheduled_date' => $data->startDate->addDays($index)->toDateString(),
+                        'updated_at' => $now,
+                        'created_at' => $day->created_at ?? $now,
+                    ];
+                }
+
+                // Single round-trip via upsert on the (subscription_id, day_id)
+                // unique index — INSERT path is never taken for existing rows,
+                // but all NOT NULL columns must be supplied for MySQL to parse
+                // the statement.
+                DB::table('reading_plan_subscription_days')->upsert(
+                    $rows,
+                    ['reading_plan_subscription_id', 'reading_plan_day_id'],
+                    ['scheduled_date', 'updated_at'],
+                );
             }
 
             return $subscription->loadCount([

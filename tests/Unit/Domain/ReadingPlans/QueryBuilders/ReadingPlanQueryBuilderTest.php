@@ -27,4 +27,18 @@ final class ReadingPlanQueryBuilderTest extends TestCase
         $this->assertSame([$published->id], $ids);
         $this->assertNotContains($draft->id, $ids);
     }
+
+    public function test_published_excludes_plans_with_future_published_at(): void
+    {
+        $live = ReadingPlan::factory()->published()->create();
+        $future = ReadingPlan::factory()->create([
+            'status' => ReadingPlanStatus::Published,
+            'published_at' => now()->addDay(),
+        ]);
+
+        $ids = ReadingPlan::query()->published()->pluck('id')->all();
+
+        $this->assertSame([$live->id], $ids);
+        $this->assertNotContains($future->id, $ids);
+    }
 }

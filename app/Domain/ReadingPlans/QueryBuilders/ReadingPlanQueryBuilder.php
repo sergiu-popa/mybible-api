@@ -17,7 +17,8 @@ final class ReadingPlanQueryBuilder extends Builder
     {
         return $this
             ->where('status', ReadingPlanStatus::Published->value)
-            ->whereNotNull('published_at');
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now());
     }
 
     public function withDaysAndFragments(): self

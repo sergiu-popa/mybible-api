@@ -11,6 +11,12 @@ use Illuminate\Support\Facades\DB;
 
 final class StartReadingPlanSubscriptionAction
 {
+    /**
+     * Multiple active subscriptions to the same plan for the same user are
+     * intentionally allowed (e.g., a user restarting a plan alongside the
+     * original run). Pinned by
+     * StartReadingPlanSubscriptionTest::test_it_allows_multiple_active_subscriptions_to_the_same_plan.
+     */
     public function execute(StartReadingPlanSubscriptionData $data): ReadingPlanSubscription
     {
         return DB::transaction(function () use ($data): ReadingPlanSubscription {
@@ -36,6 +42,10 @@ final class StartReadingPlanSubscriptionAction
                 ];
             }
 
+            // Raw insert (over Eloquent mass-create) to materialize all day rows
+            // in a single round-trip. Trade-off: bypasses model events; any
+            // future ReadingPlanSubscriptionDay observer must be invoked here
+            // explicitly.
             if ($rows !== []) {
                 DB::table('reading_plan_subscription_days')->insert($rows);
             }
