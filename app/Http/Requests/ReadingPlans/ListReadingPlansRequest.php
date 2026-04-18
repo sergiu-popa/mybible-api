@@ -24,7 +24,7 @@ final class ListReadingPlansRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'language' => ['nullable', 'string', 'in:en,ro,hu'],
+            'language' => ['nullable', 'string'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:' . self::MAX_PER_PAGE],
         ];
     }

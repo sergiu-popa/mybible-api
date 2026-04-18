@@ -54,6 +54,17 @@ final class ShowReadingPlanTest extends TestCase
             ->assertJsonPath('data.days.0.fragments.0.content', '<p>EN D1 intro</p>');
     }
 
+    public function test_it_falls_back_to_english_for_an_unsupported_language(): void
+    {
+        $plan = $this->seedPublishedPlan();
+
+        $this->withHeader('X-Api-Key', 'mobile-valid-key')
+            ->getJson(route('reading-plans.show', ['slug' => $plan->slug, 'language' => 'fr']))
+            ->assertOk()
+            ->assertJsonPath('data.name', 'EN Name')
+            ->assertJsonPath('data.days.0.fragments.0.content', '<p>EN D1 intro</p>');
+    }
+
     public function test_it_returns_references_as_raw_strings(): void
     {
         $plan = $this->seedPublishedPlan();

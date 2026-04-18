@@ -76,6 +76,23 @@ final class ListReadingPlansTest extends TestCase
             ->assertJsonPath('data.0.description', 'RO desc');
     }
 
+    public function test_it_falls_back_to_english_for_an_unsupported_language(): void
+    {
+        ReadingPlan::factory()->published()->create([
+            'slug' => 'only-english',
+            'name' => ['en' => 'English Title'],
+            'description' => ['en' => 'English description.'],
+            'image' => ['en' => 'https://cdn.example.com/en.jpg'],
+            'thumbnail' => ['en' => 'https://cdn.example.com/thumb-en.jpg'],
+        ]);
+
+        $this->withHeader('X-Api-Key', 'mobile-valid-key')
+            ->getJson(route('reading-plans.index', ['language' => 'fr']))
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'English Title')
+            ->assertJsonPath('data.0.description', 'English description.');
+    }
+
     public function test_it_paginates_with_a_default_of_15_per_page(): void
     {
         ReadingPlan::factory()->count(20)->published()->create();

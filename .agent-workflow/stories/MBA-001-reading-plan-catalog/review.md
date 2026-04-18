@@ -15,7 +15,7 @@ request validation rule; otherwise findings are tightening suggestions.
 - _None._
 
 ### Warning (should fix)
-- [ ] `app/Http/Requests/ReadingPlans/ListReadingPlansRequest.php:27`,
+- [x] `app/Http/Requests/ReadingPlans/ListReadingPlansRequest.php:27`,
   `app/Http/Requests/ReadingPlans/ShowReadingPlanRequest.php:23` — the
   `language` rule `in:en,ro,hu` returns a **422** for unsupported values
   (e.g. `?language=fr`). This contradicts story AC 7: *"other values fall

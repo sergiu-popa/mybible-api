@@ -56,7 +56,7 @@ None found. The 74-test suite (including prior auth suite) remains green. Pint a
    - Note: this was previously raised as a Warning in `review.md` and remains unresolved. It's a direct AC miss, so it's elevated to blocking here.
 
 ### Re-QA checklist
-- [ ] Decide AC 7 interpretation (code vs. spec).
-- [ ] Implement the chosen path in both `ListReadingPlansRequest` and `ShowReadingPlanRequest`.
-- [ ] Add one feature test per endpoint pinning the behavior.
-- [ ] Re-run `make check` (lint + stan + test) and rerun QA.
+- [x] Decide AC 7 interpretation (code vs. spec). _Code path chosen — drop `in:` rule and let `Language::fromRequest()` fall back to `en`._
+- [x] Implement the chosen path in both `ListReadingPlansRequest` and `ShowReadingPlanRequest`.
+- [x] Add one feature test per endpoint pinning the behavior. _Added `test_it_falls_back_to_english_for_an_unsupported_language` in both `ListReadingPlansTest` and `ShowReadingPlanTest`._
+- [x] Re-run `make check` (lint + stan + test) and rerun QA. _Lint + stan green; 76 tests passed (205 assertions)._

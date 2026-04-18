@@ -20,7 +20,7 @@ final class ShowReadingPlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'language' => ['nullable', 'string', 'in:en,ro,hu'],
+            'language' => ['nullable', 'string'],
         ];
     }
 
