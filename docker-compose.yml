@@ -1,7 +1,7 @@
 services:
   traefik:
     image: traefik:v2.11
-    container_name: 'laravel-13-start-traefik'
+    container_name: 'mybible-api-traefik'
     ports:
       - '80:80'
     volumes:
@@ -12,10 +12,10 @@ services:
       - '--providers.docker.exposedbydefault=false'
       - '--entrypoints.web.address=:80'
     networks:
-      - laravel-13-start
+      - mybible-api
 
   mysql:
-    container_name: 'laravel-13-start-mysql'
+    container_name: 'mybible-api-mysql'
     image: 'mysql:8.0'
     ports:
       - '3306:3306'
@@ -25,31 +25,31 @@ services:
       MYSQL_ROOT_PASSWORD: '${DB_PASSWORD:-secret}'
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
     volumes:
-      - 'laravel-13-start-mysql:/var/lib/mysql'
+      - 'mybible-api-mysql:/var/lib/mysql'
     networks:
-      - laravel-13-start
+      - mybible-api
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-psecret"]
       retries: 3
       timeout: 5s
 
   redis:
-    container_name: 'laravel-13-start-redis'
+    container_name: 'mybible-api-redis'
     image: 'redis:alpine'
     ports:
       - '6379:6379'
     volumes:
-      - 'laravel-13-start-redis:/data'
+      - 'mybible-api-redis:/data'
     networks:
-      - laravel-13-start
+      - mybible-api
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       retries: 3
       timeout: 5s
 
   app:
-    container_name: 'laravel-13-start-app'
-    image: laravel-13-start-app
+    container_name: 'mybible-api-app'
+    image: mybible-api-app
     entrypoint: ['/app/entrypoint.sh']
     command: ["web"]
     build:
@@ -69,28 +69,25 @@ services:
       - 'host.docker.internal:host-gateway'
     ports:
       - '8080:8080'
-      - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
     labels:
       - traefik.enable=true
-      - traefik.http.routers.web.rule=Host(`laravel-13-start.localhost`)
+      - traefik.http.routers.web.rule=Host(`mybible-api.localhost`)
       - traefik.http.routers.web.entrypoints=web
       - traefik.http.services.web.loadbalancer.server.port=8080
     environment:
       WWWUSER: '${WWWUSER}'
       COMPOSER_HOME: '/tmp/.composer'
-      COMPOSER_AUTH: '${COMPOSER_AUTH}'
       XDEBUG_MODE: '${XDEBUG_MODE:-off}'
       XDEBUG_CONFIG: '${XDEBUG_CONFIG:-client_host=host.docker.internal}'
       PHP_OPCACHE_VALIDATE_TIMESTAMPS: '1'
-      ENABLE_NPM_FRONTEND: '${ENABLE_NPM_FRONTEND:-true}'
     volumes:
       - '.:/var/www'
     networks:
-      - laravel-13-start
+      - mybible-api
 
   worker:
-    container_name: 'laravel-13-start-worker'
-    image: laravel-13-start-app
+    container_name: 'mybible-api-worker'
+    image: mybible-api-app
     entrypoint: ['/app/entrypoint.sh']
     command: ["worker"]
     build:
@@ -107,17 +104,16 @@ services:
     environment:
       WWWUSER: '${WWWUSER}'
       COMPOSER_HOME: '/tmp/.composer'
-      COMPOSER_AUTH: '${COMPOSER_AUTH}'
       XDEBUG_MODE: '${XDEBUG_MODE:-off}'
       XDEBUG_CONFIG: '${XDEBUG_CONFIG:-client_host=host.docker.internal}'
       PHP_OPCACHE_VALIDATE_TIMESTAMPS: '1'
     volumes:
       - '.:/var/www'
     networks:
-      - laravel-13-start
+      - mybible-api
 
   test-mysql:
-    container_name: 'laravel-13-start-test-mysql'
+    container_name: 'mybible-api-test-mysql'
     image: 'mysql:8.0'
     tmpfs: /var/lib/mysql
     ports:
@@ -128,31 +124,31 @@ services:
       MYSQL_ROOT_PASSWORD: '${DB_PASSWORD:-secret}'
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
     networks:
-      - laravel-13-start
+      - mybible-api
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-psecret"]
       retries: 3
       timeout: 5s
 
   test-redis:
-    container_name: 'laravel-13-start-test-redis'
+    container_name: 'mybible-api-test-redis'
     image: 'redis:alpine'
     ports:
       - '6381:6379'
     networks:
-      - laravel-13-start
+      - mybible-api
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       retries: 3
       timeout: 5s
 
 networks:
-  laravel-13-start:
-    name: laravel-13-start
+  mybible-api:
+    name: mybible-api
     driver: bridge
 
 volumes:
-  laravel-13-start-mysql:
+  mybible-api-mysql:
     driver: local
-  laravel-13-start-redis:
+  mybible-api-redis:
     driver: local

@@ -1,8 +1,8 @@
 name: CI
 on: push
 env:
-  DOCKER_REGISTRY: ghcr.io/workguard/
-  IMAGE_NAME: laravel-13-start-ci-image
+  DOCKER_REGISTRY: ghcr.io/sergiu-popa/
+  IMAGE_NAME: mybible-api-ci-image
   PHPSTAN_CACHE_BRANCH: main
   PHPSTAN_CACHE_TMPDIR: /tmp/phpstan
   PHP_VERSION: '8.4'

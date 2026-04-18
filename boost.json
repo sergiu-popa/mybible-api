@@ -7,9 +7,6 @@
     "nightwatch_mcp": false,
     "sail": false,
     "skills": [
-        "laravel-best-practices",
-        "fluxui-development",
-        "livewire-development",
-        "tailwindcss-development"
+        "laravel-best-practices"
     ]
 }

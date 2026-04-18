@@ -1,6 +1,5 @@
 ARG COMPOSER_VERSION=2.9.1
 ARG PHP_IMAGE_VERSION=8.4-apache-bookworm
-ARG NODE_VERSION=22-slim
 
 FROM composer:$COMPOSER_VERSION AS composer-src
 FROM php:$PHP_IMAGE_VERSION AS base
@@ -69,8 +68,7 @@ RUN chmod +x /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-RUN --mount=type=secret,id=composer_auth,env=COMPOSER_AUTH \
-    composer install \
+RUN composer install \
     --no-dev \
     --ignore-platform-reqs \
     --no-interaction \
@@ -78,19 +76,6 @@ RUN --mount=type=secret,id=composer_auth,env=COMPOSER_AUTH \
     --no-scripts \
     --prefer-dist \
     --optimize-autoloader
-
-FROM node:$NODE_VERSION AS frontend
-FROM frontend AS production-frontend
-
-RUN mkdir -p /app/public
-
-COPY package.json package-lock.json vite.config.js /app/
-COPY resources/ /app/resources/
-COPY app/ /app/app/
-COPY --from=base /var/www/vendor /app/vendor
-
-WORKDIR /app
-RUN npm ci && npm run build
 
 EXPOSE 8080
 
@@ -109,11 +94,6 @@ RUN usermod --uid $WWWUSER www-data
 RUN chown -R $WWWUSER:$WWWGROUP .
 
 COPY --chown=$WWWUSER:$WWWGROUP . .
-
-COPY --from=frontend /usr/local/bin /usr/local/bin
-COPY --from=frontend /usr/local/lib/node_modules /usr/local/lib/node_modules
-
-RUN npm install -g vite
 
 USER www-data
 
@@ -135,13 +115,10 @@ RUN chown -R $WWWUSER:$WWWGROUP .
 
 USER www-data
 
-RUN --mount=type=secret,id=composer_auth,env=COMPOSER_AUTH \
-    composer install \
+RUN composer install \
     --prefer-dist \
     --no-scripts \
     --optimize-autoloader
-
-COPY --from=production-frontend --chown=www-data:www-data /app/public/build/ /var/www/public/build
 
 COPY --chown=www-data:www-data .env.example .env
 COPY --chown=$WWWUSER:$WWWGROUP . .
@@ -154,9 +131,6 @@ RUN php artisan key:generate
 
 FROM base AS production
 
-COPY --from=production-frontend --chown=www-data:www-data /app/public/build/ /var/www/public/build
-COPY --chown=www-data:www-data .docker/development/conf.d/npm.conf /etc/supervisor/conf.d/
-
 COPY --chown=www-data:www-data .env.example .env
 COPY --chown=www-data:www-data . .
 
@@ -164,4 +138,3 @@ USER www-data
 
 RUN mkdir -p storage/framework/cache storage/framework/views
 RUN chmod 775 -R /var/www/storage/
-RUN php artisan view:cache

@@ -12,31 +12,28 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - php - 8.4
 - laravel/framework (LARAVEL) - v13
 - laravel/prompts (PROMPTS) - v0
-- livewire/flux (FLUXUI_FREE) - v2
-- livewire/flux-pro (FLUXUI_PRO) - v2
-- livewire/livewire (LIVEWIRE) - v4
 - larastan/larastan (LARASTAN) - v3
 - laravel/boost (BOOST) - v2
 - laravel/mcp (MCP) - v0
 - laravel/pail (PAIL) - v1
 - laravel/pint (PINT) - v1
 - phpunit/phpunit (PHPUNIT) - v12
-- tailwindcss (TAILWINDCSS) - v4
+
+## Application Type
+
+This is a **JSON-only API**. There is no frontend, no Blade views, no Livewire, no Tailwind, no Vite. All routes return JSON. All exceptions are rendered as JSON responses. Do not introduce Blade views, session-based auth flows, or frontend asset tooling.
 
 ## Skills Activation
 
 This project has domain-specific skills available. You MUST activate the relevant skill whenever you work in that domain—don't wait until you're stuck.
 
 - `laravel-best-practices` — Apply this skill whenever writing, reviewing, or refactoring Laravel PHP code. This includes creating or modifying controllers, models, migrations, form requests, policies, jobs, scheduled commands, service classes, and Eloquent queries. Triggers for N+1 and query performance issues, caching strategies, authorization and security patterns, validation, error handling, queue and job configuration, route definitions, and architectural decisions. Also use for Laravel code reviews and refactoring existing Laravel code to follow best practices. Covers any task involving Laravel backend PHP code patterns.
-- `fluxui-development` — Use this skill for Flux UI development in Livewire applications only. Trigger when working with <flux:*> components, building or customizing Livewire component UIs, creating forms, modals, tables, or other interactive elements. Covers: flux: components (buttons, inputs, modals, forms, tables, date-pickers, kanban, badges, tooltips, etc.), component composition, Tailwind CSS styling, Heroicons/Lucide icon integration, validation patterns, responsive design, and theming. Do not use for non-Livewire frameworks or non-component styling.
-- `livewire-development` — Use for any task or question involving Livewire. Activate if user mentions Livewire, wire: directives, or Livewire-specific concepts like wire:model, wire:click, wire:sort, or islands, invoke this skill. Covers building new components, debugging reactivity issues, real-time form validation, drag-and-drop, loading states, migrating from Livewire 3 to 4, converting component formats (SFC/MFC/class-based), and performance optimization. Do not use for non-Livewire reactive UI (React, Vue, Alpine-only, Inertia.js) or standard Laravel forms without Livewire.
-- `tailwindcss-development` — Always invoke when the user's message includes 'tailwind' in any form. Also invoke for: building responsive grid layouts (multi-column card grids, product grids), flex/grid page structures (dashboards with sidebars, fixed topbars, mobile-toggle navs), styling UI components (cards, tables, navbars, pricing sections, forms, inputs, badges), adding dark mode variants, fixing spacing or typography, and Tailwind v3/v4 work. The core use case: writing or fixing Tailwind utility classes in HTML templates (Blade, JSX, Vue). Skip for backend PHP logic, database queries, API routes, JavaScript with no HTML/CSS component, CSS file audits, build tool configuration, and vanilla CSS.
 
 ## Conventions
 
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
-- Check for existing components to reuse before writing a new one.
+- Check for existing classes to reuse before writing a new one.
 
 ## Verification Scripts
 
@@ -46,10 +43,9 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - Stick to existing directory structure; don't create new base folders without approval.
 - Do not change the application's dependencies without approval.
-
-## Frontend Bundling
-
-- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.
+- API routes live in `routes/api.php` under the `/api/v1` prefix.
+- Controllers go under `App\Http\Controllers\Api\V1`.
+- Use Form Requests (`App\Http\Requests`) for validation and Eloquent API Resources (`App\Http\Resources`) for responses.
 
 ## Documentation Files
 
@@ -69,7 +65,6 @@ This project has domain-specific skills available. You MUST activate the relevan
 - Use `database-query` to run read-only queries against the database instead of writing raw SQL in tinker.
 - Use `database-schema` to inspect table structure before writing migrations or models.
 - Use `get-absolute-url` to resolve the correct scheme, domain, and port for project URLs. Always use this before sharing a URL with the user.
-- Use `browser-logs` to read browser logs, errors, and exceptions. Only recent logs are useful, ignore old entries.
 
 ## Searching Documentation (IMPORTANT)
 
@@ -135,21 +130,9 @@ This project has domain-specific skills available. You MUST activate the relevan
 - Faker: Use methods such as `$this->faker->word()` or `fake()->randomDigit()`. Follow existing conventions whether to use `$this->faker` or `fake()`.
 - When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
 
-## Vite Error
-
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
-
 ## Deployment
 
 - Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
-
-=== livewire/core rules ===
-
-# Livewire
-
-- Livewire allow to build dynamic, reactive interfaces in PHP without writing JavaScript.
-- You can use Alpine.js for client-side interactions instead of JavaScript frameworks.
-- Keep state server-side so the UI reflects it. Validate and authorize in actions as you would in HTTP requests.
 
 === pint/core rules ===
 
@@ -184,7 +167,7 @@ This application runs in Docker. All commands (linting, static analysis, tests, 
 
 ## Local Domain
 
-The application is available at `http://laravel-13-start.localhost` when containers are running.
+The application is available at `http://mybible-api.localhost` when containers are running.
 
 ## Running Commands
 
@@ -194,14 +177,13 @@ Always use `make` targets or `docker exec` to run commands inside the container:
 - **Static analysis:** `make stan`
 - **Tests:** `make test` or `make test filter=testName`
 - **All checks:** `make check` (lint + stan + test)
-- **Artisan:** `docker exec laravel-13-start-app php artisan <command>`
+- **Artisan:** `docker exec mybible-api-app php artisan <command>`
 - **Shell:** `make bash`
 
-Do not run `php artisan`, `vendor/bin/pint`, `vendor/bin/phpstan`, or `php artisan test` directly on the host. Always prefix with `docker exec laravel-13-start-app` or use the corresponding `make` target.
+Do not run `php artisan`, `vendor/bin/pint`, `vendor/bin/phpstan`, or `php artisan test` directly on the host. Always prefix with `docker exec mybible-api-app` or use the corresponding `make` target.
 
 ## Container Setup
 
-- `make setup` — full initialization (env, containers, composer, key, migrate, npm build)
+- `make setup` — full initialization (env, containers, composer, key, migrate)
 - `make up` / `make down` — start/stop containers
 - `make migrate` / `make fresh` / `make seed` — database management
-- `make npm-build` / `make npm-dev` — frontend builds

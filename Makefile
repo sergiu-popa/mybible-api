@@ -8,74 +8,65 @@ down:
 
 restart: down up
 
-setup: env up composer key migrate npm-build
-	@echo "Setup complete. Visit http://laravel-13-start.localhost"
+setup: env up composer key migrate
+	@echo "Setup complete. Visit http://mybible-api.localhost"
 
 env:
 	cp .env.example .env
 
 composer:
-	docker exec laravel-13-start-app composer install
+	docker exec mybible-api-app composer install
 
 key:
-	docker exec laravel-13-start-app php artisan key:generate
+	docker exec mybible-api-app php artisan key:generate
 
 migrate:
-	docker exec laravel-13-start-app php artisan migrate
+	docker exec mybible-api-app php artisan migrate
 
 migrate-test:
-	docker exec -e DB_HOST=laravel-13-start-test-mysql laravel-13-start-app php artisan migrate
+	docker exec -e DB_HOST=mybible-api-test-mysql mybible-api-app php artisan migrate
 
 fresh:
-	docker exec laravel-13-start-app php artisan migrate:fresh
+	docker exec mybible-api-app php artisan migrate:fresh
 
 fresh-test:
-	docker exec -e DB_HOST=laravel-13-start-test-mysql laravel-13-start-app php artisan migrate:fresh
+	docker exec -e DB_HOST=mybible-api-test-mysql mybible-api-app php artisan migrate:fresh
 
 seed:
-	docker exec laravel-13-start-app php artisan db:seed
+	docker exec mybible-api-app php artisan db:seed
 
 refresh: fresh seed
 
 refresh-test: fresh-test
 
 bash:
-	docker exec -it laravel-13-start-app /bin/bash
+	docker exec -it mybible-api-app /bin/bash
 
 tinker:
-	docker exec -it laravel-13-start-app php artisan tinker
-
-npm:
-	docker exec laravel-13-start-app npm install
-
-npm-dev:
-	docker exec laravel-13-start-app bash -c "npm install && npm run dev"
-
-npm-build:
-	docker exec laravel-13-start-app bash -c "npm install && npm run build"
+	docker exec -it mybible-api-app php artisan tinker
 
 test: migrate-test
-	docker exec laravel-13-start-app php artisan test --compact $(if $(filter),--filter="$(filter)")
+	docker exec mybible-api-app php artisan test --compact $(if $(filter),--filter="$(filter)")
 
 test-unit:
-	docker exec laravel-13-start-app php artisan test --compact --testsuite=Unit
+	docker exec mybible-api-app php artisan test --compact --testsuite=Unit
 
 test-feature: migrate-test
-	docker exec laravel-13-start-app php artisan test --compact --testsuite=Feature
+	docker exec mybible-api-app php artisan test --compact --testsuite=Feature
 
 lint:
-	docker exec laravel-13-start-app composer lint
+	docker exec mybible-api-app composer lint
 
 lint-fix:
-	docker exec laravel-13-start-app composer lint-fix
+	docker exec mybible-api-app composer lint-fix
 
 stan:
-	docker exec laravel-13-start-app composer stan
+	docker exec mybible-api-app composer stan
 
 check: lint stan test
 
 cache:
-	docker exec laravel-13-start-app php artisan optimize:clear
+	docker exec mybible-api-app php artisan optimize:clear
 
 app-logs:
-	docker logs --tail 500 laravel-13-start-app
+	docker logs --tail 500 mybible-api-app
