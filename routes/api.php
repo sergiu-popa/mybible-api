@@ -6,8 +6,11 @@ use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
+use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
+use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\ListReadingPlansController;
+use App\Http\Controllers\Api\V1\ReadingPlans\RescheduleReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\ShowReadingPlanController;
 use App\Http\Controllers\Api\V1\ReadingPlans\StartReadingPlanSubscriptionController;
 use Illuminate\Support\Facades\Route;
@@ -41,5 +44,11 @@ Route::prefix('v1')->group(function (): void {
         ->group(function (): void {
             Route::post('{subscription}/days/{day}/complete', CompleteReadingPlanSubscriptionDayController::class)
                 ->name('days.complete');
+            Route::patch('{subscription}/start-date', RescheduleReadingPlanSubscriptionController::class)
+                ->name('reschedule');
+            Route::post('{subscription}/finish', FinishReadingPlanSubscriptionController::class)
+                ->name('finish');
+            Route::post('{subscription}/abandon', AbandonReadingPlanSubscriptionController::class)
+                ->name('abandon');
         });
 });
