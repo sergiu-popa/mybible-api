@@ -2,12 +2,12 @@
 
 ## Overview
 
-Introduce a single new bounded context, `ReadingPlans`, that owns the public
+Introduce a single new bounded context, `ReadingPlans`, that owns the
 catalog: plans → days → fragments. All textual fields are multilingual via
 JSON columns keyed by language with `en` fallback; Bible references are stored
-as raw strings and parsed at read time. Two public read endpoints (list, show)
-serve the data; no auth in this story (the API-key middleware from MBA-002
-will be applied to both routes when it lands).
+as raw strings and parsed at read time. Two read endpoints (list, show)
+serve the data, both gated by the `api-key` middleware alias delivered in
+MBA-002 — no user context, app-level credential only.
 
 This is the catalog-only slice of the original combined story. Subscriptions
 and lifecycle live in MBA-003 and MBA-004.
@@ -125,13 +125,15 @@ None.
 
 Both routes registered in `routes/api.php` inside the existing `Route::prefix('v1')`
 group. Single-action invokable controllers under
-`App\Http\Controllers\Api\V1\ReadingPlans\…`. **No auth middleware** in this
-story — the routes are public until MBA-002 lands and adds `api-key`.
+`App\Http\Controllers\Api\V1\ReadingPlans\…`. Both routes apply the
+`api-key` middleware alias (registered in `bootstrap/app.php` by MBA-002)
+per-route rather than on the `v1` group, so future public routes can opt
+out without a negative-scoped exception.
 
-| Method | Path | Controller | Form Request | Resource |
-|---|---|---|---|---|
-| GET | `/reading-plans` | `ListReadingPlansController` | `ListReadingPlansRequest` | `ReadingPlanResource` (collection, paginated) |
-| GET | `/reading-plans/{plan:slug}` | `ShowReadingPlanController` | `ShowReadingPlanRequest` | `ReadingPlanResource` (with days + fragments) |
+| Method | Path | Controller | Form Request | Resource | Auth |
+|---|---|---|---|---|---|
+| GET | `/reading-plans` | `ListReadingPlansController` | `ListReadingPlansRequest` | `ReadingPlanResource` (collection, paginated) | `api-key` |
+| GET | `/reading-plans/{plan:slug}` | `ShowReadingPlanController` | `ShowReadingPlanRequest` | `ReadingPlanResource` (with days + fragments) | `api-key` |
 
 ### Form Requests
 
@@ -179,7 +181,7 @@ resource children free of `$request` plumbing.
 | QueryBuilder | `ReadingPlanQueryBuilderTest::published_excludes_drafts_and_unpublished`. |
 | API Resources | `ReadingPlanResourceTest` (language resolution, fallback path, days only when loaded); `ReadingPlanDayFragmentResourceTest` (html resolution, references returned as raw array). |
 | Form Requests | `ListReadingPlansRequestTest`, `ShowReadingPlanRequestTest` (validation rules, language helper). |
-| HTTP feature | `ListReadingPlansTest` (returns published only, paginates, language filter, default per_page=15, max enforced); `ShowReadingPlanTest` (full tree, language fallback per fragment, references returned as raw strings, 404 on unknown slug). |
+| HTTP feature | `ListReadingPlansTest` (returns published only, paginates, language filter, default per_page=15, max enforced, `401` when `X-Api-Key` is missing or unknown); `ShowReadingPlanTest` (full tree, language fallback per fragment, references returned as raw strings, 404 on unknown slug, `401` without a valid key). |
 
 ---
 

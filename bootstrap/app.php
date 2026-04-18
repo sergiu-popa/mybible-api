@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureApiKeyOrSanctum;
+use App\Http\Middleware\EnsureValidApiKey;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
@@ -18,7 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'api-key' => EnsureValidApiKey::class,
+            'api-key-or-sanctum' => EnsureApiKeyOrSanctum::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(fn (Request $request, Throwable $e): bool => true);
