@@ -54,6 +54,9 @@ test-unit:
 test-feature: migrate-test
 	docker exec mybible-api-app php artisan test --compact --testsuite=Feature
 
+coverage: migrate-test
+	docker exec -e XDEBUG_MODE=coverage mybible-api-app php artisan test --coverage $(if $(min),--min=$(min))
+
 lint:
 	docker exec mybible-api-app composer lint
 
