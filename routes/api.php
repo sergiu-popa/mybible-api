@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\V1\ReadingPlans\ListReadingPlansController;
 use App\Http\Controllers\Api\V1\ReadingPlans\ShowReadingPlanController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->middleware('resolve-language')->group(function (): void {
+Route::prefix('v1')->group(function (): void {
     Route::prefix('auth')->name('auth.')->group(function (): void {
         Route::post('register', RegisterController::class)->name('register');
         Route::post('login', LoginController::class)->name('login');
@@ -21,8 +21,11 @@ Route::prefix('v1')->middleware('resolve-language')->group(function (): void {
         });
     });
 
-    Route::prefix('reading-plans')->name('reading-plans.')->middleware('api-key')->group(function (): void {
-        Route::get('/', ListReadingPlansController::class)->name('index');
-        Route::get('{slug}', ShowReadingPlanController::class)->name('show');
-    });
+    Route::prefix('reading-plans')
+        ->name('reading-plans.')
+        ->middleware(['api-key', 'resolve-language'])
+        ->group(function (): void {
+            Route::get('/', ListReadingPlansController::class)->name('index');
+            Route::get('{slug}', ShowReadingPlanController::class)->name('show');
+        });
 });

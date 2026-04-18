@@ -21,8 +21,7 @@ final class ReadingPlanResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        /** @var Language $language */
-        $language = app(ResolveRequestLanguage::CONTAINER_KEY);
+        $language = $request->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY, Language::En);
 
         return [
             'id' => $this->id,
@@ -31,7 +30,6 @@ final class ReadingPlanResource extends JsonResource
             'description' => LanguageResolver::resolve($this->description, $language),
             'image' => LanguageResolver::resolve($this->image, $language),
             'thumbnail' => LanguageResolver::resolve($this->thumbnail, $language),
-            'status' => $this->status->value,
             'published_at' => $this->published_at?->toIso8601String(),
             'days' => ReadingPlanDayResource::collection($this->whenLoaded('days')),
         ];

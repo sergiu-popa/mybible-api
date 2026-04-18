@@ -4,7 +4,7 @@
 Reading Plans — public catalog (browse + view)
 
 ## Status
-`audited`
+`done`
 
 ## Description
 A **Reading Plan** is a structured, multi-day guide that combines rich text

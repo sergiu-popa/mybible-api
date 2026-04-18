@@ -7,20 +7,19 @@ namespace Tests\Feature\Api\V1\ReadingPlans;
 use App\Domain\ReadingPlans\Enums\ReadingPlanStatus;
 use App\Domain\ReadingPlans\Models\ReadingPlan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithApiKeyClient;
 use Tests\TestCase;
 
 final class ListReadingPlansTest extends TestCase
 {
     use RefreshDatabase;
+    use WithApiKeyClient;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        config()->set('api_keys.header', 'X-Api-Key');
-        config()->set('api_keys.clients', [
-            'mobile' => 'mobile-valid-key',
-        ]);
+        $this->setUpApiKeyClient();
     }
 
     public function test_it_returns_published_plans_only(): void
@@ -165,7 +164,6 @@ final class ListReadingPlansTest extends TestCase
                         'description',
                         'image',
                         'thumbnail',
-                        'status',
                         'published_at',
                     ],
                 ],

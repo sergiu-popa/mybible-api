@@ -26,14 +26,14 @@ final class ReadingPlanDayFragmentResource extends JsonResource
             'id' => $this->id,
             'position' => $this->position,
             'type' => $this->type->value,
-            'content' => $this->resolveContent(),
+            'content' => $this->resolveContent($request),
         ];
     }
 
     /**
      * @return string|array<int, string>|null
      */
-    private function resolveContent(): string|array|null
+    private function resolveContent(Request $request): string|array|null
     {
         if ($this->type === FragmentType::References) {
             /** @var array<int, string> $content */
@@ -42,8 +42,7 @@ final class ReadingPlanDayFragmentResource extends JsonResource
             return array_values($content);
         }
 
-        /** @var Language $language */
-        $language = app(ResolveRequestLanguage::CONTAINER_KEY);
+        $language = $request->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY, Language::En);
 
         /** @var array<string, mixed> $content */
         $content = $this->content;

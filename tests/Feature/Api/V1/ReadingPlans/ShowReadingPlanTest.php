@@ -9,20 +9,19 @@ use App\Domain\ReadingPlans\Models\ReadingPlan;
 use App\Domain\ReadingPlans\Models\ReadingPlanDay;
 use App\Domain\ReadingPlans\Models\ReadingPlanDayFragment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithApiKeyClient;
 use Tests\TestCase;
 
 final class ShowReadingPlanTest extends TestCase
 {
     use RefreshDatabase;
+    use WithApiKeyClient;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        config()->set('api_keys.header', 'X-Api-Key');
-        config()->set('api_keys.clients', [
-            'mobile' => 'mobile-valid-key',
-        ]);
+        $this->setUpApiKeyClient();
     }
 
     public function test_it_returns_the_full_tree_for_a_published_plan(): void
