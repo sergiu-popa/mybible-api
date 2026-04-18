@@ -29,6 +29,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $updated_at
  * @property Carbon|null $deleted_at
  * @property-read Collection<int, ReadingPlanDay> $days
+ * @property-read Collection<int, ReadingPlanSubscription> $subscriptions
  */
 #[UseFactory(ReadingPlanFactory::class)]
 final class ReadingPlan extends Model
@@ -61,6 +62,28 @@ final class ReadingPlan extends Model
     public function days(): HasMany
     {
         return $this->hasMany(ReadingPlanDay::class)->orderBy('position');
+    }
+
+    /**
+     * @return HasMany<ReadingPlanSubscription, $this>
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(ReadingPlanSubscription::class);
+    }
+
+    /**
+     * Restrict route-model binding to published plans so draft/unpublished
+     * slugs 404 before controllers ever see them.
+     */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        $field ??= $this->getRouteKeyName();
+
+        return ReadingPlan::query()
+            ->published()
+            ->where($field, $value)
+            ->first();
     }
 
     /**

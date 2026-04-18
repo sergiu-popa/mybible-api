@@ -8,6 +8,9 @@ use App\Domain\ReadingPlans\Enums\FragmentType;
 use App\Domain\ReadingPlans\Models\ReadingPlan;
 use App\Domain\ReadingPlans\Models\ReadingPlanDay;
 use App\Domain\ReadingPlans\Models\ReadingPlanDayFragment;
+use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
+use App\Domain\ReadingPlans\Models\ReadingPlanSubscriptionDay;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\WithApiKeyClient;
 use Tests\TestCase;
@@ -29,7 +32,7 @@ final class ShowReadingPlanTest extends TestCase
         $plan = $this->seedPublishedPlan();
 
         $response = $this->withHeader('X-Api-Key', 'mobile-valid-key')
-            ->getJson(route('reading-plans.show', ['slug' => $plan->slug]));
+            ->getJson(route('reading-plans.show', ['plan' => $plan->slug]));
 
         $response
             ->assertOk()
@@ -44,7 +47,7 @@ final class ShowReadingPlanTest extends TestCase
         $plan = $this->seedPublishedPlan();
 
         $response = $this->withHeader('X-Api-Key', 'mobile-valid-key')
-            ->getJson(route('reading-plans.show', ['slug' => $plan->slug, 'language' => 'hu']));
+            ->getJson(route('reading-plans.show', ['plan' => $plan->slug, 'language' => 'hu']));
 
         $response
             ->assertOk()
@@ -58,7 +61,7 @@ final class ShowReadingPlanTest extends TestCase
         $plan = $this->seedPublishedPlan();
 
         $this->withHeader('X-Api-Key', 'mobile-valid-key')
-            ->getJson(route('reading-plans.show', ['slug' => $plan->slug, 'language' => 'fr']))
+            ->getJson(route('reading-plans.show', ['plan' => $plan->slug, 'language' => 'fr']))
             ->assertOk()
             ->assertJsonPath('data.name', 'EN Name')
             ->assertJsonPath('data.days.0.fragments.0.content', '<p>EN D1 intro</p>');
@@ -69,7 +72,7 @@ final class ShowReadingPlanTest extends TestCase
         $plan = $this->seedPublishedPlan();
 
         $this->withHeader('X-Api-Key', 'mobile-valid-key')
-            ->getJson(route('reading-plans.show', ['slug' => $plan->slug]))
+            ->getJson(route('reading-plans.show', ['plan' => $plan->slug]))
             ->assertOk()
             ->assertJsonPath('data.days.0.fragments.1.type', FragmentType::References->value)
             ->assertJsonPath('data.days.0.fragments.1.content', ['GEN.1-2', 'MAT.5:27-48']);
@@ -78,7 +81,7 @@ final class ShowReadingPlanTest extends TestCase
     public function test_it_returns_404_for_an_unknown_slug(): void
     {
         $this->withHeader('X-Api-Key', 'mobile-valid-key')
-            ->getJson(route('reading-plans.show', ['slug' => 'does-not-exist']))
+            ->getJson(route('reading-plans.show', ['plan' => 'does-not-exist']))
             ->assertNotFound()
             ->assertJsonStructure(['message']);
     }
@@ -88,7 +91,7 @@ final class ShowReadingPlanTest extends TestCase
         $plan = ReadingPlan::factory()->draft()->create(['slug' => 'draft-plan']);
 
         $this->withHeader('X-Api-Key', 'mobile-valid-key')
-            ->getJson(route('reading-plans.show', ['slug' => $plan->slug]))
+            ->getJson(route('reading-plans.show', ['plan' => $plan->slug]))
             ->assertNotFound();
     }
 
@@ -96,12 +99,62 @@ final class ShowReadingPlanTest extends TestCase
     {
         $plan = $this->seedPublishedPlan();
 
-        $this->getJson(route('reading-plans.show', ['slug' => $plan->slug]))
+        $this->getJson(route('reading-plans.show', ['plan' => $plan->slug]))
             ->assertUnauthorized();
 
         $this->withHeader('X-Api-Key', 'nope')
-            ->getJson(route('reading-plans.show', ['slug' => $plan->slug]))
+            ->getJson(route('reading-plans.show', ['plan' => $plan->slug]))
             ->assertUnauthorized();
+    }
+
+    public function test_it_omits_subscriptions_on_api_key_only_requests(): void
+    {
+        $plan = $this->seedPublishedPlan();
+        ReadingPlanSubscription::factory()->create(['reading_plan_id' => $plan->id]);
+
+        $response = $this->withHeader('X-Api-Key', 'mobile-valid-key')
+            ->getJson(route('reading-plans.show', ['plan' => $plan->slug]))
+            ->assertOk();
+
+        $this->assertArrayNotHasKey('subscriptions', $response->json('data'));
+    }
+
+    public function test_it_surfaces_only_the_authenticated_users_subscriptions(): void
+    {
+        $plan = $this->seedPublishedPlan();
+        $day = $plan->days()->orderBy('position')->firstOrFail();
+
+        $alice = User::factory()->create();
+        $bob = User::factory()->create();
+
+        $aliceSubscription = ReadingPlanSubscription::factory()->create([
+            'user_id' => $alice->id,
+            'reading_plan_id' => $plan->id,
+        ]);
+        ReadingPlanSubscriptionDay::factory()->completed()->create([
+            'reading_plan_subscription_id' => $aliceSubscription->id,
+            'reading_plan_day_id' => $day->id,
+        ]);
+
+        $bobSubscription = ReadingPlanSubscription::factory()->create([
+            'user_id' => $bob->id,
+            'reading_plan_id' => $plan->id,
+        ]);
+        ReadingPlanSubscriptionDay::factory()->pending()->create([
+            'reading_plan_subscription_id' => $bobSubscription->id,
+            'reading_plan_day_id' => $day->id,
+        ]);
+
+        $token = $alice->createToken('test')->plainTextToken;
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson(route('reading-plans.show', ['plan' => $plan->slug]))
+            ->assertOk();
+
+        $response->assertJsonCount(1, 'data.subscriptions');
+        $response->assertJsonPath('data.subscriptions.0.id', $aliceSubscription->id);
+        $response->assertJsonPath('data.subscriptions.0.progress.completed_days', 1);
+        $response->assertJsonPath('data.subscriptions.0.progress.total_days', 1);
     }
 
     private function seedPublishedPlan(): ReadingPlan

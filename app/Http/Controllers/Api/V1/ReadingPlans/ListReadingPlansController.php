@@ -13,11 +13,20 @@ final class ListReadingPlansController
 {
     public function __invoke(ListReadingPlansRequest $request): AnonymousResourceCollection
     {
-        $plans = ReadingPlan::query()
+        $query = ReadingPlan::query()
             ->published()
-            ->orderByDesc('published_at')
-            ->paginate($request->perPage());
+            ->orderByDesc('published_at');
 
-        return ReadingPlanResource::collection($plans);
+        $user = $request->user();
+
+        if ($user !== null) {
+            $query->with([
+                'subscriptions' => fn ($q) => $q
+                    ->forUser($user)
+                    ->withProgressCounts(),
+            ]);
+        }
+
+        return ReadingPlanResource::collection($query->paginate($request->perPage()));
     }
 }
