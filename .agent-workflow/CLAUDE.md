@@ -183,6 +183,13 @@ user-facing feature, the Engineer produces:
 8. Feature test that exercises the HTTP endpoint end-to-end.
 9. Unit tests for the Action.
 
+Additional rules:
+
+- Never embed environment-dependent costs (bcrypt rounds, cache TTLs,
+  token expirations, retry intervals) as frozen literals when the same
+  cost is configurable elsewhere. Derive from `config(...)` or compute
+  once and memoize so the value tracks the configured source.
+
 ### Code Reviewer (`~/.claude/agents/code-reviewer.md`)
 
 Drop the Livewire checks. Add these instead:
@@ -193,6 +200,10 @@ Drop the Livewire checks. Add these instead:
 - Authorization enforced via Form Request `authorize()` or Policy.
 - Feature tests assert JSON structure + status codes, not HTML.
 - Exception paths return the JSON error envelope, not Blade or redirects.
+- When a package's config file is published into `config/`, unused
+  package defaults (stateful domains, guards, drivers, middleware lists)
+  must be trimmed or nulled out to match the project's posture. Flag any
+  published config that retains defaults the project cannot hit.
 
 ### QA (`~/.claude/agents/qa.md`)
 
