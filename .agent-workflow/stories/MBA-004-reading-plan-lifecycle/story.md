@@ -4,7 +4,7 @@
 Reading Plans — reschedule, finish, abandon
 
 ## Status
-`draft`
+`done`
 
 ## Description
 Round out the subscription model from MBA-003 with the three lifecycle

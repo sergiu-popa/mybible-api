@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\ReadingPlans\Exceptions\SubscriptionNotCompletableException;
 use App\Http\Middleware\EnsureApiKeyOrSanctum;
 use App\Http\Middleware\EnsureValidApiKey;
 use App\Http\Middleware\ResolveRequestLanguage;
@@ -54,6 +55,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             return response()->json(['message' => 'Resource not found.'], 404);
+        });
+
+        $exceptions->render(function (SubscriptionNotCompletableException $e, Request $request) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'pending_days' => $e->pendingPositions,
+            ], 422);
         });
 
         $exceptions->render(function (Throwable $e, Request $request) {
