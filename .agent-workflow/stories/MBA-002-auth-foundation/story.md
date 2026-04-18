@@ -4,7 +4,7 @@
 Auth foundation — Sanctum tokens for users, env-injected API keys for clients
 
 ## Status
-`architected`
+`in-review`
 
 ## Description
 The MyBible API serves two kinds of callers:
