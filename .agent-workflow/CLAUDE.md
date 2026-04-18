@@ -290,3 +290,18 @@ make check
   story is decided. If a route needs to be protected, stub it with a TODO.
 - Never return HTML or plain-text responses. Every response is JSON.
 - Every new endpoint must have at least one feature test.
+
+---
+
+## 7. Deferred Extractions Tripwire
+
+Conscious duplication deferrals tracked across stories. Each entry names the
+pattern, the current copy-count, the extraction threshold, and the locations
+involved. **Architect** consults this register when planning; **Auditor**
+checks it on pass; **Improver** updates counts on story close. When a count
+reaches its threshold, the next story extracts before adding a new copy.
+
+| Pattern | Copies | Locations | Extract at | Notes |
+|---|---|---|---|---|
+| Owner-`authorize()` block (Form Request checks `subscription->user_id === request->user()->id`) | 4 | `CompleteReadingPlanSubscriptionDayRequest` (MBA-003); `RescheduleReadingPlanSubscriptionRequest`, `FinishReadingPlanSubscriptionRequest`, `AbandonReadingPlanSubscriptionRequest` (MBA-004) | 5 | Extract to a trait or base request when the 5th owner-gated endpoint lands. |
+| `withProgressCounts()` helper on lifecycle Actions | 2 | `FinishReadingPlanSubscriptionAction`, `AbandonReadingPlanSubscriptionAction` (MBA-004) | 3 | Extract to a shared trait/service when a third lifecycle Action (resume, restart, transfer) lands. |
