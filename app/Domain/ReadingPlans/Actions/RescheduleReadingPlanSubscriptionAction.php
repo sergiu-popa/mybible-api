@@ -15,7 +15,7 @@ final class RescheduleReadingPlanSubscriptionAction
     {
         return DB::transaction(function () use ($data): ReadingPlanSubscription {
             $subscription = $data->subscription;
-            $subscription->start_date = Carbon::parse($data->startDate->toDateString());
+            $subscription->start_date = Carbon::instance($data->startDate);
             $subscription->save();
 
             $uncompleted = $subscription->days()
@@ -26,7 +26,7 @@ final class RescheduleReadingPlanSubscriptionAction
                 ->values();
 
             foreach ($uncompleted as $index => $day) {
-                $day->scheduled_date = Carbon::parse($data->startDate->addDays($index)->toDateString());
+                $day->scheduled_date = Carbon::instance($data->startDate->addDays($index));
                 $day->save();
             }
 
