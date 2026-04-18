@@ -9,7 +9,7 @@ down:
 restart: down up
 
 setup: env up composer key migrate
-	@echo "Setup complete. Visit http://mybible-api.localhost"
+	@echo "Setup complete. Visit http://api.mybible.local"
 
 env:
 	cp .env.example .env
