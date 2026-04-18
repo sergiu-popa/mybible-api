@@ -14,6 +14,8 @@ final class LoginUserTest extends TestCase
 
     public function test_it_returns_a_token_for_valid_credentials(): void
     {
+        // The User model's `hashed` cast hashes `password` on create — the
+        // plain value passed here is stored as a bcrypt hash.
         User::factory()->create([
             'email' => 'jane@example.com',
             'password' => 'secret-pass',

@@ -14,10 +14,11 @@ final class LogoutCurrentTokenAction
         $token = $user->currentAccessToken();
 
         /**
-         * `currentAccessToken()` may return a `TransientToken` when the user
-         * is authenticated via the session guard; that instance has no
+         * `currentAccessToken()` may return `null` (unauthenticated caller) or
+         * a `TransientToken` (session-guard authentication) — neither has a
          * database row to delete. Under `auth:sanctum` with bearer tokens it
-         * is always a `PersonalAccessToken`.
+         * is always a `PersonalAccessToken`. The `instanceof` guard covers
+         * both non-deletable cases.
          *
          * @phpstan-ignore instanceof.alwaysTrue
          */

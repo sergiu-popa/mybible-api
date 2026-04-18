@@ -9,9 +9,14 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Enforces the `X-Api-Key` header for trusted client apps.
+ *
+ * @todo Per-client rate limiting lives in a future story; it will key off the
+ *       `api_client` attribute attached here.
+ */
 final class EnsureValidApiKey
 {
-    // TODO(rate-limit): per-client rate limiting lives in a future story.
     public function handle(Request $request, Closure $next): Response
     {
         /** @var string $header */

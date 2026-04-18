@@ -13,18 +13,19 @@ use Illuminate\Support\Facades\Hash;
 final class LoginUserAction
 {
     /**
-     * A pre-hashed dummy value used to burn CPU when the user does not exist,
+     * Lazily-computed dummy hash used to burn CPU when the user does not exist,
      * so a failed lookup is not trivially distinguishable from a wrong
-     * password via wall-clock timing.
+     * password via wall-clock timing. Computed via the configured hasher so the
+     * cost tracks `config('hashing.bcrypt.rounds')` instead of a frozen literal.
      */
-    private const DUMMY_HASH = '$2y$12$EoB0YDn5a5mBx2bynAImmukkrJXpAwDw6jvW5P6sorYRaWA7B29Ja';
+    private static ?string $dummyHash = null;
 
     public function execute(LoginUserData $data): AuthTokenData
     {
         $user = User::where('email', $data->email)->first();
 
         if ($user === null) {
-            Hash::check($data->password, self::DUMMY_HASH);
+            Hash::check($data->password, self::dummyHash());
 
             throw new InvalidCredentialsException;
         }
@@ -39,5 +40,14 @@ final class LoginUserAction
             user: $user,
             plainTextToken: $token,
         );
+    }
+
+    private static function dummyHash(): string
+    {
+        if (self::$dummyHash === null) {
+            self::$dummyHash = Hash::make('dummy-password');
+        }
+
+        return self::$dummyHash;
     }
 }

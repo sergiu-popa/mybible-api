@@ -3,7 +3,6 @@
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Laravel\Sanctum\Http\Middleware\AuthenticateSession;
-use Laravel\Sanctum\Sanctum;
 
 return [
 
@@ -13,17 +12,14 @@ return [
     |--------------------------------------------------------------------------
     |
     | Requests from the following domains / hosts will receive stateful API
-    | authentication cookies. Typically, these should include your local
-    | and production domains which access your API via a frontend SPA.
+    | authentication cookies. This API uses pure bearer-token auth (see
+    | `'guard' => []` below), so this list is empty by default. Populate
+    | `SANCTUM_STATEFUL_DOMAINS` only if a future story adds cookie-based
+    | first-party SPA auth.
     |
     */
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
-        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
-        Sanctum::currentApplicationUrlWithPort(),
-        // Sanctum::currentRequestHost(),
-    ))),
+    'stateful' => array_values(array_filter(explode(',', (string) env('SANCTUM_STATEFUL_DOMAINS', '')))),
 
     /*
     |--------------------------------------------------------------------------
