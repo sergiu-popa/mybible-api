@@ -9,8 +9,17 @@ use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
 use App\Http\Requests\ReadingPlans\FinishReadingPlanSubscriptionRequest;
 use App\Http\Resources\ReadingPlans\ReadingPlanSubscriptionResource;
 
+/**
+ * @tags Reading Plan Subscriptions
+ */
 final class FinishReadingPlanSubscriptionController
 {
+    /**
+     * Finish a subscription.
+     *
+     * Marks the authenticated user's reading plan subscription as finished.
+     * Requires all days to be completed; otherwise the request is rejected.
+     */
     public function __invoke(
         FinishReadingPlanSubscriptionRequest $request,
         ReadingPlanSubscription $subscription,
