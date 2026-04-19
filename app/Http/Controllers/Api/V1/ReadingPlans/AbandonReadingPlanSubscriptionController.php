@@ -9,8 +9,18 @@ use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
 use App\Http\Requests\ReadingPlans\AbandonReadingPlanSubscriptionRequest;
 use App\Http\Resources\ReadingPlans\ReadingPlanSubscriptionResource;
 
+/**
+ * @tags Reading Plans
+ */
 final class AbandonReadingPlanSubscriptionController
 {
+    /**
+     * Abandon a subscription.
+     *
+     * Marks the authenticated user's reading plan subscription as abandoned.
+     * The subscription is preserved for history but no longer counts as
+     * active and cannot be resumed.
+     */
     public function __invoke(
         AbandonReadingPlanSubscriptionRequest $request,
         ReadingPlanSubscription $subscription,

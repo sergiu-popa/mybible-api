@@ -11,8 +11,18 @@ use App\Http\Resources\ReadingPlans\ReadingPlanSubscriptionResource;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * @tags Reading Plans
+ */
 final class StartReadingPlanSubscriptionController
 {
+    /**
+     * Start a reading plan subscription.
+     *
+     * Creates a new subscription for the authenticated user on the given
+     * reading plan, scheduled from the provided start date. Returns the
+     * created subscription with its generated day schedule.
+     */
     public function __invoke(
         StartReadingPlanSubscriptionRequest $request,
         ReadingPlan $plan,
