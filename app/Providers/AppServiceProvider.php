@@ -7,8 +7,10 @@ namespace App\Providers;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
 use App\Policies\ReadingPlanSubscriptionPolicy;
 use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,6 +18,21 @@ class AppServiceProvider extends ServiceProvider
     {
         if (class_exists(Scramble::class)) {
             Scramble::ignoreDefaultRoutes();
+            Scramble::resolveTagsUsing(function (RouteInfo $routeInfo): array {
+                $defaultTag = Str::of(class_basename($routeInfo->className() ?: ''))
+                    ->replace('Controller', '')
+                    ->toString();
+
+                $classPhpDoc = $routeInfo->isClassBased()
+                    ? $routeInfo->reflectionMethod()?->getDeclaringClass()->getDocComment()
+                    : null;
+
+                if (is_string($classPhpDoc) && preg_match('/@tags\s+([^\n*]+)/', $classPhpDoc, $matches) === 1) {
+                    return array_values(array_filter(array_map('trim', explode(',', $matches[1]))));
+                }
+
+                return [$defaultTag];
+            });
         }
     }
 

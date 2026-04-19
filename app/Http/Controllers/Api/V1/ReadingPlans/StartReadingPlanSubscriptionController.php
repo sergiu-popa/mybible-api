@@ -12,7 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * @tags Reading Plan Subscriptions
+ * @tags Reading Plans
  */
 final class StartReadingPlanSubscriptionController
 {

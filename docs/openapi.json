@@ -110,309 +110,13 @@
                 }
             }
         },
-        "/reading-plans/{plan}/subscriptions": {
-            "post": {
-                "operationId": "reading-plans.subscriptions.store",
-                "description": "Creates a new subscription for the authenticated user on the given\nreading plan, scheduled from the provided start date. Returns the\ncreated subscription with its generated day schedule.",
-                "summary": "Start a reading plan subscription",
-                "tags": [
-                    "Reading Plan Subscriptions",
-                    "StartReadingPlanSubscription"
-                ],
-                "parameters": [
-                    {
-                        "name": "plan",
-                        "in": "path",
-                        "required": true,
-                        "description": "The plan slug",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/StartReadingPlanSubscriptionRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "`ReadingPlanSubscriptionResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ReadingPlanSubscriptionResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
-        "/reading-plan-subscriptions/{subscription}/days/{day}/complete": {
-            "post": {
-                "operationId": "reading-plan-subscriptions.days.complete",
-                "description": "Marks the given day of the authenticated user's subscription as\ncompleted. The {day} parameter is scoped to the parent {subscription},\nso a day that does not belong to that subscription returns 404.",
-                "summary": "Complete a subscription day",
-                "tags": [
-                    "Reading Plan Subscriptions",
-                    "CompleteReadingPlanSubscriptionDay"
-                ],
-                "parameters": [
-                    {
-                        "name": "subscription",
-                        "in": "path",
-                        "required": true,
-                        "description": "The subscription ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "day",
-                        "in": "path",
-                        "required": true,
-                        "description": "The day ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`ReadingPlanSubscriptionDayResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ReadingPlanSubscriptionDayResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    }
-                }
-            }
-        },
-        "/reading-plan-subscriptions/{subscription}/start-date": {
-            "patch": {
-                "operationId": "reading-plan-subscriptions.reschedule",
-                "description": "Updates the start date of the authenticated user's reading plan\nsubscription and regenerates the day schedule from the new start date.",
-                "summary": "Reschedule a subscription",
-                "tags": [
-                    "Reading Plan Subscriptions",
-                    "RescheduleReadingPlanSubscription"
-                ],
-                "parameters": [
-                    {
-                        "name": "subscription",
-                        "in": "path",
-                        "required": true,
-                        "description": "The subscription ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/RescheduleReadingPlanSubscriptionRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "`ReadingPlanSubscriptionResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ReadingPlanSubscriptionResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    }
-                }
-            }
-        },
-        "/reading-plan-subscriptions/{subscription}/finish": {
-            "post": {
-                "operationId": "reading-plan-subscriptions.finish",
-                "description": "Marks the authenticated user's reading plan subscription as finished.\nRequires all days to be completed; otherwise the request is rejected.",
-                "summary": "Finish a subscription",
-                "tags": [
-                    "Reading Plan Subscriptions",
-                    "FinishReadingPlanSubscription"
-                ],
-                "parameters": [
-                    {
-                        "name": "subscription",
-                        "in": "path",
-                        "required": true,
-                        "description": "The subscription ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`ReadingPlanSubscriptionResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ReadingPlanSubscriptionResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    }
-                }
-            }
-        },
-        "/reading-plan-subscriptions/{subscription}/abandon": {
-            "post": {
-                "operationId": "reading-plan-subscriptions.abandon",
-                "description": "Marks the authenticated user's reading plan subscription as abandoned.\nThe subscription is preserved for history but no longer counts as\nactive and cannot be resumed.",
-                "summary": "Abandon a subscription",
-                "tags": [
-                    "Reading Plan Subscriptions",
-                    "AbandonReadingPlanSubscription"
-                ],
-                "parameters": [
-                    {
-                        "name": "subscription",
-                        "in": "path",
-                        "required": true,
-                        "description": "The subscription ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`ReadingPlanSubscriptionResource`",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ReadingPlanSubscriptionResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/AuthenticationException"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/AuthorizationException"
-                    }
-                }
-            }
-        },
         "/reading-plans": {
             "get": {
                 "operationId": "reading-plans.index",
                 "description": "Returns a paginated list of published reading plans in the resolved\nlanguage. When the request is authenticated, each plan is enriched with\nthe current user's subscriptions and progress counts.",
                 "summary": "List reading plans",
                 "tags": [
-                    "Reading Plans",
-                    "ListReadingPlans"
+                    "Reading Plans"
                 ],
                 "parameters": [
                     {
@@ -590,8 +294,7 @@
                 "description": "Returns a single reading plan resolved by slug, eagerly loading days and\ntheir fragments. When the request is authenticated, the user's own\nsubscriptions for this plan (with progress counts) are also embedded.",
                 "summary": "Show a reading plan",
                 "tags": [
-                    "Reading Plans",
-                    "ShowReadingPlan"
+                    "Reading Plans"
                 ],
                 "parameters": [
                     {
@@ -638,6 +341,296 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/reading-plans/{plan}/subscriptions": {
+            "post": {
+                "operationId": "reading-plans.subscriptions.store",
+                "description": "Creates a new subscription for the authenticated user on the given\nreading plan, scheduled from the provided start date. Returns the\ncreated subscription with its generated day schedule.",
+                "summary": "Start a reading plan subscription",
+                "tags": [
+                    "Reading Plans"
+                ],
+                "parameters": [
+                    {
+                        "name": "plan",
+                        "in": "path",
+                        "required": true,
+                        "description": "The plan slug",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartReadingPlanSubscriptionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`ReadingPlanSubscriptionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ReadingPlanSubscriptionResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/reading-plan-subscriptions/{subscription}/days/{day}/complete": {
+            "post": {
+                "operationId": "reading-plan-subscriptions.days.complete",
+                "description": "Marks the given day of the authenticated user's subscription as\ncompleted. The {day} parameter is scoped to the parent {subscription},\nso a day that does not belong to that subscription returns 404.",
+                "summary": "Complete a subscription day",
+                "tags": [
+                    "Reading Plans"
+                ],
+                "parameters": [
+                    {
+                        "name": "subscription",
+                        "in": "path",
+                        "required": true,
+                        "description": "The subscription ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "day",
+                        "in": "path",
+                        "required": true,
+                        "description": "The day ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ReadingPlanSubscriptionDayResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ReadingPlanSubscriptionDayResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/reading-plan-subscriptions/{subscription}/start-date": {
+            "patch": {
+                "operationId": "reading-plan-subscriptions.reschedule",
+                "description": "Updates the start date of the authenticated user's reading plan\nsubscription and regenerates the day schedule from the new start date.",
+                "summary": "Reschedule a subscription",
+                "tags": [
+                    "Reading Plans"
+                ],
+                "parameters": [
+                    {
+                        "name": "subscription",
+                        "in": "path",
+                        "required": true,
+                        "description": "The subscription ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RescheduleReadingPlanSubscriptionRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`ReadingPlanSubscriptionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ReadingPlanSubscriptionResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/reading-plan-subscriptions/{subscription}/finish": {
+            "post": {
+                "operationId": "reading-plan-subscriptions.finish",
+                "description": "Marks the authenticated user's reading plan subscription as finished.\nRequires all days to be completed; otherwise the request is rejected.",
+                "summary": "Finish a subscription",
+                "tags": [
+                    "Reading Plans"
+                ],
+                "parameters": [
+                    {
+                        "name": "subscription",
+                        "in": "path",
+                        "required": true,
+                        "description": "The subscription ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ReadingPlanSubscriptionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ReadingPlanSubscriptionResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/reading-plan-subscriptions/{subscription}/abandon": {
+            "post": {
+                "operationId": "reading-plan-subscriptions.abandon",
+                "description": "Marks the authenticated user's reading plan subscription as abandoned.\nThe subscription is preserved for history but no longer counts as\nactive and cannot be resumed.",
+                "summary": "Abandon a subscription",
+                "tags": [
+                    "Reading Plans"
+                ],
+                "parameters": [
+                    {
+                        "name": "subscription",
+                        "in": "path",
+                        "required": true,
+                        "description": "The subscription ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ReadingPlanSubscriptionResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ReadingPlanSubscriptionResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
                     }
                 }
             }

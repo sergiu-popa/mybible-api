@@ -10,7 +10,7 @@ use App\Http\Requests\ReadingPlans\FinishReadingPlanSubscriptionRequest;
 use App\Http\Resources\ReadingPlans\ReadingPlanSubscriptionResource;
 
 /**
- * @tags Reading Plan Subscriptions
+ * @tags Reading Plans
  */
 final class FinishReadingPlanSubscriptionController
 {

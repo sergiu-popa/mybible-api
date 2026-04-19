@@ -11,7 +11,7 @@ use App\Http\Requests\ReadingPlans\CompleteReadingPlanSubscriptionDayRequest;
 use App\Http\Resources\ReadingPlans\ReadingPlanSubscriptionDayResource;
 
 /**
- * @tags Reading Plan Subscriptions
+ * @tags Reading Plans
  */
 final class CompleteReadingPlanSubscriptionDayController
 {
