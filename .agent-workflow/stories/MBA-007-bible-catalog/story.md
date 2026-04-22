@@ -4,7 +4,7 @@
 Bible catalog — versions, books, and chapters endpoints
 
 ## Status
-`planned`
+`in-review`
 
 ## Description
 Expose the read-only Bible catalog used by clients to render the version

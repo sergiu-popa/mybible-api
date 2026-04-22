@@ -8,6 +8,10 @@ use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\RequestPasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
+use App\Http\Controllers\Api\V1\Bible\ExportBibleVersionController;
+use App\Http\Controllers\Api\V1\Bible\ListBibleBookChaptersController;
+use App\Http\Controllers\Api\V1\Bible\ListBibleBooksController;
+use App\Http\Controllers\Api\V1\Bible\ListBibleVersionsController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
 use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
@@ -29,6 +33,22 @@ Route::prefix('v1')->group(function (): void {
             Route::get('me', MeController::class)->name('me');
         });
     });
+
+    Route::prefix('bible-versions')
+        ->name('bible-versions.')
+        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->group(function (): void {
+            Route::get('/', ListBibleVersionsController::class)->name('index');
+            Route::get('{version:abbreviation}/export', ExportBibleVersionController::class)->name('export');
+        });
+
+    Route::prefix('books')
+        ->name('books.')
+        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->group(function (): void {
+            Route::get('/', ListBibleBooksController::class)->name('index');
+            Route::get('{book:abbreviation}/chapters', ListBibleBookChaptersController::class)->name('chapters');
+        });
 
     Route::prefix('reading-plans')
         ->name('reading-plans.')
