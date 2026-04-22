@@ -23,5 +23,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(ReadingPlanSeeder::class);
+        $this->call(BibleCanonSeeder::class);
     }
 }
