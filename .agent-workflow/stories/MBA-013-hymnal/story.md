@@ -4,7 +4,7 @@
 Hymnal — books, songs, and personal favorites
 
 ## Status
-`in-review`
+`qa-ready`
 
 ## Description
 Clients access hymnal content (hymnbooks → songs) and can favorite songs.

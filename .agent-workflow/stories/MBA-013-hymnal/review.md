@@ -1,8 +1,8 @@
 # Code Review: MBA-013-hymnal
 
 **Reviewer:** Code Reviewer agent
-**Verdict:** `REQUEST CHANGES`
-**Scope:** Diff `main...mba-013` — 39 files, +1952/-25.
+**Verdict:** `APPROVE` (iteration 2 — supersedes prior `REQUEST CHANGES`)
+**Scope:** Diff `main...mba-013` — 39 files, +1952/-25 (plus +56/-0 in iteration 2 for the rollback tests).
 
 ---
 
@@ -113,3 +113,44 @@ reuse; api-key-only favorites test). Remaining items are Suggestions
 (non-blocking). Until the rollback test is added, the story remains in
 `in-review`. Once the test lands and passes, re-review will advance to
 `qa-ready`.
+
+---
+
+## Re-review (iteration 2) — supersedes prior verdict
+
+**Verdict:** `APPROVE`
+**Status transition:** `in-review` → `qa-ready`
+**Scope of this pass:** commit `0abe73c [MBA-013] Fix: add transactional rollback tests for toggle action` — +56/-0 in `tests/Unit/Domain/Hymnal/Actions/ToggleHymnalFavoriteActionTest.php` plus the checkbox flip in `review.md`.
+
+### Prior Warning — resolved
+
+The single blocking Warning from iteration 1 (missing transactional-rollback assertion called out in plan task 22) is **resolved**. Two new test methods were added to `tests/Unit/Domain/Hymnal/Actions/ToggleHymnalFavoriteActionTest.php`:
+
+- `test_it_rolls_back_the_insert_when_the_transaction_body_throws` (lines 53-76) — registers a `HymnalFavorite::created` listener that throws `RuntimeException`. The event fires AFTER the INSERT but BEFORE the `DB::transaction()` commit, so a correctly-wrapped Action rolls the insert back. Asserts the row is absent via `assertDatabaseMissing`. `HymnalFavorite::flushEventListeners()` in `finally` prevents the closure from leaking into sibling tests.
+- `test_it_rolls_back_the_delete_when_the_transaction_body_throws` (lines 78-106) — symmetric case: pre-seeds a favorite, registers a `HymnalFavorite::deleted` listener that throws, asserts the original row survives via `assertDatabaseHas`.
+
+Both assertions are tight enough to catch a regression that strips `DB::transaction(...)` from `ToggleHymnalFavoriteAction::execute()`: without the transaction, the insert/delete would persist before the thrown exception, and both tests would fail on the DB assertion. That is exactly the regression signal the plan asked for.
+
+### Fresh-pass findings on the new tests
+
+- ✅ `declare(strict_types=1)`, `final class`, `RefreshDatabase` — matches project conventions.
+- ✅ `$this->app->make(...)` resolution matches the style used by the two original positive-path tests.
+- ✅ Event listener cleanup via `flushEventListeners()` in `finally` — correct pattern, avoids cross-test pollution.
+- ✅ Uses `RuntimeException` (imported) not a bare `\Exception` / magic string — clean.
+- ✅ `$this->fail(...)` guard ensures the test fails loudly if the exception is swallowed rather than bubbling.
+- ✅ No new Critical or Warning findings introduced by the diff.
+
+### Gate results
+
+- `make test filter=ToggleHymnalFavoriteActionTest` → **5 passed (12 assertions)**.
+- `make test filter=Hymnal` → **40 passed (125 assertions)** (up from 38/121 in iteration 1; delta matches the two new tests and their 4 DB assertions).
+- `make lint` → **PASS** (292 files clean).
+- `make stan` → **OK, no errors** (272 files).
+
+### Deferred extractions tripwire
+
+Unchanged from iteration 1. Hymnal adds zero owner-`authorize()` blocks and zero lifecycle `withProgressCounts()` consumers. Counts stay at 4 / 2.
+
+### Verdict rationale
+
+Zero Critical findings. Zero unchecked Warnings (the prior blocker is ticked and the fix verified; the two acknowledged-only Warnings remain acknowledged). The new tests are well-constructed and raise the rollback-regression bar exactly where the plan asked. Story moves to `qa-ready`.
