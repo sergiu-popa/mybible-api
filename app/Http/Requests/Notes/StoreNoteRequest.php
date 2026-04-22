@@ -6,6 +6,7 @@ namespace App\Http\Requests\Notes;
 
 use App\Domain\Notes\DataTransferObjects\CreateNoteData;
 use App\Domain\Reference\Formatter\ReferenceFormatter;
+use App\Domain\Reference\Parser\ReferenceParser;
 use App\Domain\Reference\Reference;
 use App\Http\Rules\StripHtml;
 use App\Http\Rules\ValidReference;
@@ -31,12 +32,12 @@ final class StoreNoteRequest extends FormRequest
             'reference' => [
                 'required',
                 'string',
-                $this->container->make(ValidReference::class),
+                new ValidReference($this->container->make(ReferenceParser::class), $this),
             ],
             'content' => [
                 'required',
                 'string',
-                $this->container->make(StripHtml::class),
+                new StripHtml,
                 'max:' . self::CONTENT_MAX_LENGTH,
             ],
         ];

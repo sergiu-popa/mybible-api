@@ -107,10 +107,10 @@ No Symfony `note` table exists in the current MySQL instance (verified via Boost
 - [x] 14. Create `NoteResource` shaping `{ id, reference, book, content, created_at, updated_at }` (ISO-8601 timestamps).
 - [x] 15. Create invokable controllers `ListNotesController`, `StoreNoteController`, `UpdateNoteController`, `DeleteNoteController` under `App\Http\Controllers\Api\V1\Notes`. Controllers only receive the request, call the Action, and return a Resource (or `response()->noContent()` for delete). `ListNotesController` composes `Note::query()->forUser($user)->forBook($request->book())->latest()->paginate($request->perPage())`.
 - [x] 16. Register routes in `routes/api.php` under `Route::middleware('auth:sanctum')->prefix('notes')->name('notes.')->group(...)`. Use `Route::get/post/patch/delete` individually (no `apiResource` — the controllers are single-action invokables).
-- [ ] 17. Feature tests (`tests/Feature/Notes/*`): index (pagination, newest-first, `?book=` filter, only caller's notes); store (happy path returns 201 + canonical reference; invalid reference → 422; content > 10 000 → 422; HTML stripped and length measured post-strip); update (owner success; cross-user → 403; `reference` field in body is silently ignored — asserted via DB value unchanged); delete (owner → 204; cross-user → 403; unknown id → 404); unauthenticated → 401 on all four routes.
-- [ ] 18. Unit tests for `CreateNoteAction`, `UpdateNoteAction`, `DeleteNoteAction` — persistence + return shape only. No HTTP.
-- [ ] 19. Unit tests for `ValidReference` (valid canonical → passes, gibberish → fails) and `StripHtml` (HTML stripped, plain text untouched).
-- [ ] 20. Run `make lint-fix`, `make stan`, then `make test --filter=Notes`; finally run `make check` before marking the story ready for review.
+- [x] 17. Feature tests (`tests/Feature/Notes/*`): index (pagination, newest-first, `?book=` filter, only caller's notes); store (happy path returns 201 + canonical reference; invalid reference → 422; content > 10 000 → 422; HTML stripped and length measured post-strip); update (owner success; cross-user → 403; `reference` field in body is silently ignored — asserted via DB value unchanged); delete (owner → 204; cross-user → 403; unknown id → 404); unauthenticated → 401 on all four routes.
+- [x] 18. Unit tests for `CreateNoteAction`, `UpdateNoteAction`, `DeleteNoteAction` — persistence + return shape only. No HTTP.
+- [x] 19. Unit tests for `ValidReference` (valid canonical → passes, gibberish → fails) and `StripHtml` (HTML stripped, plain text untouched).
+- [x] 20. Run `make lint-fix`, `make stan`, then `make test --filter=Notes`; finally run `make check` before marking the story ready for review.
 
 ## Risks & notes
 

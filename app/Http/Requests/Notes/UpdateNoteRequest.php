@@ -21,7 +21,7 @@ final class UpdateNoteRequest extends AuthorizedNoteRequest
             'content' => [
                 'required',
                 'string',
-                $this->container->make(StripHtml::class),
+                new StripHtml,
                 'max:' . self::CONTENT_MAX_LENGTH,
             ],
         ];
