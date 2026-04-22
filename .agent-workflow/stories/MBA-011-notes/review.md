@@ -1,8 +1,9 @@
 # Code Review: MBA-011-notes
 
 **Reviewer:** Code Reviewer agent
-**Verdict:** `REQUEST CHANGES`
-**Scope:** Diff on `mba-011` vs `main` — 33 files, +1490/-21. Tests: `make test filter=Notes` → 30 passed. `make stan` + `make lint --test` clean.
+**Verdict (current):** `APPROVE` — see Re-review (iteration 2) below.
+**Verdict (iteration 1, superseded):** `REQUEST CHANGES`
+**Scope:** Diff on `mba-011` vs `main` — 36 files, +1622/-21. Tests: `make test filter=Notes` → 31 passed.
 
 ---
 
@@ -81,3 +82,39 @@ One Critical contract issue: `ValidReference::validate()` silently discards all 
 ## Verdict rationale
 
 One Critical: `ValidReference` silently truncates multi-reference input, which violates the story's reference-validation contract and produces DB rows that don't round-trip to the input. One unchecked Warning: generic rule coupled to notes domain via its public attribute-bag key. Request changes; status stays `in-review`.
+
+---
+
+## Re-review (iteration 2)
+
+**Verdict:** `APPROVE`
+**Counts:** 0 Critical / 0 Warnings / 0 new Suggestions.
+**Scope:** Fix commit `6766fa8` on top of iteration-1 state. Diff vs `main` → 36 files, +1622/-21. `make test filter=Notes` → **31 passed** (was 30).
+
+### Previous findings — resolution verified
+
+1. **Critical — multi-reference silent truncation in `ValidReference`.** ✅ Resolved.
+   - `app/Http/Rules/ValidReference.php:54-58` now rejects `count($references) !== 1` with `"The :attribute must reference a single passage."` before stashing.
+   - Class PHPDoc updated to describe the single-reference contract.
+   - Unit tests: `ValidReferenceTest::test_it_fails_for_multi_reference_input` (chapter range `GEN.1-3.VDC`) and `::test_it_fails_for_multi_reference_list_input` (verse list `GEN.1:1;2.VDC`) — both assert the message and that `PARSED_ATTRIBUTE_KEY` stays unset.
+   - Feature test: `StoreNoteTest::test_it_rejects_a_multi_reference_input` asserts `422` + `assertDatabaseCount('notes', 0)`.
+
+2. **Warning — domain-coupled attribute-bag key.** ✅ Resolved.
+   - `PARSED_ATTRIBUTE_KEY` renamed from `'notes.parsed_reference'` to `'reference.parsed'` (neutral, named after the rule).
+   - Only caller (`StoreNoteRequest::toData()` at line 51) accesses through the constant, so no text changes were required there — the rename is internally consistent.
+
+### Fresh pass — new issues introduced by the fix
+
+None. The delta is 3 lines of production code plus focused tests, no behaviour change outside the documented contract tightening. The new failure message is plain and matches the other `$fail` calls in the rule. Early-return ordering (`count !== 1` after the `[]` check) is correct.
+
+### Standing iteration-1 Suggestions (non-blocking, unchanged)
+
+- `Note::$guarded = []` vs explicit `$fillable` — still a defense-in-depth consideration.
+- `NoteQueryBuilder::forBook(?string)` vs plan's `forBook(string)` — non-blocking.
+- `Note::newEloquentBuilder()` return type widened to base `Builder` (PHPDoc narrows) — acknowledged.
+- `StoreNoteController` injecting `ReferenceFormatter` as a method param — non-blocking stylistic.
+- `StripHtmlTest` comment wording — cosmetic.
+
+### Final gate
+
+0 Critical, 0 unchecked Warnings → APPROVE. Story status → `qa-ready`.
