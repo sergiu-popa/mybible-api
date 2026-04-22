@@ -4,7 +4,7 @@
 Personal notes on Bible passages
 
 ## Status
-`draft`
+`planned`
 
 ## Description
 Users can attach private notes to specific passages. Lighter-weight than

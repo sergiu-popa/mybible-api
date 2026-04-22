@@ -4,7 +4,7 @@
 Reading progress — track chapters/verses a user has read
 
 ## Status
-`draft`
+`planned`
 
 ## Description
 Per-user reading tracker. Separate from Reading Plans (MBA-001–004): this
