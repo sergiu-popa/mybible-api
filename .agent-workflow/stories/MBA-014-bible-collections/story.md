@@ -4,7 +4,7 @@
 Bible collections — themed reference lists
 
 ## Status
-`in-review`
+`qa-ready`
 
 ## Description
 A "collection" is a topical list of Bible references (e.g. "Verses about
