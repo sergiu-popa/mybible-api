@@ -12,6 +12,11 @@ use App\Http\Controllers\Api\V1\Bible\ExportBibleVersionController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBookChaptersController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBooksController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleVersionsController;
+use App\Http\Controllers\Api\V1\Hymnal\ListHymnalBooksController;
+use App\Http\Controllers\Api\V1\Hymnal\ListHymnalBookSongsController;
+use App\Http\Controllers\Api\V1\Hymnal\ListHymnalFavoritesController;
+use App\Http\Controllers\Api\V1\Hymnal\ShowHymnalSongController;
+use App\Http\Controllers\Api\V1\Hymnal\ToggleHymnalFavoriteController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
 use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
@@ -70,6 +75,24 @@ Route::prefix('v1')->group(function (): void {
             Route::post('{plan:slug}/subscriptions', StartReadingPlanSubscriptionController::class)
                 ->middleware('auth:sanctum')
                 ->name('subscriptions.store');
+        });
+
+    Route::middleware(['api-key-or-sanctum', 'resolve-language', 'cache.headers:public;max_age=3600;etag'])
+        ->group(function (): void {
+            Route::get('hymnal-books', ListHymnalBooksController::class)
+                ->name('hymnal-books.index');
+            Route::get('hymnal-books/{book:slug}/songs', ListHymnalBookSongsController::class)
+                ->name('hymnal-books.songs');
+            Route::get('hymnal-songs/{song}', ShowHymnalSongController::class)
+                ->name('hymnal-songs.show');
+        });
+
+    Route::middleware('auth:sanctum')
+        ->prefix('hymnal-favorites')
+        ->name('hymnal-favorites.')
+        ->group(function (): void {
+            Route::get('/', ListHymnalFavoritesController::class)->name('index');
+            Route::post('toggle', ToggleHymnalFavoriteController::class)->name('toggle');
         });
 
     Route::middleware('auth:sanctum')
