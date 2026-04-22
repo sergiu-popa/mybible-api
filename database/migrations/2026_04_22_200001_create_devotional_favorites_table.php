@@ -16,7 +16,10 @@ return new class extends Migration
 
         Schema::create('devotional_favorites', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            // users.id is unsigned INT (Symfony schema preserved via increments('id')),
+            // so user_id has to match width — foreignId would create bigint and fail FK.
+            $table->unsignedInteger('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
             $table->foreignId('devotional_id')->constrained()->cascadeOnDelete();
             $table->timestamp('created_at')->useCurrent();
 

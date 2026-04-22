@@ -4,7 +4,7 @@
 Daily devotionals and personal favorites
 
 ## Status
-`planned`
+`in-review`
 
 ## Description
 Clients show a daily devotional ("adults" or "kids" variants) keyed by

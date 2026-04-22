@@ -54,7 +54,7 @@ final class ShowDevotionalRequest extends FormRequest
         if (is_string($raw) && $raw !== '') {
             $parsed = CarbonImmutable::createFromFormat('!Y-m-d', $raw);
 
-            if ($parsed !== false) {
+            if ($parsed instanceof CarbonImmutable) {
                 return $parsed;
             }
         }

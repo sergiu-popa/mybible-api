@@ -76,6 +76,6 @@ final class ListDevotionalArchiveRequest extends FormRequest
 
         $parsed = CarbonImmutable::createFromFormat('!Y-m-d', $raw);
 
-        return $parsed === false ? null : $parsed;
+        return $parsed instanceof CarbonImmutable ? $parsed : null;
     }
 }

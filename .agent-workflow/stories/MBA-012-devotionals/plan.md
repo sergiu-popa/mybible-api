@@ -144,16 +144,16 @@ No duplicate suites: controller tests already cover routing/auth, and the query 
 - [x] 20. Create `App\Http\Controllers\Api\V1\Devotionals\ListDevotionalFavoritesController` — `DevotionalFavorite::query()->forUser($request->user())->withDevotional()->newestFirst()->paginate(...)`.
 - [x] 21. Create `App\Http\Controllers\Api\V1\Devotionals\ToggleDevotionalFavoriteController` — calls the action; returns `201` with `DevotionalFavoriteResource` on create, `200 { deleted: true }` on delete.
 - [x] 22. Register routes in `routes/api.php` under the `v1` prefix: archive **before** show on the `/devotionals` prefix; favorites group under `/devotional-favorites` with `auth:sanctum`.
-- [ ] 23. Write `DevotionalQueryBuilderTest` covering `onDate` / `withinRange` / `publishedUpTo` / `newestFirst`.
-- [ ] 24. Write `FetchDevotionalActionTest` (found + 404 paths).
-- [ ] 25. Write `ToggleDevotionalFavoriteActionTest` (insert + delete + transaction isolation).
-- [ ] 26. Write unit tests for `DevotionalResource` and `DevotionalFavoriteResource` (null-field omission, embedded devotional).
-- [ ] 27. Write Form Request unit tests for the four requests (valid / invalid / enum rejection / date format / `from <= to`).
-- [ ] 28. Write `ShowDevotionalControllerTest` (today, by date, 404, enum rejection, Cache-Control header).
-- [ ] 29. Write `ListDevotionalArchiveControllerTest` (pagination, newest-first, `from`/`to` window combinations, max per_page).
-- [ ] 30. Write `ListDevotionalFavoritesControllerTest` (owner list, cross-user scoping, 401, embedded shape).
-- [ ] 31. Write `ToggleDevotionalFavoriteControllerTest` (create 201, delete 200, unknown id 422, 401).
-- [ ] 32. Run `make lint-fix`, `make stan`, `make test --filter=Devotional`, then `make test` before marking ready.
+- [x] 23. Write `DevotionalQueryBuilderTest` covering `onDate` / `withinRange` / `publishedUpTo` / `newestFirst`.
+- [x] 24. Write `FetchDevotionalActionTest` (found + 404 paths).
+- [x] 25. Write `ToggleDevotionalFavoriteActionTest` (insert + delete + transaction isolation).
+- [x] 26. Write unit tests for `DevotionalResource` and `DevotionalFavoriteResource` (null-field omission, embedded devotional).
+- [x] 27. Write Form Request unit tests for the four requests (valid / invalid / enum rejection / date format / `from <= to`).
+- [x] 28. Write `ShowDevotionalControllerTest` (today, by date, 404, enum rejection, Cache-Control header).
+- [x] 29. Write `ListDevotionalArchiveControllerTest` (pagination, newest-first, `from`/`to` window combinations, max per_page).
+- [x] 30. Write `ListDevotionalFavoritesControllerTest` (owner list, cross-user scoping, 401, embedded shape).
+- [x] 31. Write `ToggleDevotionalFavoriteControllerTest` (create 201, delete 200, unknown id 422, 401).
+- [x] 32. Run `make lint-fix`, `make stan`, `make test --filter=Devotional`, then `make test` before marking ready.
 
 ## Risks & notes
 
