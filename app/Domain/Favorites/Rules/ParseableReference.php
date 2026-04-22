@@ -9,6 +9,7 @@ use App\Domain\Reference\Parser\ReferenceParser;
 use App\Domain\Reference\Reference;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Translation\PotentiallyTranslatedString;
 
 /**
  * Validates a canonical reference string (MBA-006) and memoizes the parsed
@@ -24,6 +25,9 @@ final class ParseableReference implements ValidationRule
         private readonly ReferenceParser $parser,
     ) {}
 
+    /**
+     * @param  Closure(string, ?string=): PotentiallyTranslatedString  $fail
+     */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (! is_string($value) || $value === '') {

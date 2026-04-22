@@ -8,6 +8,7 @@ use App\Domain\Reference\Data\BibleBookCatalog;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Translation\PotentiallyTranslatedString;
 
 final class ListFavoritesRequest extends FormRequest
 {
@@ -75,6 +76,9 @@ final class ListFavoritesRequest extends FormRequest
     {
         return new class implements ValidationRule
         {
+            /**
+             * @param  Closure(string, ?string=): PotentiallyTranslatedString  $fail
+             */
             public function validate(string $attribute, mixed $value, Closure $fail): void
             {
                 if (! is_string($value) || ! BibleBookCatalog::hasBook(strtoupper($value))) {

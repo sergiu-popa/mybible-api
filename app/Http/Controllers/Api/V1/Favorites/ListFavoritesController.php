@@ -36,6 +36,7 @@ final class ListFavoritesController
 
         $categoryFilter = $request->categoryFilter();
         if ($categoryFilter !== ListFavoritesRequest::NO_CATEGORY_FILTER) {
+            /** @var int|null $categoryFilter */
             $query->forCategory($categoryFilter);
         }
 

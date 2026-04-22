@@ -32,7 +32,7 @@ final class FavoriteResource extends JsonResource
             'category_id' => $this->category_id,
             'reference' => $this->reference,
             'note' => $this->note,
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at->toIso8601String(),
         ];
 
         if ($reference === null) {
@@ -58,7 +58,7 @@ final class FavoriteResource extends JsonResource
 
     private function parseReference(): ?Reference
     {
-        if (! is_string($this->reference) || $this->reference === '') {
+        if ($this->reference === '') {
             return null;
         }
 
