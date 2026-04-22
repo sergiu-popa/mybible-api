@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Auth\Exceptions\InvalidPasswordResetTokenException;
+use App\Domain\Olympiad\Exceptions\OlympiadThemeNotFoundException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionAlreadyCompletedException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionNotCompletableException;
 use App\Domain\Reference\Exceptions\InvalidReferenceException;
@@ -84,6 +85,10 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (NoDailyVerseForDateException $e, Request $request) {
+            return response()->json(['message' => $e->getMessage()], 404);
+        });
+
+        $exceptions->render(function (OlympiadThemeNotFoundException $e, Request $request) {
             return response()->json(['message' => $e->getMessage()], 404);
         });
 
