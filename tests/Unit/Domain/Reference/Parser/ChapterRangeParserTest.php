@@ -60,4 +60,18 @@ final class ChapterRangeParserTest extends TestCase
 
         $this->parser->expand('GEN.1-.VDC');
     }
+
+    public function test_throws_when_bound_is_not_digits(): void
+    {
+        $this->expectException(InvalidReferenceException::class);
+
+        $this->parser->expand('GEN.1abc-3.VDC');
+    }
+
+    public function test_throws_when_end_bound_is_not_digits(): void
+    {
+        $this->expectException(InvalidReferenceException::class);
+
+        $this->parser->expand('GEN.1-3xyz.VDC');
+    }
 }

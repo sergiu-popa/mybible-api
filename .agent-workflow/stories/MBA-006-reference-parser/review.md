@@ -4,94 +4,82 @@
 
 Port of the Symfony Bible reference library to `App\Domain\Reference\*` — parser,
 formatter, linkifier, 66-book catalog, typed exception, RO/EN/HU language
-formatters, and unit coverage. Implementation matches the plan's layout and
-semantics; all 285 tests pass; Pint and PHPStan are clean. Two cross-language
-inconsistencies in the EN linkify pathway should be resolved before merge; the
-remaining items are minor cleanups.
+formatters, and unit coverage. Second-pass review after commit
+`76d24ed [MBA-006] Address review findings`. Both prior warnings (W1, W2) and
+every suggestion (S1–S7) from the first pass are resolved. 116 Reference tests
+pass; `make lint` and `make stan` are clean.
 
-**Verdict:** REQUEST CHANGES
+**Verdict:** APPROVE
 
 ---
 
 ## Warnings
 
 - [x] **W1. EN `linkifyRegex()` uses `/m` while RO/HU use `/mi`** —
-  `app/Domain/Reference/Formatter/Languages/EnglishFormatter.php:227`. The
-  Romanian pattern at
-  `app/Domain/Reference/Formatter/Languages/RomanianFormatter.php:183` and
-  Hungarian at
-  `app/Domain/Reference/Formatter/Languages/HungarianFormatter.php:242` are
-  case-insensitive; EN is not. Result: `"genesis 1:1"` (lowercase) is not
-  linkified in English, but `"geneza 1:1"` is in Romanian. The story says the
-  EN regex should "mirror the shape of RO/HU" (plan Risks & notes:
-  `plan.md:99`). Fix: add the `i` flag to the EN regex (or make an explicit,
-  documented decision that EN is case-sensitive).
+  `app/Domain/Reference/Formatter/Languages/EnglishFormatter.php:227`.
+  Resolved: EN pattern now ends `/mi`, aligning free-text case-insensitivity
+  with Romanian and Hungarian. The interface docblock
+  (`LanguageFormatter.php:23-29`) was also updated to require the `i` flag
+  for all implementations (closes S7 in the same edit).
 
 - [x] **W2. EN short-form aliases are dead code in `linkify()`** —
-  `app/Domain/Reference/Formatter/Languages/EnglishFormatter.php:14-132` lists
-  many short forms (`Gen`, `Exo`, `Deut`, `Josh`, `Judg`, `Rom`, `1 Cor`,
-  `Matt`, `Rev`, …), but the `linkifyRegex()` at line 227 includes only the
-  long forms plus a handful of abbreviations. Consequence: `"Gen 1:1"` is
-  *not* linkified even though `abbreviation('Gen')` returns `GEN`. Either add
-  the short forms to the alternation (remembering PCRE is left-to-right so
-  longer alternates must precede their prefixes — e.g. `1 Corinthians`
-  before `1 Cor`, `Genesis` before `Gen`) or remove the short aliases from
-  `NAME_TO_ABBREV` to keep the two maps consistent. Picking either side is
-  fine; the two must agree.
+  `app/Domain/Reference/Formatter/Languages/EnglishFormatter.php:227`.
+  Resolved: the short-form aliases present in `NAME_TO_ABBREV` (`Gen`,
+  `Exo`, `Deut`, `Josh`, `Judg`, `Rom`, `Matt`, `Rev`, `Ps`, etc.) are now
+  appended to the regex alternation after the long forms. PCRE alternation
+  order is safe here because the pattern mandates a trailing ` {1}`
+  separator — a shorter prefix that matches but isn't followed by a space
+  fails and PCRE falls through to the longer alternative (e.g. `Phil` vs
+  `Philippians`, `Exo` vs `Exodus`, `Rom` vs `Romans`).
 
 ## Suggestions
 
-- **S1. `Reference` VO reuses `InvalidReferenceException::unparseable()` for
-  VO invariants** —
-  `app/Domain/Reference/Reference.php:24-35`. The constructor throws
-  `unparseable($this->describe(), …)` when verses aren't positive/ascending —
-  but there is no query string being parsed; this is an invariant on the VO.
-  Consider either a dedicated factory
-  (`InvalidReferenceException::invalidVerses(string $reason)`) or a plain
-  `\InvalidArgumentException` so that "unparseable" stays semantically tied
-  to parser input.
+- [x] **S1. `Reference` VO reuses `InvalidReferenceException::unparseable()`
+  for VO invariants** — resolved. A dedicated
+  `InvalidReferenceException::invalidVerses(string $book, int $chapter,
+  string $reason)` factory now models VO-invariant failures
+  (`app/Domain/Reference/Exceptions/InvalidReferenceException.php:39-48`),
+  and the `Reference` constructor uses it at lines 24-36. Covered by
+  `InvalidReferenceExceptionTest::test_invalid_verses_factory_sets_context`.
 
-- **S2. Plan deviation on `LinkBuilder::build()` signature, unnoted** —
-  `app/Domain/Reference/Creator/LinkBuilder.php:17`. Plan `plan.md:49` says
-  `build(Reference $ref, string $language)`; implementation is
-  `build(string $book, string $passage, string $language)`. The change is
-  well-justified (composite passages like `4:13;6:1-6` don't fit a single
-  `Reference`), but the deviation is not noted in `plan.md` or the commit
-  message. Add a one-liner to the plan's "Risks & notes" section so
-  downstream readers don't wonder.
+- [x] **S2. Plan deviation on `LinkBuilder::build()` signature, unnoted** —
+  resolved. `plan.md:103` now documents that the implemented signature is
+  `build(string $book, string $passage, string $language)` rather than
+  `build(Reference $ref, string $language)` and explains why (composite
+  passage expressions like `4:13;6:1-6` don't round-trip through a single
+  `Reference`).
 
-- **S3. `ReferenceFormatter::forLanguage()` duplicates `resolveLanguage()`** —
-  `app/Domain/Reference/Formatter/ReferenceFormatter.php:51-54, 101-108`. The
-  public `forLanguage()` is a thin passthrough to the private
-  `resolveLanguage()`. Collapse into a single public method and delete the
-  private wrapper.
+- [x] **S3. `ReferenceFormatter::forLanguage()` duplicates
+  `resolveLanguage()`** — resolved. `resolveLanguage()` was removed and
+  `forLanguage()` now contains the `match` directly
+  (`app/Domain/Reference/Formatter/ReferenceFormatter.php:51-58`).
 
-- **S4. `ReferenceCreator` and `CanonicalLinkBuilder` each allocate their
-  own `ReferenceFormatter`** —
-  `app/Domain/Reference/Creator/ReferenceCreator.php:12-13` plus
-  `app/Domain/Reference/Creator/CanonicalLinkBuilder.php:12`. When using the
-  default-wired constructors, the creator constructs one formatter and the
-  canonical link builder it defaulted in constructs a second. Inject a
-  shared `ReferenceFormatter` or document that both instances are cheap and
-  intentional. Micro-issue, but it's the sort of thing that looks like a
-  mistake in a code review six months from now.
+- [x] **S4. `ReferenceCreator` and `CanonicalLinkBuilder` each allocate
+  their own `ReferenceFormatter`** — resolved.
+  `ReferenceCreator::__construct` now seeds its default
+  `CanonicalLinkBuilder` with the same `ReferenceFormatter` instance it
+  stores for itself (`app/Domain/Reference/Creator/ReferenceCreator.php:15-21`),
+  so a default-wired creator shares one formatter rather than allocating two.
 
-- **S5. Plan Task 15 lists a `parser.php` fixture that wasn't created** —
-  `plan.md:92`. `ReferenceParserTest` uses inline test methods instead of a
-  data-provider-driven fixture file. Either add the fixture for consistency
-  with the other tests, or update the plan to reflect the chosen approach.
-  Not a blocker.
+- [x] **S5. Plan Task 15 lists a `parser.php` fixture that wasn't
+  created** — resolved. `plan.md:104` now documents the decision: parser
+  failure modes are structurally heterogeneous (distinct exception
+  factories with different context shapes) and don't benefit from a flat
+  `{input, expected}` table, so `ReferenceParserTest` keeps inline test
+  methods. Human-readable, canonical, and linkify tests remain
+  data-driven as planned.
 
-- **S6. `Reference::getVerse()` returns `0` for whole chapters** —
-  `app/Domain/Reference/Reference.php:56-59`. Using `0` as a sentinel inside
-  a typed VO is awkward: `?int` with explicit `null` communicates intent
-  better and matches the `isSingleVerse()`-guarded usage pattern. Low
-  priority; cosmetic.
+- [x] **S6. `Reference::getVerse()` returns `0` for whole chapters** —
+  resolved. Return type is now `?int` and whole-chapter references return
+  `null` (`app/Domain/Reference/Reference.php:58-61`). Callers must guard
+  with `isSingleVerse()` / `isRange()` or a null check — which is exactly
+  the intent.
 
-- **S7. `LanguageFormatter::linkifyRegex()` docblock doesn't mention flags**
-  — `app/Domain/Reference/Formatter/Languages/LanguageFormatter.php:23-29`.
-  Callers currently infer case-sensitivity from the pattern body. One
-  sentence in the interface docblock would surface the convention (see W1).
+- [x] **S7. `LanguageFormatter::linkifyRegex()` docblock doesn't mention
+  flags** — resolved. Interface docblock at
+  `app/Domain/Reference/Formatter/Languages/LanguageFormatter.php:23-29`
+  now states that implementations must use the `i` flag for
+  case-insensitive matching across languages.
 
 ---
 
@@ -115,3 +103,19 @@ remaining items are minor cleanups.
 - `RuntimeException` from `BibleBookCatalog::maxChapter()` is intentionally
   non-typed because all call sites pre-check with `hasBook()` — this is
   documented in the plan.
+- **Known inherited limitation (not a regression of this story).** The
+  linkify regex matches case-insensitively (`/mi`), but every language
+  formatter's `NAME_TO_ABBREV` map is case-sensitive. A lowercase match
+  (e.g. `"genesis 1:1"` in EN, `"geneza 1:1"` in RO) would enter the
+  `preg_replace_callback`, fail the `abbreviation()` lookup, and throw
+  `InvalidReferenceException::unknownBook` — surfacing through
+  `linkify()`. This is the behaviour the Symfony library had for RO/HU
+  and is now consistent for EN; hardening (lowercase lookup or a
+  case-insensitive map) belongs in a follow-up if it turns out free-text
+  callers pass lowercased content.
+
+## Gate results
+
+- `make test filter=Reference` → 116 passed, 478 assertions (0.63s).
+- `make lint` → PASS (188 files).
+- `make stan` → PASS (no errors, 169 files analysed).

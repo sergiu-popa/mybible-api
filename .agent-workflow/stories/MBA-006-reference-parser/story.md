@@ -4,7 +4,7 @@
 Reference parser — port the Symfony Bible reference library to a Domain service
 
 ## Status
-`in-review`
+`done`
 
 ## Description
 The Symfony app has a reference parsing library that turns human-readable

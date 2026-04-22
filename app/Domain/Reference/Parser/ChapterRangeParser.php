@@ -34,6 +34,10 @@ final class ChapterRangeParser
             throw InvalidReferenceException::unparseable($query, 'expected a chapter range "start-end"');
         }
 
+        if (! ctype_digit($bounds[0]) || ! ctype_digit($bounds[1])) {
+            throw InvalidReferenceException::unparseable($query, 'chapter range bounds must be positive integers');
+        }
+
         $start = (int) $bounds[0];
         $end = (int) $bounds[1];
 
