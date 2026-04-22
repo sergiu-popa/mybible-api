@@ -31,8 +31,8 @@ assertion on `ToggleHymnalFavoriteAction`, which is not present.
 
 ## Warnings
 
-- [ ] **`ToggleHymnalFavoriteActionTest` is missing the transactional-rollback
-  case called out in plan task 22.** `tests/Unit/Domain/Hymnal/Actions/ToggleHymnalFavoriteActionTest.php`.
+- [x] **`ToggleHymnalFavoriteActionTest` is missing the transactional-rollback
+  case called out in plan task 22.** — fixed: added `test_it_rolls_back_the_insert_when_the_transaction_body_throws` and `test_it_rolls_back_the_delete_when_the_transaction_body_throws`, using model `created`/`deleted` events to throw after the row reaches the DB; verified both fail when `DB::transaction()` is stripped from the Action. `tests/Unit/Domain/Hymnal/Actions/ToggleHymnalFavoriteActionTest.php`.
   Plan task 22 explicitly listed "transactional rollback on downstream failure"
   as a required test; only the insert / delete / cross-user branches are
   covered (lines 19-71). Add a test that forces the inner transaction to

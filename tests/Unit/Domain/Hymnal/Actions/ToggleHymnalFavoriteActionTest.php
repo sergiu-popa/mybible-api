@@ -10,6 +10,7 @@ use App\Domain\Hymnal\Models\HymnalFavorite;
 use App\Domain\Hymnal\Models\HymnalSong;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use RuntimeException;
 use Tests\TestCase;
 
 final class ToggleHymnalFavoriteActionTest extends TestCase
@@ -47,6 +48,61 @@ final class ToggleHymnalFavoriteActionTest extends TestCase
 
         $this->assertFalse($result->created);
         $this->assertDatabaseMissing('hymnal_favorites', ['id' => $existing->id]);
+    }
+
+    public function test_it_rolls_back_the_insert_when_the_transaction_body_throws(): void
+    {
+        $user = User::factory()->create();
+        $song = HymnalSong::factory()->create();
+
+        HymnalFavorite::created(function (): void {
+            throw new RuntimeException('downstream failure');
+        });
+
+        try {
+            $this->app->make(ToggleHymnalFavoriteAction::class)
+                ->execute(new ToggleHymnalFavoriteData($user, $song));
+            $this->fail('Expected RuntimeException to bubble out of the transaction.');
+        } catch (RuntimeException $e) {
+            $this->assertSame('downstream failure', $e->getMessage());
+        } finally {
+            HymnalFavorite::flushEventListeners();
+        }
+
+        $this->assertDatabaseMissing('hymnal_favorites', [
+            'user_id' => $user->id,
+            'hymnal_song_id' => $song->id,
+        ]);
+    }
+
+    public function test_it_rolls_back_the_delete_when_the_transaction_body_throws(): void
+    {
+        $user = User::factory()->create();
+        $song = HymnalSong::factory()->create();
+        $existing = HymnalFavorite::factory()->create([
+            'user_id' => $user->id,
+            'hymnal_song_id' => $song->id,
+        ]);
+
+        HymnalFavorite::deleted(function (): void {
+            throw new RuntimeException('downstream failure');
+        });
+
+        try {
+            $this->app->make(ToggleHymnalFavoriteAction::class)
+                ->execute(new ToggleHymnalFavoriteData($user, $song));
+            $this->fail('Expected RuntimeException to bubble out of the transaction.');
+        } catch (RuntimeException $e) {
+            $this->assertSame('downstream failure', $e->getMessage());
+        } finally {
+            HymnalFavorite::flushEventListeners();
+        }
+
+        $this->assertDatabaseHas('hymnal_favorites', [
+            'id' => $existing->id,
+            'user_id' => $user->id,
+            'hymnal_song_id' => $song->id,
+        ]);
     }
 
     public function test_it_keeps_other_users_favorites_untouched(): void
