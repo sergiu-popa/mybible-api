@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
+use App\Http\Controllers\Api\V1\Auth\RequestPasswordResetController;
+use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
 use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
@@ -19,6 +21,8 @@ Route::prefix('v1')->group(function (): void {
     Route::prefix('auth')->name('auth.')->group(function (): void {
         Route::post('register', RegisterController::class)->name('register');
         Route::post('login', LoginController::class)->name('login');
+        Route::post('forgot-password', RequestPasswordResetController::class)->name('forgot-password');
+        Route::post('reset-password', ResetPasswordController::class)->name('reset-password');
 
         Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('logout', LogoutController::class)->name('logout');

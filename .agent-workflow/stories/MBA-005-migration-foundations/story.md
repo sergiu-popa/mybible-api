@@ -4,7 +4,7 @@
 Migration foundations — User schema reconciliation, Argon2id hashing, password reset
 
 ## Status
-`draft`
+`in-review`
 
 ## Description
 First migration story. Establishes the bridge between the existing Symfony

@@ -114,4 +114,17 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Password Reset URL
+    |--------------------------------------------------------------------------
+    |
+    | Public URL where users complete a password reset. This API has no web
+    | route, so PasswordResetNotification renders the link against this
+    | external consumer URL rather than route('password.reset', ...).
+    |
+    */
+
+    'password_reset_url' => env('AUTH_PASSWORD_RESET_URL', 'http://api.mybible.local/reset-password'),
+
 ];

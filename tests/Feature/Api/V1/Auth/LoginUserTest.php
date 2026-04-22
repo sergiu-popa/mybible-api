@@ -66,4 +66,29 @@ final class LoginUserTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['email', 'password']);
     }
+
+    public function test_it_logs_in_a_user_with_a_symfony_argon2id_hash(): void
+    {
+        // Pre-baked Argon2id hash of the plaintext "symfony-original-pass",
+        // generated with Symfony's production parameters (m=65536, t=4, p=1).
+        // Proves that existing Symfony user rows verify under Laravel's
+        // Argon2id hasher without any forced password reset at cutover.
+        $legacyHash = '$argon2id$v=19$m=65536,t=4,p=1$LldGaTI1czRIRWI3OGhvdQ$1RQeVbmorryhz0LsIdoCuR1/0paYb25qvBVlR+PdTn8';
+
+        $user = User::factory()->make([
+            'email' => 'legacy@example.com',
+        ]);
+        // Bypass the `hashed` cast so the legacy hash is stored verbatim.
+        $user->setRawAttributes(array_merge($user->getAttributes(), [
+            'password' => $legacyHash,
+        ]));
+        $user->save();
+
+        $this->postJson(route('auth.login'), [
+            'email' => 'legacy@example.com',
+            'password' => 'symfony-original-pass',
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.user.email', 'legacy@example.com');
+    }
 }

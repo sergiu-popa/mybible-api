@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Auth\Exceptions\InvalidPasswordResetTokenException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionAlreadyCompletedException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionNotCompletableException;
 use App\Http\Middleware\EnsureApiKeyOrSanctum;
@@ -66,6 +67,10 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (SubscriptionAlreadyCompletedException $e, Request $request) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        });
+
+        $exceptions->render(function (InvalidPasswordResetTokenException $e, Request $request) {
             return response()->json(['message' => $e->getMessage()], 422);
         });
 
