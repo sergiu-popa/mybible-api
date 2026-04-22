@@ -47,6 +47,19 @@ final class StoreNoteTest extends TestCase
             ->assertJsonValidationErrors('reference');
     }
 
+    public function test_it_rejects_a_multi_reference_input(): void
+    {
+        $this->givenAnAuthenticatedUser();
+
+        $this->postJson(route('notes.store'), [
+            'reference' => 'GEN.1-3.VDC',
+            'content' => 'hello',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('reference');
+
+        $this->assertDatabaseCount('notes', 0);
+    }
+
     public function test_it_rejects_missing_reference(): void
     {
         $this->givenAnAuthenticatedUser();

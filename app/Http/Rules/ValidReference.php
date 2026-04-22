@@ -14,13 +14,15 @@ use Illuminate\Http\Request;
 /**
  * Validation rule that parses the attribute value via {@see ReferenceParser}.
  *
- * On success the first parsed {@see Reference} is stashed on the current
- * request's attribute bag under {@see self::PARSED_ATTRIBUTE_KEY}, so the
- * Form Request's `toData()` can re-use it without parsing twice.
+ * The input must resolve to exactly one {@see Reference} — multi-reference
+ * inputs (chapter ranges, comma lists) are rejected so callers never silently
+ * drop extra references. On success the parsed {@see Reference} is stashed on
+ * the current request's attribute bag under {@see self::PARSED_ATTRIBUTE_KEY}
+ * so the Form Request's `toData()` can re-use it without parsing twice.
  */
 final class ValidReference implements ValidationRule
 {
-    public const PARSED_ATTRIBUTE_KEY = 'notes.parsed_reference';
+    public const PARSED_ATTRIBUTE_KEY = 'reference.parsed';
 
     public function __construct(
         private readonly ReferenceParser $parser,
@@ -49,8 +51,14 @@ final class ValidReference implements ValidationRule
             return;
         }
 
-        // Store the first parsed Reference so the Form Request can recover
-        // it without re-parsing.
+        if (count($references) !== 1) {
+            $fail('The :attribute must reference a single passage.');
+
+            return;
+        }
+
+        // Store the parsed Reference so the Form Request can recover it
+        // without re-parsing.
         $this->request->attributes->set(self::PARSED_ATTRIBUTE_KEY, $references[0]);
     }
 }

@@ -67,6 +67,34 @@ final class ValidReferenceTest extends TestCase
         $this->assertCount(1, $messages);
     }
 
+    public function test_it_fails_for_multi_reference_input(): void
+    {
+        $request = Request::create('/');
+        $rule = new ValidReference(new ReferenceParser, $request);
+
+        $messages = [];
+        $rule->validate('reference', 'GEN.1-3.VDC', $this->failCollector($messages));
+
+        $this->assertCount(1, $messages);
+        $this->assertSame(
+            'The :attribute must reference a single passage.',
+            $messages[0],
+        );
+        $this->assertNull($request->attributes->get(ValidReference::PARSED_ATTRIBUTE_KEY));
+    }
+
+    public function test_it_fails_for_multi_reference_list_input(): void
+    {
+        $request = Request::create('/');
+        $rule = new ValidReference(new ReferenceParser, $request);
+
+        $messages = [];
+        $rule->validate('reference', 'GEN.1:1;2.VDC', $this->failCollector($messages));
+
+        $this->assertCount(1, $messages);
+        $this->assertNull($request->attributes->get(ValidReference::PARSED_ATTRIBUTE_KEY));
+    }
+
     /**
      * Produce a closure whose signature satisfies Laravel's $fail contract
      * while capturing every message into the provided array for assertions.
