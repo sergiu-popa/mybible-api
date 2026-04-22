@@ -3,6 +3,8 @@
 use App\Domain\Auth\Exceptions\InvalidPasswordResetTokenException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionAlreadyCompletedException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionNotCompletableException;
+use App\Domain\Reference\Exceptions\InvalidReferenceException;
+use App\Domain\Verses\Exceptions\NoDailyVerseForDateException;
 use App\Http\Middleware\EnsureApiKeyOrSanctum;
 use App\Http\Middleware\EnsureValidApiKey;
 use App\Http\Middleware\ResolveRequestLanguage;
@@ -72,6 +74,17 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (InvalidPasswordResetTokenException $e, Request $request) {
             return response()->json(['message' => $e->getMessage()], 422);
+        });
+
+        $exceptions->render(function (InvalidReferenceException $e, Request $request) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'errors' => ['reference' => [$e->reason()]],
+            ], 422);
+        });
+
+        $exceptions->render(function (NoDailyVerseForDateException $e, Request $request) {
+            return response()->json(['message' => $e->getMessage()], 404);
         });
 
         $exceptions->render(function (Throwable $e, Request $request) {

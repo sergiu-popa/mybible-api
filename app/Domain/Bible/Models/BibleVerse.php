@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Bible\Models;
 
+use App\Domain\Bible\QueryBuilders\BibleVerseQueryBuilder;
 use Database\Factories\BibleVerseFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -56,5 +58,14 @@ final class BibleVerse extends Model
     public function book(): BelongsTo
     {
         return $this->belongsTo(BibleBook::class, 'bible_book_id');
+    }
+
+    /**
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @return BibleVerseQueryBuilder
+     */
+    public function newEloquentBuilder($query): Builder
+    {
+        return new BibleVerseQueryBuilder($query);
     }
 }

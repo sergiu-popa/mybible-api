@@ -19,6 +19,8 @@ use App\Http\Controllers\Api\V1\ReadingPlans\ListReadingPlansController;
 use App\Http\Controllers\Api\V1\ReadingPlans\RescheduleReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\ShowReadingPlanController;
 use App\Http\Controllers\Api\V1\ReadingPlans\StartReadingPlanSubscriptionController;
+use App\Http\Controllers\Api\V1\Verses\GetDailyVerseController;
+use App\Http\Controllers\Api\V1\Verses\ResolveVersesController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -53,6 +55,11 @@ Route::prefix('v1')->group(function (): void {
                 ->name('index');
             Route::get('{book:abbreviation}/chapters', ListBibleBookChaptersController::class)->name('chapters');
         });
+
+    Route::middleware(['api-key-or-sanctum', 'resolve-language'])->group(function (): void {
+        Route::get('verses', ResolveVersesController::class)->name('verses.index');
+        Route::get('daily-verse', GetDailyVerseController::class)->name('daily-verse.show');
+    });
 
     Route::prefix('reading-plans')
         ->name('reading-plans.')

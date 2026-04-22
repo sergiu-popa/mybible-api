@@ -103,32 +103,32 @@ Three-tier cascade inside `ResolveVersesRequest::resolveVersion()`:
 
 ## Tasks
 
-- [ ] 1. Inspect `daily_verse` and `verse` tables via `mcp__laravel-boost__database-schema` in the shared DB; record actual column names in a comment at the top of `DailyVerse.php`. Confirm Option A vs. Option B with product before proceeding.
-- [ ] 2. Create `config/bible.php` with `default_version_by_language` map. Skip if MBA-007 already created it.
-- [ ] 3. Create `App\Domain\Verses\Models\DailyVerse` mapped to the `daily_verse` table (`$table`, `$fillable`, casts `for_date => immutable_date`, no timestamps unless table has them). Skip writes.
-- [ ] 4. Create `App\Domain\Verses\QueryBuilders\DailyVerseQueryBuilder` with `forDate(\DateTimeImmutable): ?DailyVerse`. Wire via `newEloquentBuilder()` on the model.
-- [ ] 5. Create `App\Domain\Verses\Exceptions\NoDailyVerseForDateException` carrying the requested date.
-- [ ] 6. Extend `App\Domain\Bible\QueryBuilders\VerseQueryBuilder` (or create if MBA-007 did not) with `lookupReferences(array<Reference>): Collection`. Groups by `(version, book, chapter)`, issues one query per group using `IN` for positions; whole-chapter refs query without position constraint.
-- [ ] 7. Create `App\Domain\Verses\DataTransferObjects\ResolveVersesData` (readonly, `array<Reference>`, `string $version`).
-- [ ] 8. Create `App\Domain\Verses\DataTransferObjects\VerseLookupResult` (readonly, resolved verses + missing tuples).
-- [ ] 9. Create `App\Domain\Verses\Actions\ResolveVersesAction::handle(ResolveVersesData): VerseLookupResult`. Computes expected verse-tuple set from the input `Reference[]`, calls `VerseQueryBuilder::lookupReferences()`, diffs to produce `missing`.
-- [ ] 10. Create `App\Domain\Verses\Actions\GetDailyVerseAction::handle(\DateTimeImmutable): DailyVerse`. Delegates to the query builder; throws `NoDailyVerseForDateException` on null.
-- [ ] 11. Create `App\Http\Requests\Verses\ResolveVersesRequest`. Rules: mutual-exclusion of `reference` and split-form, `reference` string pattern allowlist, `book` 3-letter, `chapter` int ≥1, `verses` string (comma/dash/semicolon pattern), optional `version`. `passedValidation()` assembles canonical form if split, then invokes `ReferenceParser` and exposes `toData(): ResolveVersesData` including default-version cascade (query → `$this->user()?->preferred_version` → `config('bible.default_version_by_language')` → fail with `ValidationException::withMessages`).
-- [ ] 12. Create `App\Http\Requests\Verses\DailyVerseRequest`. Rules: `date` nullable `date_format:Y-m-d` + `before_or_equal:today`. Expose `forDate(): \DateTimeImmutable` defaulting to today.
-- [ ] 13. Create `App\Http\Resources\Verses\VerseResource` with shape `{ version, book, chapter, verse, text }` (aliasing `position` → `verse`, `content` → `text`).
-- [ ] 14. Create `App\Http\Resources\Verses\VerseCollection` extending `ResourceCollection`, adds `meta.missing` from the collection's additional-data channel.
-- [ ] 15. Create `App\Http\Resources\Verses\DailyVerseResource` with Option A shape `{ date, reference, image_url }`.
-- [ ] 16. Create `App\Http\Controllers\Api\V1\Verses\ResolveVersesController` invokable. Receives `ResolveVersesRequest`, calls `ResolveVersesAction`, wraps into `VerseCollection::make()->additional(['meta' => ['missing' => ...]])`.
-- [ ] 17. Create `App\Http\Controllers\Api\V1\Verses\GetDailyVerseController` invokable. Returns `DailyVerseResource` with `Cache-Control: public, max-age=3600` header.
-- [ ] 18. Register the two routes under the `v1` prefix in `routes/api.php` with `api-key-or-sanctum` + `resolve-language` middleware. Name routes `verses.index` and `daily-verse.show`.
-- [ ] 19. Register `InvalidReferenceException` and `NoDailyVerseForDateException` handlers in `bootstrap/app.php` per the table above.
-- [ ] 20. Feature test `ResolveVersesController`: single verse, multi-verse range, mixed-verse (`1-3,5`), multi-chapter (`GEN.1:1;2:3`), split-param form, unknown reference → `422`, partial resolution → `200 + meta.missing`, no version supplied + no user + no config fallback → `422`, authenticated-user default-version fallback (stub `preferred_version`), anonymous API-key client with language-based config fallback, missing both auth → `401`/`403`.
-- [ ] 21. Feature test `GetDailyVerseController`: today (no date), past date, missing date → `404`, `Cache-Control` header asserted, `date` in the future → `422`, unauthenticated → `401`.
-- [ ] 22. Unit test `ResolveVersesAction`: group-by batching (assert query count ≤ number of distinct `(version, book, chapter)` groups — use `DB::listen`), whole-chapter expansion, missing computation edge cases (all-missing, none-missing, partial).
-- [ ] 23. Unit test `GetDailyVerseAction`: hit, miss throws `NoDailyVerseForDateException`.
-- [ ] 24. Unit test `ResolveVersesRequest::toData()` default-version cascade: explicit > user > config > fail. Use the Form Request's `validateResolved()` in a unit harness (see `tests/Feature/ReadingPlans` precedents if present).
-- [ ] 25. Feature test for `InvalidReferenceException` handler: request with `reference=NOPE.99:1.VDC` asserts the `422` + `errors.reference` envelope.
-- [ ] 26. Run `make lint-fix`, `make stan`, `make test filter=Verses`; then full `make check` before marking ready for review.
+- [x] 1. Inspect `daily_verse` and `verse` tables via `mcp__laravel-boost__database-schema` in the shared DB; record actual column names in a comment at the top of `DailyVerse.php`. Confirm Option A vs. Option B with product before proceeding.
+- [x] 2. Create `config/bible.php` with `default_version_by_language` map. Skip if MBA-007 already created it.
+- [x] 3. Create `App\Domain\Verses\Models\DailyVerse` mapped to the `daily_verse` table (`$table`, `$fillable`, casts `for_date => immutable_date`, no timestamps unless table has them). Skip writes.
+- [x] 4. Create `App\Domain\Verses\QueryBuilders\DailyVerseQueryBuilder` with `forDate(\DateTimeImmutable): ?DailyVerse`. Wire via `newEloquentBuilder()` on the model.
+- [x] 5. Create `App\Domain\Verses\Exceptions\NoDailyVerseForDateException` carrying the requested date.
+- [x] 6. Extend `App\Domain\Bible\QueryBuilders\VerseQueryBuilder` (or create if MBA-007 did not) with `lookupReferences(array<Reference>): Collection`. Groups by `(version, book, chapter)`, issues one query per group using `IN` for positions; whole-chapter refs query without position constraint.
+- [x] 7. Create `App\Domain\Verses\DataTransferObjects\ResolveVersesData` (readonly, `array<Reference>`, `string $version`).
+- [x] 8. Create `App\Domain\Verses\DataTransferObjects\VerseLookupResult` (readonly, resolved verses + missing tuples).
+- [x] 9. Create `App\Domain\Verses\Actions\ResolveVersesAction::handle(ResolveVersesData): VerseLookupResult`. Computes expected verse-tuple set from the input `Reference[]`, calls `VerseQueryBuilder::lookupReferences()`, diffs to produce `missing`.
+- [x] 10. Create `App\Domain\Verses\Actions\GetDailyVerseAction::handle(\DateTimeImmutable): DailyVerse`. Delegates to the query builder; throws `NoDailyVerseForDateException` on null.
+- [x] 11. Create `App\Http\Requests\Verses\ResolveVersesRequest`. Rules: mutual-exclusion of `reference` and split-form, `reference` string pattern allowlist, `book` 3-letter, `chapter` int ≥1, `verses` string (comma/dash/semicolon pattern), optional `version`. `passedValidation()` assembles canonical form if split, then invokes `ReferenceParser` and exposes `toData(): ResolveVersesData` including default-version cascade (query → `$this->user()?->preferred_version` → `config('bible.default_version_by_language')` → fail with `ValidationException::withMessages`).
+- [x] 12. Create `App\Http\Requests\Verses\DailyVerseRequest`. Rules: `date` nullable `date_format:Y-m-d` + `before_or_equal:today`. Expose `forDate(): \DateTimeImmutable` defaulting to today.
+- [x] 13. Create `App\Http\Resources\Verses\VerseResource` with shape `{ version, book, chapter, verse, text }` (aliasing `position` → `verse`, `content` → `text`).
+- [x] 14. Create `App\Http\Resources\Verses\VerseCollection` extending `ResourceCollection`, adds `meta.missing` from the collection's additional-data channel.
+- [x] 15. Create `App\Http\Resources\Verses\DailyVerseResource` with Option A shape `{ date, reference, image_url }`.
+- [x] 16. Create `App\Http\Controllers\Api\V1\Verses\ResolveVersesController` invokable. Receives `ResolveVersesRequest`, calls `ResolveVersesAction`, wraps into `VerseCollection::make()->additional(['meta' => ['missing' => ...]])`.
+- [x] 17. Create `App\Http\Controllers\Api\V1\Verses\GetDailyVerseController` invokable. Returns `DailyVerseResource` with `Cache-Control: public, max-age=3600` header.
+- [x] 18. Register the two routes under the `v1` prefix in `routes/api.php` with `api-key-or-sanctum` + `resolve-language` middleware. Name routes `verses.index` and `daily-verse.show`.
+- [x] 19. Register `InvalidReferenceException` and `NoDailyVerseForDateException` handlers in `bootstrap/app.php` per the table above.
+- [x] 20. Feature test `ResolveVersesController`: single verse, multi-verse range, mixed-verse (`1-3,5`), multi-chapter (`GEN.1:1;2:3`), split-param form, unknown reference → `422`, partial resolution → `200 + meta.missing`, no version supplied + no user + no config fallback → `422`, authenticated-user default-version fallback (stub `preferred_version`), anonymous API-key client with language-based config fallback, missing both auth → `401`/`403`.
+- [x] 21. Feature test `GetDailyVerseController`: today (no date), past date, missing date → `404`, `Cache-Control` header asserted, `date` in the future → `422`, unauthenticated → `401`.
+- [x] 22. Unit test `ResolveVersesAction`: group-by batching (assert query count ≤ number of distinct `(version, book, chapter)` groups — use `DB::listen`), whole-chapter expansion, missing computation edge cases (all-missing, none-missing, partial).
+- [x] 23. Unit test `GetDailyVerseAction`: hit, miss throws `NoDailyVerseForDateException`.
+- [x] 24. Unit test `ResolveVersesRequest::toData()` default-version cascade: explicit > user > config > fail. Use the Form Request's `validateResolved()` in a unit harness (see `tests/Feature/ReadingPlans` precedents if present).
+- [x] 25. Feature test for `InvalidReferenceException` handler: request with `reference=NOPE.99:1.VDC` asserts the `422` + `errors.reference` envelope.
+- [x] 26. Run `make lint-fix`, `make stan`, `make test filter=Verses`; then full `make check` before marking ready for review.
 
 ## Risks & notes
 
