@@ -8,7 +8,6 @@ use App\Domain\Reference\Parser\ReferenceParser;
 use App\Domain\Verses\Actions\ResolveVersesAction;
 use App\Http\Requests\Verses\ResolveVersesRequest;
 use App\Http\Resources\Verses\VerseCollection;
-use App\Http\Resources\Verses\VerseResource;
 
 /**
  * @tags Verses
@@ -24,7 +23,7 @@ final class ResolveVersesController
 
         $result = $action->handle($data);
 
-        return (new VerseCollection(VerseResource::collection($result->verses)))
+        return (new VerseCollection($result->verses))
             ->additional(['meta' => ['missing' => $result->missing]]);
     }
 }

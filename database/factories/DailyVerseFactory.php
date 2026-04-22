@@ -20,7 +20,7 @@ final class DailyVerseFactory extends Factory
     public function definition(): array
     {
         return [
-            'for_date' => fake()->unique()->date(),
+            'for_date' => fake()->date(),
             'reference' => 'GEN.1:1.VDC',
             'image_cdn_url' => null,
         ];

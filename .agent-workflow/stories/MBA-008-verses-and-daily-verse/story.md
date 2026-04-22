@@ -4,7 +4,7 @@
 Verses lookup and daily verse
 
 ## Status
-`in-review`
+`done`
 
 ## Description
 Clients need two things on top of the catalog (MBA-007): pull a specific

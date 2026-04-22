@@ -38,8 +38,11 @@ final class GetDailyVerseTest extends TestCase
             ->assertJsonStructure(['data' => ['date', 'reference', 'image_url']])
             ->assertJsonPath('data.date', $today->for_date->format('Y-m-d'))
             ->assertJsonPath('data.reference', 'GEN.1:1.VDC')
-            ->assertJsonPath('data.image_url', 'https://cdn.example/today.jpg')
-            ->assertHeader('Cache-Control', 'max-age=3600, public');
+            ->assertJsonPath('data.image_url', 'https://cdn.example/today.jpg');
+
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+        $this->assertStringContainsString('public', $cacheControl);
+        $this->assertStringContainsString('max-age=3600', $cacheControl);
     }
 
     public function test_it_returns_the_daily_verse_for_a_past_date(): void

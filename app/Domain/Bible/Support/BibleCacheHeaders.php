@@ -13,6 +13,8 @@ final class BibleCacheHeaders
 
     public const EXPORT_MAX_AGE = 86400;
 
+    public const DAILY_VERSE_MAX_AGE = 3600;
+
     /**
      * Headers for a list endpoint. The ETag is computed from the max
      * `updated_at` and row count across the filtered set so pagination

@@ -30,7 +30,7 @@ final class ResolveVersesRequest extends FormRequest
             'reference' => ['nullable', 'string', 'max:200'],
             'book' => ['nullable', 'string', 'max:8'],
             'chapter' => ['nullable', 'integer', 'min:1'],
-            'verses' => ['nullable', 'string', 'max:100', 'regex:/^[0-9,\-]+$/'],
+            'verses' => ['nullable', 'string', 'max:100', 'regex:/^\d+(-\d+)?(,\d+(-\d+)?)*$/'],
             'version' => ['nullable', 'string', 'max:16'],
         ];
     }

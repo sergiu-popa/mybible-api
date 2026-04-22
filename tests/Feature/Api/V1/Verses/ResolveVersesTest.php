@@ -186,6 +186,20 @@ final class ResolveVersesTest extends TestCase
             ->assertJsonValidationErrors(['version']);
     }
 
+    public function test_it_rejects_malformed_verses_field_on_the_verses_field(): void
+    {
+        $this
+            ->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('verses.index', [
+                'book' => 'GEN',
+                'chapter' => 1,
+                'verses' => '1,,3',
+                'version' => 'VDC',
+            ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['verses']);
+    }
+
     public function test_it_rejects_missing_auth(): void
     {
         $this

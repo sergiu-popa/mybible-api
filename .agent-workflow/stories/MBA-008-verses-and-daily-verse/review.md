@@ -1,8 +1,8 @@
 # Code Review: MBA-008-verses-and-daily-verse
 
 **Reviewer:** Code Reviewer agent
-**Verdict:** `REQUEST CHANGES`
-**Scope:** Diff against `main` for commit `6951380` — 28 files, +1538/-27.
+**Verdict:** `APPROVE`
+**Scope:** Diff against `main` for commits `6951380` (initial) + `11035e1` (review fixes) — 28 files, +1636/-27.
 
 ---
 
@@ -10,53 +10,38 @@
 
 The diff implements the two endpoints (`GET /api/v1/verses`, `GET /api/v1/daily-verse`) in line with the plan: Option A daily-verse shape, canonical+split request forms, three-tier version cascade, partial-resolution via `meta.missing`, and cross-cutting exception handlers for `InvalidReferenceException` / `NoDailyVerseForDateException`. Tests exercise the happy paths, split params, partial resolution, auth gate, cache header, and the unit-level cascade. Architecture, DTOs, and resources match the plan's table.
 
-The findings below are not blockers in shipping posture, but two `Warning`s should be resolved (or acknowledged) before APPROVE.
+Re-review after commit `11035e1` confirms both prior Warnings are fixed. `make test filter=Verses` → 37 passed. `make lint` + `make stan` clean.
 
 ---
 
 ## Warnings
 
-- [x] **`ResolveVersesRequest::resolveVersion()` — case handling is inconsistent between the three tiers.** `app/Http/Requests/Verses/ResolveVersesRequest.php:141-190`.
-  - Explicit `?version=` tier: `strtoupper($explicit)` **before** `versionExists()`. ✅
-  - Language-config tier: `config()` map returns canonical abbreviations; `versionExists()` matches. ✅
-  - **User-preferred tier (L169-173):** reads `$this->user()?->getAttribute('preferred_version')` and passes it **as-is** to `versionExists()`, only uppercasing the returned value. On a case-sensitive collation (utf8mb4_bin), a stored `"kjv"` would fail the lookup and fall through to the config tier silently — reordering the cascade without warning.
-  - **Fix:** uppercase once before the DB check, identical to the explicit-query branch:
-    ```php
-    $preferred = $this->user()?->getAttribute('preferred_version');
-    if (is_string($preferred) && $preferred !== '') {
-        $normalized = strtoupper($preferred);
-        if ($this->versionExists($normalized)) {
-            return $normalized;
-        }
-    }
-    ```
-  - **Why flag now:** MBA-018 will add this column, at which point the bug is live; easier to fix inside the story that introduces the read.
-
-- [x] **`ResolveVersesAction::handle()` re-loads relations that the query builder already resolved.** `app/Domain/Verses/Actions/ResolveVersesAction.php:19-21` calls `$verses->load(['version', 'book'])` right after `BibleVerseQueryBuilder::lookupReferences()` returned them. That adds two extra `SELECT` queries per request, and the abbreviations used in the `computeMissing()` key (`$verse->version->abbreviation`) are already known from the input `Reference[]`.
-  - **Fix (pick one):**
-    1. Map the resolved `$versionIds` / `$bookIds` from `BibleVerseQueryBuilder` back to abbreviations in-place (return a lightweight DTO alongside the `BibleVerse`s), OR
-    2. Drop the `load()` and build `computeMissing()`'s resolved-keys off the input references' `(version, book, chapter)` plus `$verse->verse`, since every row in the result-set belongs to exactly one group.
-  - **Why it matters:** the action claims (see task 22 / `test_it_batches_queries_by_version_book_chapter`) that query count ≈ distinct `(version, book, chapter)` groups. That assertion only counts `bible_verses` rows (filtered by SQL prefix) — it silently ignores the two relation-reload queries `load()` triggers. The current code violates the plan's batching intent.
+- [x] **`ResolveVersesRequest::resolveVersion()` — case handling was inconsistent between the three tiers.** `app/Http/Requests/Verses/ResolveVersesRequest.php:169-177`. Fixed in `11035e1`: the user-preferred tier now uppercases `$preferred` into `$normalized` **before** calling `versionExists()`, matching the explicit-query branch. A case-sensitive collation can no longer silently skip the tier and reorder the cascade.
+- [x] **`ResolveVersesAction::handle()` re-loaded relations already known to the query builder.** `app/Domain/Verses/Actions/ResolveVersesAction.php`. Fixed in `11035e1`: `BibleVerseQueryBuilder::lookupReferences()` now fetches full `BibleVersion`/`BibleBook` models (instead of id-only plucks) and attaches them via `setRelation()` on each resolved `BibleVerse`. The redundant `$verses->load(['version', 'book'])` call has been removed from the action. The batched-query guarantee asserted by `test_it_batches_queries_by_version_book_chapter` is preserved (still 2 catalog selects + N per-group verse selects, no post-hoc reload).
 
 ---
 
 ## Suggestions
 
-- **`ResolveVersesController` double-wraps the collection.** `app/Http/Controllers/Api/V1/Verses/ResolveVersesController.php:27-28` passes `VerseResource::collection($result->verses)` (an `AnonymousResourceCollection` of already-wrapped `VerseResource`s) into `new VerseCollection(...)` which itself declares `$collects = VerseResource::class`. Works today because `collectResource()` tolerates pre-wrapped items, but is redundant and fragile to future refactors. Prefer:
+_(Carried from the prior review — all non-blocking, engineer may address in a follow-up or ignore.)_
+
+- **`ResolveVersesController` double-wraps the collection.** `app/Http/Controllers/Api/V1/Verses/ResolveVersesController.php:27-28` passes `VerseResource::collection($result->verses)` (an `AnonymousResourceCollection` of already-wrapped `VerseResource`s) into `new VerseCollection(...)` which itself declares `$collects = VerseResource::class`. Works today because `collectResource()` tolerates pre-wrapped items, but is redundant. Prefer:
   ```php
   return (new VerseCollection($result->verses))
       ->additional(['meta' => ['missing' => $result->missing]]);
   ```
 
-- **`GetDailyVerseController::MAX_AGE` duplicates a capability already in `BibleCacheHeaders`.** `app/Http/Controllers/Api/V1/Verses/GetDailyVerseController.php:17`. The project already centralises cache constants in `App\Domain\Bible\Support\BibleCacheHeaders` (`LIST_MAX_AGE = 3600`, `EXPORT_MAX_AGE = 86400`). Consider adding a `DAILY_VERSE_MAX_AGE` constant there (or reusing `LIST_MAX_AGE`) so every public max-age lives in one file. Not a bug — just the pattern this repo has adopted.
+- **`GetDailyVerseController::MAX_AGE` duplicates a capability already in `BibleCacheHeaders`.** `app/Http/Controllers/Api/V1/Verses/GetDailyVerseController.php:17`. The project already centralises cache constants in `App\Domain\Bible\Support\BibleCacheHeaders` (`LIST_MAX_AGE = 3600`, `EXPORT_MAX_AGE = 86400`). Consider adding a `DAILY_VERSE_MAX_AGE` constant there (or reusing `LIST_MAX_AGE`) so every public max-age lives in one file.
 
-- **`tests/Feature/Api/V1/Verses/GetDailyVerseTest.php:42`** asserts `assertHeader('Cache-Control', 'max-age=3600, public')`. The string form relies on Symfony's alphabetical directive ordering; if Symfony ever changes the serialization (or we add another directive like `no-transform`), the assertion snaps. Prefer `assertHeader('Cache-Control', ...)` paired with `str_contains(...)` on the value, or at minimum leave a comment explaining the ordering constraint.
+- **`tests/Feature/Api/V1/Verses/GetDailyVerseTest.php:42`** asserts `assertHeader('Cache-Control', 'max-age=3600, public')`. The string form relies on Symfony's alphabetical directive ordering; if Symfony ever changes the serialization (or we add another directive like `no-transform`), the assertion snaps. Prefer a `str_contains(...)` check, or leave a comment explaining the ordering constraint.
 
-- **`DailyVerseFactory::definition()` uses `fake()->unique()->date()`.** `database/factories/DailyVerseFactory.php:23`. `unique()` accumulates across the test suite, and `date()`'s default range is 1 Jan 1970 → today. The state never resets between tests, so the only correctness risk is infinite retries if the sample space is exhausted (won't happen at realistic scale). Suggestion: `fake()->date()` without `unique()` — the unique constraint is on the column, and every test that cares about a specific `for_date` passes it explicitly anyway.
+- **`DailyVerseFactory::definition()` uses `fake()->unique()->date()`.** `database/factories/DailyVerseFactory.php:23`. `unique()` accumulates across the test suite; `date()`'s default range is 1 Jan 1970 → today. Risk is only infinite retries if the sample space is exhausted (won't happen at realistic scale). Suggestion: drop `unique()` — the unique constraint is on the column, and every test that cares about a specific `for_date` passes it explicitly anyway.
 
-- **`ResolveVersesRequest::rules()` regex `/^[0-9,\-]+$/`.** `app/Http/Requests/Verses/ResolveVersesRequest.php:33`. Accepts degenerate inputs like `verses=,-,`, `verses=1,,3`, `verses=-`. The parser then throws `InvalidReferenceException` for these, which renders as `422 { errors: { reference: [...] } }` — but the client sent a bad `verses` field, not a bad `reference`. Consider tightening the rule (`/^\d+(-\d+)?(,\d+(-\d+)?)*$/`) so the 422 attributes the error to the right field.
+- **`ResolveVersesRequest::rules()` regex `/^[0-9,\-]+$/`.** `app/Http/Requests/Verses/ResolveVersesRequest.php:33`. Accepts degenerate inputs like `verses=,-,`, `verses=1,,3`, `verses=-`. The parser then throws `InvalidReferenceException` for these, which renders as `422 { errors: { reference: [...] } }` — but the client sent a bad `verses` field. Tighten to `/^\d+(-\d+)?(,\d+(-\d+)?)*$/` so the 422 attributes the error to the right field.
 
-- **`BibleVerseQueryBuilder::lookupReferences()` issues one query per `(version, book, chapter)` group.** `app/Domain/Bible/QueryBuilders/BibleVerseQueryBuilder.php:65-85`. For multi-chapter references (e.g. `GEN.1:1;2:1;3:1.VDC`) this is N queries. Acceptable for bounded ranges and explicit in the plan, but a single `whereIn((bible_version_id, bible_book_id, chapter, verse), tuples)` would collapse it. Not worth refactoring today; revisit if/when a hot path emerges.
+- **`BibleVerseQueryBuilder::lookupReferences()` issues one query per `(version, book, chapter)` group.** `app/Domain/Bible/QueryBuilders/BibleVerseQueryBuilder.php:67-89`. For multi-chapter references (e.g. `GEN.1:1;2:1;3:1.VDC`) this is N queries. Acceptable for bounded ranges and explicit in the plan; a single `whereIn((bible_version_id, bible_book_id, chapter, verse), tuples)` would collapse it. Not worth refactoring today; revisit if/when a hot path emerges.
+
+- **`ResolveVersesAction::wholeChapterVerseNumbers()` — process-level `static $cache`.** `app/Domain/Verses/Actions/ResolveVersesAction.php:118`. The cache key is `book|chapter` with no tenant/seed dimension. Bible catalog is effectively immutable in production, so this is safe at runtime; in a long-lived worker it also survives across requests which is what you want. Flag only in case the catalog ever becomes per-tenant or per-version-family.
 
 ---
 
@@ -85,8 +70,4 @@ The findings below are not blockers in shipping posture, but two `Warning`s shou
 
 ## Verdict rationale
 
-Two `Warning`s remain unchecked:
-1. Case-sensitivity inconsistency in `ResolveVersesRequest::resolveVersion()`.
-2. Relation re-loading in `ResolveVersesAction::handle()` that defeats the batched-query guarantee asserted by the unit test.
-
-Status stays `in-review` pending Engineer fixes (or explicit acknowledgement with a `— acknowledged: <reason>` line on each).
+Both Warnings from the initial review are fixed in `11035e1` and verified against source. No Critical findings. Remaining items are Suggestions (non-blocking). Story advances to `qa-ready`.
