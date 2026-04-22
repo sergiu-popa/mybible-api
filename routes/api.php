@@ -12,6 +12,10 @@ use App\Http\Controllers\Api\V1\Bible\ExportBibleVersionController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBookChaptersController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBooksController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleVersionsController;
+use App\Http\Controllers\Api\V1\Notes\DeleteNoteController;
+use App\Http\Controllers\Api\V1\Notes\ListNotesController;
+use App\Http\Controllers\Api\V1\Notes\StoreNoteController;
+use App\Http\Controllers\Api\V1\Notes\UpdateNoteController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
 use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
@@ -70,6 +74,16 @@ Route::prefix('v1')->group(function (): void {
             Route::post('{plan:slug}/subscriptions', StartReadingPlanSubscriptionController::class)
                 ->middleware('auth:sanctum')
                 ->name('subscriptions.store');
+        });
+
+    Route::middleware('auth:sanctum')
+        ->prefix('notes')
+        ->name('notes.')
+        ->group(function (): void {
+            Route::get('/', ListNotesController::class)->name('index');
+            Route::post('/', StoreNoteController::class)->name('store');
+            Route::patch('{note}', UpdateNoteController::class)->name('update');
+            Route::delete('{note}', DeleteNoteController::class)->name('destroy');
         });
 
     Route::middleware('auth:sanctum')
