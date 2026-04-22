@@ -16,7 +16,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => env('AUTH_GUARD', 'web'),
+        'guard' => env('AUTH_GUARD', 'sanctum'),
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
@@ -25,21 +25,14 @@ return [
     | Authentication Guards
     |--------------------------------------------------------------------------
     |
-    | Next, you may define every authentication guard for your application.
-    | Of course, a great default configuration has been defined for you
-    | which utilizes session storage plus the Eloquent user provider.
-    |
-    | All authentication guards have a user provider, which defines how the
-    | users are actually retrieved out of your database or other storage
-    | system used by the application. Typically, Eloquent is utilized.
-    |
-    | Supported: "session"
+    | This API is stateless — no `web`/session guard. The `sanctum` guard
+    | below is the default; Laravel Sanctum's service provider fills in the
+    | driver so only the provider needs to be declared here.
     |
     */
 
     'guards' => [
-        'web' => [
-            'driver' => 'session',
+        'sanctum' => [
             'provider' => 'users',
         ],
     ],
@@ -125,6 +118,6 @@ return [
     |
     */
 
-    'password_reset_url' => env('AUTH_PASSWORD_RESET_URL', 'http://api.mybible.local/reset-password'),
+    'password_reset_url' => env('AUTH_PASSWORD_RESET_URL', 'http://localhost/reset-password'),
 
 ];

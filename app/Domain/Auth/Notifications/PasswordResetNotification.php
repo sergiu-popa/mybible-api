@@ -9,7 +9,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Arr;
 
 final class PasswordResetNotification extends Notification implements ShouldQueue
 {
@@ -32,10 +31,8 @@ final class PasswordResetNotification extends Notification implements ShouldQueu
     {
         $url = $this->resetUrl($notifiable);
 
-        $expireMinutes = (int) config(
-            'auth.passwords.' . Arr::get(config('auth.defaults'), 'passwords') . '.expire',
-            60,
-        );
+        $broker = (string) config('auth.defaults.passwords');
+        $expireMinutes = (int) config("auth.passwords.{$broker}.expire", 60);
 
         return (new MailMessage)
             ->subject('Reset your password')

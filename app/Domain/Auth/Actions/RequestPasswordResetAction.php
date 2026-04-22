@@ -11,10 +11,11 @@ final class RequestPasswordResetAction
 {
     public function execute(RequestPasswordResetData $data): void
     {
-        // The broker status is deliberately discarded so the caller can send
-        // a uniform 200 response regardless of whether the email maps to an
-        // existing user, preventing account-enumeration via response shape
-        // or timing difference.
+        // The broker status is deliberately discarded so the caller returns
+        // a uniform 200 regardless of whether the email maps to a real user,
+        // preventing account enumeration via response shape. (A minor timing
+        // channel still exists — known emails incur a DB insert into
+        // password_reset_tokens, unknown ones short-circuit — accepted.)
         Password::broker()->sendResetLink(['email' => $data->email]);
     }
 }
