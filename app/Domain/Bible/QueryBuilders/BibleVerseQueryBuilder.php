@@ -50,29 +50,31 @@ final class BibleVerseQueryBuilder extends Builder
             $bookAbbreviations[$group['book']] = true;
         }
 
-        /** @var array<string, int> $versionIds */
-        $versionIds = BibleVersion::query()
+        /** @var array<string, BibleVersion> $versionsByAbbreviation */
+        $versionsByAbbreviation = BibleVersion::query()
             ->whereIn('abbreviation', array_keys($versionAbbreviations))
-            ->pluck('id', 'abbreviation')
+            ->get()
+            ->keyBy('abbreviation')
             ->all();
 
-        /** @var array<string, int> $bookIds */
-        $bookIds = BibleBook::query()
+        /** @var array<string, BibleBook> $booksByAbbreviation */
+        $booksByAbbreviation = BibleBook::query()
             ->whereIn('abbreviation', array_keys($bookAbbreviations))
-            ->pluck('id', 'abbreviation')
+            ->get()
+            ->keyBy('abbreviation')
             ->all();
 
         foreach ($groups as $group) {
-            $versionId = $versionIds[$group['version']] ?? null;
-            $bookId = $bookIds[$group['book']] ?? null;
+            $version = $versionsByAbbreviation[$group['version']] ?? null;
+            $book = $booksByAbbreviation[$group['book']] ?? null;
 
-            if ($versionId === null || $bookId === null) {
+            if ($version === null || $book === null) {
                 continue;
             }
 
             $query = BibleVerse::query()
-                ->where('bible_version_id', $versionId)
-                ->where('bible_book_id', $bookId)
+                ->where('bible_version_id', $version->id)
+                ->where('bible_book_id', $book->id)
                 ->where('chapter', $group['chapter']);
 
             if (! $group['whole_chapter']) {
@@ -80,6 +82,8 @@ final class BibleVerseQueryBuilder extends Builder
             }
 
             foreach ($query->get() as $verse) {
+                $verse->setRelation('version', $version);
+                $verse->setRelation('book', $book);
                 $results->push($verse);
             }
         }

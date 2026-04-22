@@ -168,8 +168,12 @@ final class ResolveVersesRequest extends FormRequest
         // dynamically so this story does not depend on that migration.
         $preferred = $this->user()?->getAttribute('preferred_version');
 
-        if (is_string($preferred) && $preferred !== '' && $this->versionExists($preferred)) {
-            return strtoupper($preferred);
+        if (is_string($preferred) && $preferred !== '') {
+            $normalized = strtoupper($preferred);
+
+            if ($this->versionExists($normalized)) {
+                return $normalized;
+            }
         }
 
         $language = $this->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY, Language::En);

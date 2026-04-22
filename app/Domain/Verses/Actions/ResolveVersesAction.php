@@ -18,8 +18,6 @@ final class ResolveVersesAction
         /** @var Collection<int, BibleVerse> $verses */
         $verses = BibleVerse::query()->lookupReferences($data->references);
 
-        $verses = $verses->load(['version', 'book']);
-
         $missing = $this->computeMissing($data->references, $verses);
 
         return new VerseLookupResult(
