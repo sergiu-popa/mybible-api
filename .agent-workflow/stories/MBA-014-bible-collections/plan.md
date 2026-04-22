@@ -92,22 +92,22 @@ Factories required (for tests): `CollectionTopicFactory`, `CollectionReferenceFa
 
 ## Tasks
 
-- [ ] 1. Create the migration for `collection_topics` + `collection_references` with the columns and indexes listed under Data & migrations.
-- [ ] 2. Create `App\Domain\Collections\Models\CollectionTopic` with fillable/casts, `references()` HasMany, `newEloquentBuilder()`, and `resolveRouteBinding()` that filters by the request-resolved `Language`.
-- [ ] 3. Create `App\Domain\Collections\Models\CollectionReference` with `collectionTopic()` BelongsTo and no route binding.
-- [ ] 4. Create `App\Domain\Collections\QueryBuilders\CollectionTopicQueryBuilder` with `forLanguage()`, `withReferenceCount()`, `ordered()`.
-- [ ] 5. Create `App\Domain\Collections\DataTransferObjects\ResolvedCollectionReference` as a readonly class with the four fields listed in Key types.
-- [ ] 6. Create `App\Domain\Collections\Actions\ResolveCollectionReferencesAction` wrapping `ReferenceParser::parse()` + `ReferenceFormatter::toHumanReadable()` with per-row try/catch on `InvalidReferenceException`; log a warning on degraded rows.
-- [ ] 7. Create factories `CollectionTopicFactory` and `CollectionReferenceFactory`, plus states `withValidReferences()` and `withMalformedReference()` on the reference factory.
-- [ ] 8. Create `ListCollectionTopicsRequest` (language nullable, per_page with same bounds as `ListReadingPlansRequest`).
-- [ ] 9. Create `ShowCollectionTopicRequest` (authorize true, no body rules).
-- [ ] 10. Create `CollectionTopicResource` rendering the list summary shape.
-- [ ] 11. Create `ResolvedCollectionReferenceResource` rendering `raw`, `parsed`, `display_text`, `parse_error` (all keys always present).
-- [ ] 12. Create `CollectionTopicDetailResource` embedding `ResolvedCollectionReferenceResource::collection(...)` built from the Action's output, not from the raw `references` relation.
-- [ ] 13. Create `ListCollectionTopicsController` calling the QueryBuilder with `forLanguage` + `withReferenceCount` + `ordered` and paginating.
-- [ ] 14. Create `ShowCollectionTopicController` loading `references` (ordered), invoking `ResolveCollectionReferencesAction`, and handing the result to `CollectionTopicDetailResource`.
-- [ ] 15. Add the two routes under the `v1` prefix group with `api-key-or-sanctum` + `resolve-language` middleware and names `collections.index` / `collections.show`.
-- [ ] 16. Add `Cache-Control: public, max-age=3600` on both responses.
+- [x] 1. Create the migration for `collection_topics` + `collection_references` with the columns and indexes listed under Data & migrations.
+- [x] 2. Create `App\Domain\Collections\Models\CollectionTopic` with fillable/casts, `references()` HasMany, `newEloquentBuilder()`, and `resolveRouteBinding()` that filters by the request-resolved `Language`.
+- [x] 3. Create `App\Domain\Collections\Models\CollectionReference` with `collectionTopic()` BelongsTo and no route binding.
+- [x] 4. Create `App\Domain\Collections\QueryBuilders\CollectionTopicQueryBuilder` with `forLanguage()`, `withReferenceCount()`, `ordered()`.
+- [x] 5. Create `App\Domain\Collections\DataTransferObjects\ResolvedCollectionReference` as a readonly class with the four fields listed in Key types.
+- [x] 6. Create `App\Domain\Collections\Actions\ResolveCollectionReferencesAction` wrapping `ReferenceParser::parse()` + `ReferenceFormatter::toHumanReadable()` with per-row try/catch on `InvalidReferenceException`; log a warning on degraded rows.
+- [x] 7. Create factories `CollectionTopicFactory` and `CollectionReferenceFactory`, plus states `withValidReferences()` and `withMalformedReference()` on the reference factory.
+- [x] 8. Create `ListCollectionTopicsRequest` (language nullable, per_page with same bounds as `ListReadingPlansRequest`).
+- [x] 9. Create `ShowCollectionTopicRequest` (authorize true, no body rules).
+- [x] 10. Create `CollectionTopicResource` rendering the list summary shape.
+- [x] 11. Create `ResolvedCollectionReferenceResource` rendering `raw`, `parsed`, `display_text`, `parse_error` (all keys always present).
+- [x] 12. Create `CollectionTopicDetailResource` embedding `ResolvedCollectionReferenceResource::collection(...)` built from the Action's output, not from the raw `references` relation.
+- [x] 13. Create `ListCollectionTopicsController` calling the QueryBuilder with `forLanguage` + `withReferenceCount` + `ordered` and paginating.
+- [x] 14. Create `ShowCollectionTopicController` loading `references` (ordered), invoking `ResolveCollectionReferencesAction`, and handing the result to `CollectionTopicDetailResource`.
+- [x] 15. Add the two routes under the `v1` prefix group with `api-key-or-sanctum` + `resolve-language` middleware and names `collections.index` / `collections.show`.
+- [x] 16. Add `Cache-Control: public, max-age=3600` on both responses.
 - [ ] 17. Write feature test `ListCollectionTopicsTest` covering: default-language result, explicit `?language=ro` filter, api-key auth path, `reference_count` present, pagination shape.
 - [ ] 18. Write feature test `ShowCollectionTopicTest` covering: happy path with all references parsed, a topic containing one malformed reference (asserts `parse_error` non-null and sibling refs still parsed), 404 when topic id does not belong to the resolved language, 404 when id does not exist.
 - [ ] 19. Write unit test `ResolveCollectionReferencesActionTest` covering: all-valid input, mixed valid + malformed (`InvalidReferenceException` branch recovered into DTO), parsed DTO shape round-trips through the Resource, log warning fired on degraded rows.

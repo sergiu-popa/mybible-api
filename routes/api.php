@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\V1\Bible\ExportBibleVersionController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBookChaptersController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBooksController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleVersionsController;
+use App\Http\Controllers\Api\V1\Collections\ListCollectionTopicsController;
+use App\Http\Controllers\Api\V1\Collections\ShowCollectionTopicController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
 use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
@@ -60,6 +62,14 @@ Route::prefix('v1')->group(function (): void {
         Route::get('verses', ResolveVersesController::class)->name('verses.index');
         Route::get('daily-verse', GetDailyVerseController::class)->name('daily-verse.show');
     });
+
+    Route::prefix('collections')
+        ->name('collections.')
+        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->group(function (): void {
+            Route::get('/', ListCollectionTopicsController::class)->name('index');
+            Route::get('{topic}', ShowCollectionTopicController::class)->name('show');
+        });
 
     Route::prefix('reading-plans')
         ->name('reading-plans.')
