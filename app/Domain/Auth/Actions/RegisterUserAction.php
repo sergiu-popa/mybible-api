@@ -16,6 +16,7 @@ final class RegisterUserAction
             'name' => $data->name,
             'email' => $data->email,
             'password' => $data->password,
+            'roles' => [],
         ]);
 
         $token = $user->createToken('auth')->plainTextToken;

@@ -10,7 +10,7 @@ wins.
 - **Type:** JSON-only HTTP API (no UI, no Blade, no Livewire, no Tailwind, no Vite)
 - **PHP version:** 8.4
 - **Laravel version:** 13.x
-- **Auth:** none yet (Sanctum/Passport TBD — do not scaffold auth until decided)
+- **Auth:** Laravel Sanctum bearer tokens + `api-key-or-sanctum` middleware for dual-auth public routes. Hash driver: Argon2id (memory 65536, time 4, threads 1).
 
 ## Story Location
 

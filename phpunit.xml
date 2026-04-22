@@ -21,6 +21,12 @@
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="HASH_DRIVER" value="argon2id"/>
+        <!-- Minimum argon2id cost so the suite is not dominated by hash time.
+             Prod hashes (m=65536, t=4) still verify fine because password_verify
+             reads the cost out of the hash string, not from runtime config. -->
+        <env name="ARGON_MEMORY" value="1024"/>
+        <env name="ARGON_TIME" value="1"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_CONNECTION" value="mysql"/>
