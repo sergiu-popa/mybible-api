@@ -8,10 +8,17 @@ use App\Domain\Reference\Formatter\ReferenceFormatter;
 
 final class ReferenceCreator
 {
+    private readonly ReferenceFormatter $formatter;
+
+    private readonly LinkBuilder $linkBuilder;
+
     public function __construct(
-        private readonly LinkBuilder $linkBuilder = new CanonicalLinkBuilder,
-        private readonly ReferenceFormatter $formatter = new ReferenceFormatter,
-    ) {}
+        ?LinkBuilder $linkBuilder = null,
+        ?ReferenceFormatter $formatter = null,
+    ) {
+        $this->formatter = $formatter ?? new ReferenceFormatter;
+        $this->linkBuilder = $linkBuilder ?? new CanonicalLinkBuilder($this->formatter);
+    }
 
     /**
      * Wrap each Bible reference matched by the language regex in a

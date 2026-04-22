@@ -28,6 +28,15 @@ final class InvalidReferenceExceptionTest extends TestCase
         $this->assertStringContainsString('XYZ', $e->reason());
     }
 
+    public function test_invalid_verses_factory_sets_context(): void
+    {
+        $e = InvalidReferenceException::invalidVerses('GEN', 1, 'verses must be ascending and unique');
+
+        $this->assertSame('GEN.1', $e->input());
+        $this->assertSame('verses must be ascending and unique', $e->reason());
+        $this->assertStringContainsString('GEN.1', $e->getMessage());
+    }
+
     public function test_chapter_out_of_range_factory_sets_context(): void
     {
         $e = InvalidReferenceException::chapterOutOfRange('GEN.99.VDC', 'GEN', 99, 50);

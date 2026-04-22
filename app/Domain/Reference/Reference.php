@@ -21,15 +21,17 @@ final readonly class Reference
 
         foreach ($verses as $verse) {
             if ($verse < 1) {
-                throw InvalidReferenceException::unparseable(
-                    $this->describe(),
+                throw InvalidReferenceException::invalidVerses(
+                    $this->book,
+                    $this->chapter,
                     'verses must be positive integers',
                 );
             }
 
             if ($verse <= $previous) {
-                throw InvalidReferenceException::unparseable(
-                    $this->describe(),
+                throw InvalidReferenceException::invalidVerses(
+                    $this->book,
+                    $this->chapter,
                     'verses must be ascending and unique',
                 );
             }
@@ -53,13 +55,8 @@ final readonly class Reference
         return count($this->verses) > 1;
     }
 
-    public function getVerse(): int
+    public function getVerse(): ?int
     {
-        return $this->verses[0] ?? 0;
-    }
-
-    private function describe(): string
-    {
-        return sprintf('%s.%d', $this->book, $this->chapter);
+        return $this->verses[0] ?? null;
     }
 }

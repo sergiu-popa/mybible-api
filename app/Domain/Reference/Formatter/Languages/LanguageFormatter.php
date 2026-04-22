@@ -24,7 +24,8 @@ interface LanguageFormatter
      * PCRE pattern matching free-text Bible references in this language.
      *
      * The pattern must expose two capture groups: the book name (group 1) and
-     * the passage segment (group 2).
+     * the passage segment (group 2). Implementations must use the `i` flag so
+     * that free-text matching is case-insensitive across languages.
      */
     public function linkifyRegex(): string;
 

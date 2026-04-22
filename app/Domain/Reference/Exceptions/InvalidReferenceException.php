@@ -36,6 +36,17 @@ final class InvalidReferenceException extends RuntimeException
         );
     }
 
+    public static function invalidVerses(string $book, int $chapter, string $reason): self
+    {
+        $input = sprintf('%s.%d', $book, $chapter);
+
+        return new self(
+            $input,
+            $reason,
+            sprintf('Invalid Reference for "%s": %s', $input, $reason),
+        );
+    }
+
     public static function chapterOutOfRange(string $input, string $book, int $chapter, int $max): self
     {
         $reason = sprintf('chapter %d out of range for book "%s" (max %d)', $chapter, $book, $max);

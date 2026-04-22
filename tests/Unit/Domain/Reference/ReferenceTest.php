@@ -17,7 +17,7 @@ final class ReferenceTest extends TestCase
         $this->assertTrue($ref->isWholeChapter());
         $this->assertFalse($ref->isSingleVerse());
         $this->assertFalse($ref->isRange());
-        $this->assertSame(0, $ref->getVerse());
+        $this->assertNull($ref->getVerse());
     }
 
     public function test_single_verse(): void

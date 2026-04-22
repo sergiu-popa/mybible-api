@@ -37,7 +37,7 @@ final class ReferenceFormatter
 
     public function toHumanReadable(Reference $ref, string $language): string
     {
-        $formatter = $this->resolveLanguage($language);
+        $formatter = $this->forLanguage($language);
 
         $book = $formatter->bookName($ref->book);
 
@@ -50,7 +50,11 @@ final class ReferenceFormatter
 
     public function forLanguage(string $language): LanguageFormatter
     {
-        return $this->resolveLanguage($language);
+        return match ($language) {
+            'ro' => new RomanianFormatter,
+            'hu' => new HungarianFormatter,
+            default => new EnglishFormatter,
+        };
     }
 
     /**
@@ -96,14 +100,5 @@ final class ReferenceFormatter
         }
 
         return implode(',', $segments);
-    }
-
-    private function resolveLanguage(string $language): LanguageFormatter
-    {
-        return match ($language) {
-            'ro' => new RomanianFormatter,
-            'hu' => new HungarianFormatter,
-            default => new EnglishFormatter,
-        };
     }
 }
