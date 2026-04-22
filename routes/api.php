@@ -12,6 +12,10 @@ use App\Http\Controllers\Api\V1\Bible\ExportBibleVersionController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBookChaptersController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBooksController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleVersionsController;
+use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalArchiveController;
+use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalFavoritesController;
+use App\Http\Controllers\Api\V1\Devotionals\ShowDevotionalController;
+use App\Http\Controllers\Api\V1\Devotionals\ToggleDevotionalFavoriteController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
 use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
@@ -70,6 +74,24 @@ Route::prefix('v1')->group(function (): void {
             Route::post('{plan:slug}/subscriptions', StartReadingPlanSubscriptionController::class)
                 ->middleware('auth:sanctum')
                 ->name('subscriptions.store');
+        });
+
+    Route::prefix('devotionals')
+        ->name('devotionals.')
+        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->group(function (): void {
+            // Register `/archive` before the root show route so a future
+            // `{devotional}` segment cannot shadow it.
+            Route::get('archive', ListDevotionalArchiveController::class)->name('archive');
+            Route::get('/', ShowDevotionalController::class)->name('show');
+        });
+
+    Route::prefix('devotional-favorites')
+        ->name('devotional-favorites.')
+        ->middleware('auth:sanctum')
+        ->group(function (): void {
+            Route::get('/', ListDevotionalFavoritesController::class)->name('index');
+            Route::post('toggle', ToggleDevotionalFavoriteController::class)->name('toggle');
         });
 
     Route::middleware('auth:sanctum')
