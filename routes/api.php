@@ -36,17 +36,21 @@ Route::prefix('v1')->group(function (): void {
 
     Route::prefix('bible-versions')
         ->name('bible-versions.')
-        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->middleware('api-key-or-sanctum')
         ->group(function (): void {
-            Route::get('/', ListBibleVersionsController::class)->name('index');
+            Route::get('/', ListBibleVersionsController::class)
+                ->middleware('resolve-language')
+                ->name('index');
             Route::get('{version:abbreviation}/export', ExportBibleVersionController::class)->name('export');
         });
 
     Route::prefix('books')
         ->name('books.')
-        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->middleware('api-key-or-sanctum')
         ->group(function (): void {
-            Route::get('/', ListBibleBooksController::class)->name('index');
+            Route::get('/', ListBibleBooksController::class)
+                ->middleware('resolve-language')
+                ->name('index');
             Route::get('{book:abbreviation}/chapters', ListBibleBookChaptersController::class)->name('chapters');
         });
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Bible\Support;
 
-use App\Domain\Bible\Models\BibleBook;
 use App\Domain\Bible\Models\BibleVerse;
 use App\Domain\Bible\Models\BibleVersion;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -36,7 +35,6 @@ final class BibleVersionExporter
         fwrite($out, ',"books":[');
 
         $currentBookId = null;
-        $currentBook = null;
         $currentChapter = null;
         $firstBook = true;
         $firstChapter = true;
@@ -48,25 +46,27 @@ final class BibleVersionExporter
             ->orderBy('bible_books.position')
             ->orderBy('bible_verses.chapter')
             ->orderBy('bible_verses.verse')
-            ->select('bible_verses.*');
+            ->select([
+                'bible_verses.*',
+                'bible_books.abbreviation as book_abbreviation',
+                'bible_books.position as book_position',
+            ]);
 
         foreach ($query->lazy() as $verse) {
-            /** @var BibleVerse $verse */
             if ($verse->bible_book_id !== $currentBookId) {
                 if (! $firstBook) {
                     fwrite($out, ']}]}');
                 }
 
                 $currentBookId = $verse->bible_book_id;
-                $currentBook = BibleBook::query()->findOrFail($currentBookId);
                 $currentChapter = null;
                 $firstChapter = true;
                 $firstVerse = true;
 
                 fwrite($out, ($firstBook ? '' : ',') . '{');
-                fwrite($out, '"id":' . $currentBook->id);
-                fwrite($out, ',"abbreviation":' . $this->json($currentBook->abbreviation));
-                fwrite($out, ',"position":' . $currentBook->position);
+                fwrite($out, '"id":' . $verse->bible_book_id);
+                fwrite($out, ',"abbreviation":' . $this->json((string) $verse->getAttribute('book_abbreviation')));
+                fwrite($out, ',"position":' . (int) $verse->getAttribute('book_position'));
                 fwrite($out, ',"chapters":[');
 
                 $firstBook = false;

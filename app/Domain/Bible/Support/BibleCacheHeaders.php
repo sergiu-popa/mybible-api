@@ -23,10 +23,14 @@ final class BibleCacheHeaders
      */
     public static function forVersionList(Builder $query): array
     {
-        $clone = (clone $query);
+        $row = (clone $query)
+            ->toBase()
+            ->reorder()
+            ->selectRaw('MAX(updated_at) as max_updated_at, COUNT(*) as total')
+            ->first();
 
-        $max = $clone->max('updated_at');
-        $count = (clone $query)->count();
+        $max = $row?->max_updated_at;
+        $count = $row === null ? 0 : (int) $row->total;
 
         $payload = 'versions|' . ($max ?? '') . '|' . $count;
 

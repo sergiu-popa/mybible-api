@@ -34,6 +34,7 @@ final class BibleCanonSeeder extends Seeder
             $position++;
 
             $names = $this->localizedNames($abbreviation, $formatters);
+            $shortNames = $this->placeholderShortNames($abbreviation, $formatters);
 
             $book = BibleBook::query()->updateOrCreate(
                 ['abbreviation' => $abbreviation],
@@ -42,7 +43,7 @@ final class BibleCanonSeeder extends Seeder
                     'position' => $position,
                     'chapter_count' => $chapterCount,
                     'names' => $names,
-                    'short_names' => $names,
+                    'short_names' => $shortNames,
                 ],
             );
 
@@ -68,5 +69,25 @@ final class BibleCanonSeeder extends Seeder
         }
 
         return $names;
+    }
+
+    /**
+     * Short names have no authoritative source yet; seed each language with the
+     * canonical abbreviation so downstream consumers get a stable placeholder
+     * rather than the long name. Replace once LanguageFormatter exposes short
+     * forms (see plan risk note).
+     *
+     * @param  array<string, LanguageFormatter>  $formatters
+     * @return array<string, string>
+     */
+    private function placeholderShortNames(string $abbreviation, array $formatters): array
+    {
+        $shortNames = [];
+
+        foreach (array_keys($formatters) as $language) {
+            $shortNames[$language] = $abbreviation;
+        }
+
+        return $shortNames;
     }
 }
