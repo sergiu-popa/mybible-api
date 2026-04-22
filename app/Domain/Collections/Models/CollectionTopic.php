@@ -51,10 +51,10 @@ final class CollectionTopic extends Model
     {
         $field ??= $this->getRouteKeyName();
 
-        $language = request()->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY, Language::En);
+        $language = $this->resolveLanguageForBinding();
 
         return CollectionTopic::query()
-            ->forLanguage($language instanceof Language ? $language : Language::En)
+            ->forLanguage($language)
             ->where($field, $value)
             ->first();
     }
@@ -66,5 +66,26 @@ final class CollectionTopic extends Model
     public function newEloquentBuilder($query): Builder
     {
         return new CollectionTopicQueryBuilder($query);
+    }
+
+    /**
+     * Resolve the request language for route-model binding.
+     *
+     * Binding can execute before `ResolveRequestLanguage` has populated the
+     * request attributes, so we read the raw query string as the middleware
+     * does and fall back to the attribute bag when already populated.
+     */
+    private function resolveLanguageForBinding(): Language
+    {
+        $request = request();
+        $attribute = $request->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY);
+
+        if ($attribute instanceof Language) {
+            return $attribute;
+        }
+
+        $raw = $request->query('language');
+
+        return Language::fromRequest(is_string($raw) ? $raw : null);
     }
 }

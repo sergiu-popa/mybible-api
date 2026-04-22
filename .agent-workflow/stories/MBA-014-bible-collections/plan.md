@@ -108,10 +108,10 @@ Factories required (for tests): `CollectionTopicFactory`, `CollectionReferenceFa
 - [x] 14. Create `ShowCollectionTopicController` loading `references` (ordered), invoking `ResolveCollectionReferencesAction`, and handing the result to `CollectionTopicDetailResource`.
 - [x] 15. Add the two routes under the `v1` prefix group with `api-key-or-sanctum` + `resolve-language` middleware and names `collections.index` / `collections.show`.
 - [x] 16. Add `Cache-Control: public, max-age=3600` on both responses.
-- [ ] 17. Write feature test `ListCollectionTopicsTest` covering: default-language result, explicit `?language=ro` filter, api-key auth path, `reference_count` present, pagination shape.
-- [ ] 18. Write feature test `ShowCollectionTopicTest` covering: happy path with all references parsed, a topic containing one malformed reference (asserts `parse_error` non-null and sibling refs still parsed), 404 when topic id does not belong to the resolved language, 404 when id does not exist.
-- [ ] 19. Write unit test `ResolveCollectionReferencesActionTest` covering: all-valid input, mixed valid + malformed (`InvalidReferenceException` branch recovered into DTO), parsed DTO shape round-trips through the Resource, log warning fired on degraded rows.
-- [ ] 20. Run `make lint-fix`, `make stan`, `make test --filter=Collection`, then full `make test` before handing off for review.
+- [x] 17. Write feature test `ListCollectionTopicsTest` covering: default-language result, explicit `?language=ro` filter, api-key auth path, `reference_count` present, pagination shape.
+- [x] 18. Write feature test `ShowCollectionTopicTest` covering: happy path with all references parsed, a topic containing one malformed reference (asserts `parse_error` non-null and sibling refs still parsed), 404 when topic id does not belong to the resolved language, 404 when id does not exist.
+- [x] 19. Write unit test `ResolveCollectionReferencesActionTest` covering: all-valid input, mixed valid + malformed (`InvalidReferenceException` branch recovered into DTO), parsed DTO shape round-trips through the Resource, log warning fired on degraded rows.
+- [x] 20. Run `make lint-fix`, `make stan`, `make test --filter=Collection`, then full `make test` before handing off for review.
 
 ## Risks & notes
 
