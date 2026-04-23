@@ -16,6 +16,14 @@ use App\Http\Controllers\Api\V1\Notes\DeleteNoteController;
 use App\Http\Controllers\Api\V1\Notes\ListNotesController;
 use App\Http\Controllers\Api\V1\Notes\StoreNoteController;
 use App\Http\Controllers\Api\V1\Notes\UpdateNoteController;
+use App\Http\Controllers\Api\V1\Favorites\CreateFavoriteCategoryController;
+use App\Http\Controllers\Api\V1\Favorites\CreateFavoriteController;
+use App\Http\Controllers\Api\V1\Favorites\DeleteFavoriteCategoryController;
+use App\Http\Controllers\Api\V1\Favorites\DeleteFavoriteController;
+use App\Http\Controllers\Api\V1\Favorites\ListFavoriteCategoriesController;
+use App\Http\Controllers\Api\V1\Favorites\ListFavoritesController;
+use App\Http\Controllers\Api\V1\Favorites\UpdateFavoriteCategoryController;
+use App\Http\Controllers\Api\V1\Favorites\UpdateFavoriteController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
 use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
@@ -84,6 +92,26 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/', StoreNoteController::class)->name('store');
             Route::patch('{note}', UpdateNoteController::class)->name('update');
             Route::delete('{note}', DeleteNoteController::class)->name('destroy');
+        });
+
+    Route::middleware(['auth:sanctum', 'resolve-language'])
+        ->prefix('favorite-categories')
+        ->name('favorite-categories.')
+        ->group(function (): void {
+            Route::get('/', ListFavoriteCategoriesController::class)->name('index');
+            Route::post('/', CreateFavoriteCategoryController::class)->name('store');
+            Route::patch('{category}', UpdateFavoriteCategoryController::class)->name('update');
+            Route::delete('{category}', DeleteFavoriteCategoryController::class)->name('destroy');
+        });
+
+    Route::middleware(['auth:sanctum', 'resolve-language'])
+        ->prefix('favorites')
+        ->name('favorites.')
+        ->group(function (): void {
+            Route::get('/', ListFavoritesController::class)->name('index');
+            Route::post('/', CreateFavoriteController::class)->name('store');
+            Route::patch('{favorite}', UpdateFavoriteController::class)->name('update');
+            Route::delete('{favorite}', DeleteFavoriteController::class)->name('destroy');
         });
 
     Route::middleware('auth:sanctum')
