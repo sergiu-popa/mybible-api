@@ -54,6 +54,21 @@ test-unit:
 test-feature: migrate-test
 	docker exec mybible-api-app php artisan test --compact --testsuite=Feature
 
+# Post-cutover "is it up?" smoke suite. Hits the live TARGET_URL;
+# credentials are loaded from .env.smoke (gitignored) if present, or
+# can be exported on the host and forwarded via `-e`. Status-code
+# assertions only — correctness is the regular feature suite's job.
+#
+# Example:
+#   make smoke TARGET_URL=https://api.mybible.eu
+smoke:
+	@test -f .env.smoke || { echo ".env.smoke not found. See runbook.md §4."; exit 1; }
+	docker exec \
+		-e SMOKE_TARGET_URL=$(TARGET_URL) \
+		--env-file .env.smoke \
+		mybible-api-app \
+		php artisan test --compact --testsuite=Smoke --group=smoke
+
 coverage: migrate-test
 	docker exec -e XDEBUG_MODE=coverage mybible-api-app php artisan test --coverage $(if $(min),--min=$(min))
 

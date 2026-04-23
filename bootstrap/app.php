@@ -5,6 +5,7 @@ use App\Domain\Olympiad\Exceptions\OlympiadThemeNotFoundException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionAlreadyCompletedException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionNotCompletableException;
 use App\Domain\Reference\Exceptions\InvalidReferenceException;
+use App\Domain\Security\Exceptions\SymfonyCutoverAlreadyExecutedException;
 use App\Domain\Verses\Exceptions\NoDailyVerseForDateException;
 use App\Http\Middleware\EnsureApiKeyOrSanctum;
 use App\Http\Middleware\EnsureValidApiKey;
@@ -27,6 +28,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         apiPrefix: 'api',
     )
+    ->withCommands([
+        __DIR__ . '/../app/Application/Commands',
+    ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'api-key' => EnsureValidApiKey::class,
@@ -90,6 +94,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (OlympiadThemeNotFoundException $e, Request $request) {
             return response()->json(['message' => $e->getMessage()], 404);
+        });
+
+        $exceptions->render(function (SymfonyCutoverAlreadyExecutedException $e, Request $request) {
+            return response()->json(['message' => $e->getMessage()], 409);
         });
 
         $exceptions->render(function (Throwable $e, Request $request) {

@@ -106,24 +106,24 @@ A sixth endpoint (`GET /api/v1/verses/daily`) is added if MBA-008 ships in time;
 
 ## Tasks
 
-- [ ] 1. Inspect production infrastructure (SSH to host or ask ops) and record the actual reverse-proxy software + config-file path in `runbook.md` §2. Do not use the dev Traefik assumption without confirmation.
-- [ ] 2. Enumerate active Symfony clients by grepping the prior 30 days of access logs for distinct User-Agents; record in `decommission.md` and confirm the mobile + admin + public-site set (flag any unexpected third-party).
-- [ ] 3. Create `App\Domain\Security\Models\SecurityEvent` + the `security_events` migration (id, event, reason, affected_count nullable, metadata json nullable, occurred_at, created_at; indexes on `event` and `occurred_at`).
-- [ ] 4. Create `App\Domain\Security\Actions\InvalidateAllSymfonySessionsAction` as an invokable that deletes pre-cutover `personal_access_tokens` rows and writes a `SecurityEvent`. Idempotency guard: second run throws a typed exception rather than firing twice.
-- [ ] 5. Register the typed exception from task 4 in `bootstrap/app.php` so a double-run returns a 409-shaped console exit, not a stack trace.
-- [ ] 6. Create `InvalidateSymfonySessionsCommand` (`mybible:invalidate-symfony-sessions`) with `--cutover-at=` and `--dry-run` flags. `--dry-run` prints the affected count without deleting.
-- [ ] 7. Write unit tests for `InvalidateAllSymfonySessionsAction`: happy path deletes tokens and writes the event; idempotency guard throws on second invocation; `--cutover-at` boundary filters correctly.
-- [ ] 8. Write a feature test for the artisan command: `--dry-run` mutates nothing; non-dry run writes the event; exit codes match.
-- [ ] 9. Author `parity-checklist.md` — one row per endpoint shipped by MBA-005..MBA-019 with Symfony URL, Laravel URL, story id, feature-test path, sign-off checkbox.
-- [ ] 10. Create `scripts/parity-diff.sh` (bash) that reads an endpoint list, fires requests at both APIs, normalizes JSON (`jq -S`), diffs, and exits non-zero on unexpected divergence. Document expected diffs (envelope shape) in the checklist.
-- [ ] 11. Create `tests/Smoke/CriticalPathsTest.php` under `@group smoke` covering the 5 endpoints in §Critical endpoints. Credentials read from env (`SMOKE_API_KEY`, `SMOKE_USER_EMAIL`, `SMOKE_USER_PASSWORD`). Base URL from `SMOKE_TARGET_URL`.
-- [ ] 12. Exclude the `smoke` group from the default `phpunit.xml` suite and add a `make smoke` target that runs it with env vars sourced from `.env.smoke`.
-- [ ] 13. Write `runbook.md` following the shape in §Runbook. Number every step; name an owner per step; include the exact flip command discovered in task 1.
-- [ ] 14. Write `decommission.md` with the T+30d archive date, AWS-key revocation list (Symfony's `async-aws/s3` client), container-shutdown steps, and the "Laravel is the sole writer" data-ownership statement.
-- [ ] 15. Draft `communications/email-T-1d.md` and `communications/push-T-1d.md` — RO + EN copy, under 300 chars for push. Subject, body, sender identity, scheduled-send time.
-- [ ] 16. Author the observability spec (dashboard panel list + alarm thresholds) as an appendix in `runbook.md` §5. Panel set: login success rate, 5xx rate by endpoint, token issuance rate, DB replication lag. Alarm: 5xx > 5× baseline for 5 minutes.
-- [ ] 17. Execute the staging dry-run: provision a prod-snapshot DB, run `make migrate`, run the invalidate command, run `make smoke`. Record outcomes as a dry-run log in `runbook.md` §Appendix.
-- [ ] 18. Run `make lint-fix`, `make stan`, `make test` (default suite, smoke excluded) before handing off. Smoke suite is run separately against staging, not as a gate here.
+- [~] 1. Inspect production infrastructure (SSH to host or ask ops) and record the actual reverse-proxy software + config-file path in `runbook.md` §2. Do not use the dev Traefik assumption without confirmation. _Deferred to ops: prod-infra access required. Runbook §2 documents both Traefik and nginx flip commands; actual deployment choice to be confirmed and recorded at T-7d dry-run._
+- [~] 2. Enumerate active Symfony clients by grepping the prior 30 days of access logs for distinct User-Agents; record in `decommission.md` and confirm the mobile + admin + public-site set (flag any unexpected third-party). _Deferred to ops: prod-log access required. `decommission.md` §Active client enumeration documents the exact grep command and the expected set; recorded at T-7d._
+- [x] 3. Create `App\Domain\Security\Models\SecurityEvent` + the `security_events` migration (id, event, reason, affected_count nullable, metadata json nullable, occurred_at, created_at; indexes on `event` and `occurred_at`).
+- [x] 4. Create `App\Domain\Security\Actions\InvalidateAllSymfonySessionsAction` as an invokable that deletes pre-cutover `personal_access_tokens` rows and writes a `SecurityEvent`. Idempotency guard: second run throws a typed exception rather than firing twice.
+- [x] 5. Register the typed exception from task 4 in `bootstrap/app.php` so a double-run returns a 409-shaped console exit, not a stack trace.
+- [x] 6. Create `InvalidateSymfonySessionsCommand` (`mybible:invalidate-symfony-sessions`) with `--cutover-at=` and `--dry-run` flags. `--dry-run` prints the affected count without deleting.
+- [x] 7. Write unit tests for `InvalidateAllSymfonySessionsAction`: happy path deletes tokens and writes the event; idempotency guard throws on second invocation; `--cutover-at` boundary filters correctly.
+- [x] 8. Write a feature test for the artisan command: `--dry-run` mutates nothing; non-dry run writes the event; exit codes match.
+- [x] 9. Author `parity-checklist.md` — one row per endpoint shipped by MBA-005..MBA-019 with Symfony URL, Laravel URL, story id, feature-test path, sign-off checkbox.
+- [x] 10. Create `scripts/parity-diff.sh` (bash) that reads an endpoint list, fires requests at both APIs, normalizes JSON (`jq -S`), diffs, and exits non-zero on unexpected divergence. Document expected diffs (envelope shape) in the checklist.
+- [x] 11. Create `tests/Smoke/CriticalPathsTest.php` under `@group smoke` covering the 5 endpoints in §Critical endpoints. Credentials read from env (`SMOKE_API_KEY`, `SMOKE_USER_EMAIL`, `SMOKE_USER_PASSWORD`). Base URL from `SMOKE_TARGET_URL`.
+- [x] 12. Exclude the `smoke` group from the default `phpunit.xml` suite and add a `make smoke` target that runs it with env vars sourced from `.env.smoke`.
+- [x] 13. Write `runbook.md` following the shape in §Runbook. Number every step; name an owner per step; include the exact flip command discovered in task 1.
+- [x] 14. Write `decommission.md` with the T+30d archive date, AWS-key revocation list (Symfony's `async-aws/s3` client), container-shutdown steps, and the "Laravel is the sole writer" data-ownership statement.
+- [x] 15. Draft `communications/email-T-1d.md` and `communications/push-T-1d.md` — RO + EN copy, under 300 chars for push. Subject, body, sender identity, scheduled-send time.
+- [x] 16. Author the observability spec (dashboard panel list + alarm thresholds) as an appendix in `runbook.md` §5. Panel set: login success rate, 5xx rate by endpoint, token issuance rate, DB replication lag. Alarm: 5xx > 5× baseline for 5 minutes.
+- [~] 17. Execute the staging dry-run: provision a prod-snapshot DB, run `make migrate`, run the invalidate command, run `make smoke`. Record outcomes as a dry-run log in `runbook.md` §Appendix. _Deferred to ops: staging env + prod-snapshot access required. Runbook Appendix A has the template for the dry-run log._
+- [x] 18. Run `make lint-fix`, `make stan`, `make test` (default suite, smoke excluded) before handing off. Smoke suite is run separately against staging, not as a gate here.
 
 ## Risks & notes
 
