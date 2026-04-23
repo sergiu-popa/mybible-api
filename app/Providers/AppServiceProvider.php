@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Domain\Notes\Models\Note;
 use App\Domain\Favorites\Models\Favorite;
 use App\Domain\Favorites\Models\FavoriteCategory;
+use App\Domain\Notes\Models\Note;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
-use App\Policies\NotePolicy;
 use App\Policies\FavoriteCategoryPolicy;
 use App\Policies\FavoritePolicy;
+use App\Policies\NotePolicy;
 use App\Policies\ReadingPlanSubscriptionPolicy;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\RouteInfo;
