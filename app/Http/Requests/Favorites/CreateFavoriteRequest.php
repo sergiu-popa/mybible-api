@@ -25,12 +25,10 @@ final class CreateFavoriteRequest extends FormRequest
      */
     public function rules(): array
     {
-        $this->referenceRule = app(ParseableReference::class);
-
         $userId = $this->user()?->getAuthIdentifier();
 
         return [
-            'reference' => ['required', 'string', 'max:255', $this->referenceRule],
+            'reference' => ['required', 'string', 'max:255', $this->referenceRule()],
             'category_id' => [
                 'nullable',
                 'integer',
@@ -46,7 +44,7 @@ final class CreateFavoriteRequest extends FormRequest
         /** @var User $user */
         $user = $this->user();
 
-        $reference = $this->referenceRule?->parsed();
+        $reference = $this->referenceRule()->parsed();
 
         if ($reference === null) {
             // Defensive: rules() has run and validation passed, so the rule
@@ -67,5 +65,15 @@ final class CreateFavoriteRequest extends FormRequest
             category: $category instanceof FavoriteCategory ? $category : null,
             note: is_string($note) && $note !== '' ? $note : null,
         );
+    }
+
+    /**
+     * Lazily resolve and memoize the {@see ParseableReference} rule instance
+     * so repeated calls to `rules()` (or a `toData()` callsite that beats
+     * validation on timing) share the same parsed-state holder.
+     */
+    private function referenceRule(): ParseableReference
+    {
+        return $this->referenceRule ??= app(ParseableReference::class);
     }
 }

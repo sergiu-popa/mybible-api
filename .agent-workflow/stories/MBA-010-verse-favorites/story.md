@@ -4,7 +4,7 @@
 Verse favorites and favorite categories
 
 ## Status
-`qa-passed`
+`done`
 
 ## Description
 Users can bookmark verses (or verse ranges) and organize them into
