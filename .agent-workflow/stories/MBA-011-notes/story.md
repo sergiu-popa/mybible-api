@@ -4,7 +4,7 @@
 Personal notes on Bible passages
 
 ## Status
-`qa-ready`
+`qa-passed`
 
 ## Description
 Users can attach private notes to specific passages. Lighter-weight than
