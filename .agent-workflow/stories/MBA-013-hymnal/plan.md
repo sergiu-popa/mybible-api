@@ -105,30 +105,30 @@ No `updated_at` on favorites; they are insert-or-delete, never updated.
 
 ## Tasks
 
-- [ ] 1. Create migrations `create_hymnal_books_table`, `create_hymnal_songs_table`, `create_hymnal_favorites_table` with the columns, indexes, and cascade rules above. One migration file per table.
-- [ ] 2. Create `App\Domain\Hymnal\Models\HymnalBook`, `HymnalSong`, `HymnalFavorite` with casts, relations, and `newEloquentBuilder()` wiring.
-- [ ] 3. Create `HymnalBookQueryBuilder` with `forLanguage()` and `withSongCount()`.
-- [ ] 4. Create `HymnalSongQueryBuilder` with `forBook()` and `search()` (numeric branch ORs on `number`).
-- [ ] 5. Create `HymnalFavoriteQueryBuilder` with `forUser()`, `forSong()`, `withSong()`.
-- [ ] 6. Create `HymnalBookFactory`, `HymnalSongFactory`, `HymnalFavoriteFactory` with the stated states.
-- [ ] 7. Create readonly DTO `ToggleHymnalFavoriteData` and readonly result struct `ToggleHymnalFavoriteResult` under `App\Domain\Hymnal\DataTransferObjects`.
-- [ ] 8. Create `ToggleHymnalFavoriteAction` that upserts/deletes the favorite inside a transaction and returns `ToggleHymnalFavoriteResult`.
-- [ ] 9. Create `HymnalBookResource`, `HymnalSongSummaryResource`, `HymnalSongResource`, `HymnalFavoriteResource` using `LanguageResolver` + `ResolveRequestLanguage::ATTRIBUTE_KEY`.
-- [ ] 10. Create `ListHymnalBooksRequest`, `ListHymnalBookSongsRequest`, `ShowHymnalSongRequest`, `ListHymnalFavoritesRequest`, `ToggleHymnalFavoriteRequest` with the rules listed in HTTP endpoints.
-- [ ] 11. Create `ListHymnalBooksController` — delegates to `HymnalBook::query()->forLanguage()->withSongCount()->orderBy('position')->paginate($request->perPage())`.
-- [ ] 12. Create `ListHymnalBookSongsController` — resolves `HymnalBook` via `{book:slug}`, queries `HymnalSong::query()->forBook($book)->search($request->search(), $language)->orderBy('number')->paginate($request->perPage())`.
-- [ ] 13. Create `ShowHymnalSongController` — eager-loads `book`, returns `HymnalSongResource`.
-- [ ] 14. Create `ListHymnalFavoritesController` — queries `HymnalFavorite::query()->forUser($user)->withSong()->orderByDesc('created_at')->paginate($request->perPage())`.
-- [ ] 15. Create `ToggleHymnalFavoriteController` — builds DTO, invokes Action, returns `HymnalFavoriteResource` with status 201 when `$created === true`, else `response()->json(['deleted' => true], 200)`.
-- [ ] 16. Register routes in `routes/api.php` under the `v1` prefix: catalog group with `['api-key-or-sanctum', 'resolve-language', 'cache.headers:public;max_age=3600;etag']`; favorites group with `auth:sanctum`.
-- [ ] 17. Feature test `ListHymnalBooksTest` — language filter, pagination, `song_count` aggregate present, `Cache-Control` header, auth gate (both api-key and sanctum accepted).
-- [ ] 18. Feature test `ListHymnalBookSongsTest` — book-scoped listing, numeric search branch, textual search branch, 404 on unknown slug, pagination caps at 200.
-- [ ] 19. Feature test `ShowHymnalSongTest` — stanzas structure, language fallback, 404 on unknown id, `Cache-Control` header.
-- [ ] 20. Feature test `ListHymnalFavoritesTest` — auth required (401 without token), own favorites only (cross-user rows invisible), embedded song payload.
-- [ ] 21. Feature test `ToggleHymnalFavoriteTest` — first call returns 201, second call returns 200 with `{deleted: true}`, validation error on unknown `song_id`, cross-user independence (two users can favorite the same song without collision).
-- [ ] 22. Unit test `ToggleHymnalFavoriteActionTest` — insert branch creates a row, delete branch removes it, transactional rollback on downstream failure.
-- [ ] 23. Unit test `HymnalSongQueryBuilderTest` — `search()` numeric branch matches on `number`, textual branch matches on the current-language title key, non-matching language key is not returned.
-- [ ] 24. Run `make lint-fix`, `make stan`, `make test filter=Hymnal`; finally `make test` before marking the story ready for review.
+- [x] 1. Create migrations `create_hymnal_books_table`, `create_hymnal_songs_table`, `create_hymnal_favorites_table` with the columns, indexes, and cascade rules above. One migration file per table.
+- [x] 2. Create `App\Domain\Hymnal\Models\HymnalBook`, `HymnalSong`, `HymnalFavorite` with casts, relations, and `newEloquentBuilder()` wiring.
+- [x] 3. Create `HymnalBookQueryBuilder` with `forLanguage()` and `withSongCount()`.
+- [x] 4. Create `HymnalSongQueryBuilder` with `forBook()` and `search()` (numeric branch ORs on `number`).
+- [x] 5. Create `HymnalFavoriteQueryBuilder` with `forUser()`, `forSong()`, `withSong()`.
+- [x] 6. Create `HymnalBookFactory`, `HymnalSongFactory`, `HymnalFavoriteFactory` with the stated states.
+- [x] 7. Create readonly DTO `ToggleHymnalFavoriteData` and readonly result struct `ToggleHymnalFavoriteResult` under `App\Domain\Hymnal\DataTransferObjects`.
+- [x] 8. Create `ToggleHymnalFavoriteAction` that upserts/deletes the favorite inside a transaction and returns `ToggleHymnalFavoriteResult`.
+- [x] 9. Create `HymnalBookResource`, `HymnalSongSummaryResource`, `HymnalSongResource`, `HymnalFavoriteResource` using `LanguageResolver` + `ResolveRequestLanguage::ATTRIBUTE_KEY`.
+- [x] 10. Create `ListHymnalBooksRequest`, `ListHymnalBookSongsRequest`, `ShowHymnalSongRequest`, `ListHymnalFavoritesRequest`, `ToggleHymnalFavoriteRequest` with the rules listed in HTTP endpoints.
+- [x] 11. Create `ListHymnalBooksController` — delegates to `HymnalBook::query()->forLanguage()->withSongCount()->orderBy('position')->paginate($request->perPage())`.
+- [x] 12. Create `ListHymnalBookSongsController` — resolves `HymnalBook` via `{book:slug}`, queries `HymnalSong::query()->forBook($book)->search($request->search(), $language)->orderBy('number')->paginate($request->perPage())`.
+- [x] 13. Create `ShowHymnalSongController` — eager-loads `book`, returns `HymnalSongResource`.
+- [x] 14. Create `ListHymnalFavoritesController` — queries `HymnalFavorite::query()->forUser($user)->withSong()->orderByDesc('created_at')->paginate($request->perPage())`.
+- [x] 15. Create `ToggleHymnalFavoriteController` — builds DTO, invokes Action, returns `HymnalFavoriteResource` with status 201 when `$created === true`, else `response()->json(['deleted' => true], 200)`.
+- [x] 16. Register routes in `routes/api.php` under the `v1` prefix: catalog group with `['api-key-or-sanctum', 'resolve-language', 'cache.headers:public;max_age=3600;etag']`; favorites group with `auth:sanctum`.
+- [x] 17. Feature test `ListHymnalBooksTest` — language filter, pagination, `song_count` aggregate present, `Cache-Control` header, auth gate (both api-key and sanctum accepted).
+- [x] 18. Feature test `ListHymnalBookSongsTest` — book-scoped listing, numeric search branch, textual search branch, 404 on unknown slug, pagination caps at 200.
+- [x] 19. Feature test `ShowHymnalSongTest` — stanzas structure, language fallback, 404 on unknown id, `Cache-Control` header.
+- [x] 20. Feature test `ListHymnalFavoritesTest` — auth required (401 without token), own favorites only (cross-user rows invisible), embedded song payload.
+- [x] 21. Feature test `ToggleHymnalFavoriteTest` — first call returns 201, second call returns 200 with `{deleted: true}`, validation error on unknown `song_id`, cross-user independence (two users can favorite the same song without collision).
+- [x] 22. Unit test `ToggleHymnalFavoriteActionTest` — insert branch creates a row, delete branch removes it, transactional rollback on downstream failure.
+- [x] 23. Unit test `HymnalSongQueryBuilderTest` — `search()` numeric branch matches on `number`, textual branch matches on the current-language title key, non-matching language key is not returned.
+- [x] 24. Run `make lint-fix`, `make stan`, `make test filter=Hymnal`; finally `make test` before marking the story ready for review.
 
 ## Risks & notes
 

@@ -117,43 +117,43 @@ Both migrations are fresh. Symfony's `favorite` / `favorite_category` tables (di
 
 ## Tasks
 
-- [ ] 1. Create `database/migrations/*_create_favorite_categories_table.php` per the schema above. No seeder (virtual Uncategorized needs no row).
-- [ ] 2. Create `database/migrations/*_create_favorites_table.php` per the schema above (FK to `favorite_categories` with `onDelete('set null')`).
-- [ ] 3. Create `App\Domain\Favorites\Models\FavoriteCategory` with `user()`, `favorites()`, `newEloquentBuilder()` wiring, factory. Register in `AuthServiceProvider::$policies` against `FavoriteCategoryPolicy`.
-- [ ] 4. Create `App\Domain\Favorites\Models\Favorite` with `user()`, `category()`, `newEloquentBuilder()` wiring, factory. Register policy.
-- [ ] 5. Create `App\Domain\Favorites\QueryBuilders\FavoriteCategoryQueryBuilder` with `forUser()` / `orderedByName()`.
-- [ ] 6. Create `App\Domain\Favorites\QueryBuilders\FavoriteQueryBuilder` with `forUser()`, `forCategory(?int)` (null → `whereNull('category_id')`), `forBook(string)` (canonical prefix LIKE).
-- [ ] 7. Create `App\Policies\FavoriteCategoryPolicy::manage()` and `App\Policies\FavoritePolicy::manage()`.
-- [ ] 8. Create `App\Http\Requests\Favorites\AuthorizedFavoriteCategoryRequest` (abstract) and `AuthorizedFavoriteRequest` (abstract), each resolving the route-model and delegating to `$user->can('manage', …)`.
-- [ ] 9. Create `App\Domain\Favorites\DataTransferObjects\{CreateFavoriteCategoryData,UpdateFavoriteCategoryData,CreateFavoriteData,UpdateFavoriteData}` (readonly).
-- [ ] 10. Create `App\Domain\Favorites\Rules\ParseableReference`: calls `ReferenceParser::parse()`, enforces exactly one `Reference` returned, memoizes the parsed `Reference` for the Request's `toData()` to pick up.
-- [ ] 11. Create `App\Domain\Favorites\Actions\CreateFavoriteCategoryAction` (consumes `CreateFavoriteCategoryData`).
-- [ ] 12. Create `App\Domain\Favorites\Actions\UpdateFavoriteCategoryAction` (consumes `UpdateFavoriteCategoryData`; partial update respecting sentinels).
-- [ ] 13. Create `App\Domain\Favorites\Actions\DeleteFavoriteCategoryAction` — transaction: null out `favorites.category_id`, delete category.
-- [ ] 14. Create `App\Domain\Favorites\Actions\CreateFavoriteAction` — canonicalizes via `ReferenceFormatter::toCanonical()`, persists, returns model.
-- [ ] 15. Create `App\Domain\Favorites\Actions\UpdateFavoriteAction` — partial update of `category_id` + `note` per DTO sentinels.
-- [ ] 16. Create `App\Domain\Favorites\Actions\DeleteFavoriteAction` — thin `delete()` wrapper.
-- [ ] 17. Create `App\Http\Requests\Favorites\ListFavoriteCategoriesRequest` (auth-only; no body rules; supports pagination params).
-- [ ] 18. Create `App\Http\Requests\Favorites\CreateFavoriteCategoryRequest` with rules for `name` (required, string, ≤120, unique per user via `Rule::unique` with `where('user_id', $userId)`) and `color` (optional, string, hex regex). Includes `toData()`.
-- [ ] 19. Create `App\Http\Requests\Favorites\UpdateFavoriteCategoryRequest` extending `AuthorizedFavoriteCategoryRequest`; `name` / `color` `sometimes`; same uniqueness scoped to user + ignoring the current id. Includes `toData()`.
-- [ ] 20. Create `App\Http\Requests\Favorites\DeleteFavoriteCategoryRequest` extending `AuthorizedFavoriteCategoryRequest` (no body).
-- [ ] 21. Create `App\Http\Requests\Favorites\ListFavoritesRequest` with optional `category` (int OR the literal `"uncategorized"`) and `book` (3-letter abbrev validated against `BibleBookCatalog::hasBook`). Exposes `categoryFilter(): int|null|false` (false = not provided) and `bookFilter()`.
-- [ ] 22. Create `App\Http\Requests\Favorites\CreateFavoriteRequest` with rules: `reference` required, resolved via `ParseableReference`; `category_id` optional int, must belong to caller (custom rule or `Rule::exists` scoped to `user_id`); `note` optional string ≤2000. Exposes `toData()` (pulls parsed `Reference` from the rule's memoized store; resolves the `FavoriteCategory` model once).
-- [ ] 23. Create `App\Http\Requests\Favorites\UpdateFavoriteRequest` extending `AuthorizedFavoriteRequest`. Rules: `category_id` `sometimes` nullable int belonging to caller; `note` `sometimes` nullable string ≤2000. Rejects any `reference` key with a validation error (immutability). Exposes `toData()` with the sentinels.
-- [ ] 24. Create `App\Http\Requests\Favorites\DeleteFavoriteRequest` extending `AuthorizedFavoriteRequest` (no body).
-- [ ] 25. Create `App\Http\Resources\Favorites\FavoriteCategoryResource` with `favorites_count` from `whenCounted('favorites')`.
-- [ ] 26. Create `App\Http\Resources\Favorites\FavoriteResource` including parsed expansion (`book`, `chapter`, `verses`, `version`, `human_readable`). Resolve language via `ResolveRequestLanguage::ATTRIBUTE_KEY` from the request; default to English.
-- [ ] 27. Create 8 invokable controllers under `App\Http\Controllers\Api\V1\Favorites\` matching the table above. Each accepts the FormRequest + (where applicable) the bound model + the Action, delegates, returns the Resource.
-- [ ] 28. In `ListFavoriteCategoriesController`, prepend the virtual Uncategorized pseudo-category when the caller has at least one favorite with `category_id IS NULL`. Paginate real categories; the synthetic entry sits in the first page's `data` array and is flagged `id: null`. Keep the logic in the controller — Actions don't own response shape.
-- [ ] 29. Wire routes in `routes/api.php` under `prefix('v1')->middleware('auth:sanctum')->prefix('favorites')->name('favorites.')->group(...)` and a sibling group for `favorite-categories`. Names: `favorites.index/store/update/destroy`, `favorite-categories.index/store/update/destroy`.
-- [ ] 30. Register `FavoritePolicy` and `FavoriteCategoryPolicy` in `AuthServiceProvider` (or Laravel 11+ auto-discovery check — confirm conventions from existing `ReadingPlanSubscriptionPolicy` wiring).
-- [ ] 31. Feature test: `FavoriteCategoryCrudTest` — index (paginated, ordered, includes Uncategorized when applicable), store (201 + JSON shape), duplicate-name rejected (422), cross-user 403 on update/delete, delete cascades favorites to `category_id NULL` (the Uncategorized virtual category), 204 on delete.
-- [ ] 32. Feature test: `FavoriteCrudTest` — index with `?category=<id>`, `?category=uncategorized`, `?book=GEN` filters; pagination; store with valid + invalid references (422); store with `category_id` belonging to another user (422); update changes category/note but rejects `reference` (422); cross-user 403; delete 204.
-- [ ] 33. Feature test: `FavoriteReferenceResponseShapeTest` — create with `GEN.1:1-3.VDC`, assert resource exposes `book=GEN`, `chapter=1`, `verses=[1,2,3]`, `version=VDC`, `human_readable` matches the RO/EN output based on resolved language.
-- [ ] 34. Unit tests per Action (`CreateFavoriteActionTest`, etc.) — isolate business logic: canonical-form persistence, cascade nulling on category delete (single DB assertion in `CreateFavoriteCategoryAction`/`DeleteFavoriteCategoryAction` tests), sentinel semantics for partial updates.
-- [ ] 35. Unit tests for `FavoriteQueryBuilder::forCategory(null)` + `forBook()` — assert generated SQL and row filtering (pure QueryBuilder, not controller).
-- [ ] 36. Unit test for `ParseableReference` rule — single valid reference passes, multi-ref / chapter-range / invalid book fail with distinct messages.
-- [ ] 37. Run `make lint-fix`, `make stan`, `make test --filter=Favorites`; then full `make test` before marking ready for review.
+- [x] 1. Create `database/migrations/*_create_favorite_categories_table.php` per the schema above. No seeder (virtual Uncategorized needs no row).
+- [x] 2. Create `database/migrations/*_create_favorites_table.php` per the schema above (FK to `favorite_categories` with `onDelete('set null')`).
+- [x] 3. Create `App\Domain\Favorites\Models\FavoriteCategory` with `user()`, `favorites()`, `newEloquentBuilder()` wiring, factory. Register in `AuthServiceProvider::$policies` against `FavoriteCategoryPolicy`.
+- [x] 4. Create `App\Domain\Favorites\Models\Favorite` with `user()`, `category()`, `newEloquentBuilder()` wiring, factory. Register policy.
+- [x] 5. Create `App\Domain\Favorites\QueryBuilders\FavoriteCategoryQueryBuilder` with `forUser()` / `orderedByName()`.
+- [x] 6. Create `App\Domain\Favorites\QueryBuilders\FavoriteQueryBuilder` with `forUser()`, `forCategory(?int)` (null → `whereNull('category_id')`), `forBook(string)` (canonical prefix LIKE).
+- [x] 7. Create `App\Policies\FavoriteCategoryPolicy::manage()` and `App\Policies\FavoritePolicy::manage()`.
+- [x] 8. Create `App\Http\Requests\Favorites\AuthorizedFavoriteCategoryRequest` (abstract) and `AuthorizedFavoriteRequest` (abstract), each resolving the route-model and delegating to `$user->can('manage', …)`.
+- [x] 9. Create `App\Domain\Favorites\DataTransferObjects\{CreateFavoriteCategoryData,UpdateFavoriteCategoryData,CreateFavoriteData,UpdateFavoriteData}` (readonly).
+- [x] 10. Create `App\Domain\Favorites\Rules\ParseableReference`: calls `ReferenceParser::parse()`, enforces exactly one `Reference` returned, memoizes the parsed `Reference` for the Request's `toData()` to pick up.
+- [x] 11. Create `App\Domain\Favorites\Actions\CreateFavoriteCategoryAction` (consumes `CreateFavoriteCategoryData`).
+- [x] 12. Create `App\Domain\Favorites\Actions\UpdateFavoriteCategoryAction` (consumes `UpdateFavoriteCategoryData`; partial update respecting sentinels).
+- [x] 13. Create `App\Domain\Favorites\Actions\DeleteFavoriteCategoryAction` — transaction: null out `favorites.category_id`, delete category.
+- [x] 14. Create `App\Domain\Favorites\Actions\CreateFavoriteAction` — canonicalizes via `ReferenceFormatter::toCanonical()`, persists, returns model.
+- [x] 15. Create `App\Domain\Favorites\Actions\UpdateFavoriteAction` — partial update of `category_id` + `note` per DTO sentinels.
+- [x] 16. Create `App\Domain\Favorites\Actions\DeleteFavoriteAction` — thin `delete()` wrapper.
+- [x] 17. Create `App\Http\Requests\Favorites\ListFavoriteCategoriesRequest` (auth-only; no body rules; supports pagination params).
+- [x] 18. Create `App\Http\Requests\Favorites\CreateFavoriteCategoryRequest` with rules for `name` (required, string, ≤120, unique per user via `Rule::unique` with `where('user_id', $userId)`) and `color` (optional, string, hex regex). Includes `toData()`.
+- [x] 19. Create `App\Http\Requests\Favorites\UpdateFavoriteCategoryRequest` extending `AuthorizedFavoriteCategoryRequest`; `name` / `color` `sometimes`; same uniqueness scoped to user + ignoring the current id. Includes `toData()`.
+- [x] 20. Create `App\Http\Requests\Favorites\DeleteFavoriteCategoryRequest` extending `AuthorizedFavoriteCategoryRequest` (no body).
+- [x] 21. Create `App\Http\Requests\Favorites\ListFavoritesRequest` with optional `category` (int OR the literal `"uncategorized"`) and `book` (3-letter abbrev validated against `BibleBookCatalog::hasBook`). Exposes `categoryFilter(): int|null|false` (false = not provided) and `bookFilter()`.
+- [x] 22. Create `App\Http\Requests\Favorites\CreateFavoriteRequest` with rules: `reference` required, resolved via `ParseableReference`; `category_id` optional int, must belong to caller (custom rule or `Rule::exists` scoped to `user_id`); `note` optional string ≤2000. Exposes `toData()` (pulls parsed `Reference` from the rule's memoized store; resolves the `FavoriteCategory` model once).
+- [x] 23. Create `App\Http\Requests\Favorites\UpdateFavoriteRequest` extending `AuthorizedFavoriteRequest`. Rules: `category_id` `sometimes` nullable int belonging to caller; `note` `sometimes` nullable string ≤2000. Rejects any `reference` key with a validation error (immutability). Exposes `toData()` with the sentinels.
+- [x] 24. Create `App\Http\Requests\Favorites\DeleteFavoriteRequest` extending `AuthorizedFavoriteRequest` (no body).
+- [x] 25. Create `App\Http\Resources\Favorites\FavoriteCategoryResource` with `favorites_count` from `whenCounted('favorites')`.
+- [x] 26. Create `App\Http\Resources\Favorites\FavoriteResource` including parsed expansion (`book`, `chapter`, `verses`, `version`, `human_readable`). Resolve language via `ResolveRequestLanguage::ATTRIBUTE_KEY` from the request; default to English.
+- [x] 27. Create 8 invokable controllers under `App\Http\Controllers\Api\V1\Favorites\` matching the table above. Each accepts the FormRequest + (where applicable) the bound model + the Action, delegates, returns the Resource.
+- [x] 28. In `ListFavoriteCategoriesController`, prepend the virtual Uncategorized pseudo-category when the caller has at least one favorite with `category_id IS NULL`. Paginate real categories; the synthetic entry sits in the first page's `data` array and is flagged `id: null`. Keep the logic in the controller — Actions don't own response shape.
+- [x] 29. Wire routes in `routes/api.php` under `prefix('v1')->middleware('auth:sanctum')->prefix('favorites')->name('favorites.')->group(...)` and a sibling group for `favorite-categories`. Names: `favorites.index/store/update/destroy`, `favorite-categories.index/store/update/destroy`.
+- [x] 30. Register `FavoritePolicy` and `FavoriteCategoryPolicy` in `AuthServiceProvider` (or Laravel 11+ auto-discovery check — confirm conventions from existing `ReadingPlanSubscriptionPolicy` wiring).
+- [x] 31. Feature test: `FavoriteCategoryCrudTest` — index (paginated, ordered, includes Uncategorized when applicable), store (201 + JSON shape), duplicate-name rejected (422), cross-user 403 on update/delete, delete cascades favorites to `category_id NULL` (the Uncategorized virtual category), 204 on delete.
+- [x] 32. Feature test: `FavoriteCrudTest` — index with `?category=<id>`, `?category=uncategorized`, `?book=GEN` filters; pagination; store with valid + invalid references (422); store with `category_id` belonging to another user (422); update changes category/note but rejects `reference` (422); cross-user 403; delete 204.
+- [x] 33. Feature test: `FavoriteReferenceResponseShapeTest` — create with `GEN.1:1-3.VDC`, assert resource exposes `book=GEN`, `chapter=1`, `verses=[1,2,3]`, `version=VDC`, `human_readable` matches the RO/EN output based on resolved language.
+- [x] 34. Unit tests per Action (`CreateFavoriteActionTest`, etc.) — isolate business logic: canonical-form persistence, cascade nulling on category delete (single DB assertion in `CreateFavoriteCategoryAction`/`DeleteFavoriteCategoryAction` tests), sentinel semantics for partial updates.
+- [x] 35. Unit tests for `FavoriteQueryBuilder::forCategory(null)` + `forBook()` — assert generated SQL and row filtering (pure QueryBuilder, not controller).
+- [x] 36. Unit test for `ParseableReference` rule — single valid reference passes, multi-ref / chapter-range / invalid book fail with distinct messages.
+- [x] 37. Run `make lint-fix`, `make stan`, `make test --filter=Favorites`; then full `make test` before marking ready for review.
 
 ## Risks & notes
 
