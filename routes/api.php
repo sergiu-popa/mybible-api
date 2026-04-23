@@ -37,6 +37,11 @@ use App\Http\Controllers\Api\V1\Notes\StoreNoteController;
 use App\Http\Controllers\Api\V1\Notes\UpdateNoteController;
 use App\Http\Controllers\Api\V1\Olympiad\ListOlympiadThemesController;
 use App\Http\Controllers\Api\V1\Olympiad\ShowOlympiadThemeController;
+use App\Http\Controllers\Api\V1\Profile\ChangeUserPasswordController;
+use App\Http\Controllers\Api\V1\Profile\DeleteUserAccountController;
+use App\Http\Controllers\Api\V1\Profile\RemoveUserAvatarController;
+use App\Http\Controllers\Api\V1\Profile\UpdateUserProfileController;
+use App\Http\Controllers\Api\V1\Profile\UploadUserAvatarController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
 use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
@@ -179,6 +184,17 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/', CreateFavoriteController::class)->name('store');
             Route::patch('{favorite}', UpdateFavoriteController::class)->name('update');
             Route::delete('{favorite}', DeleteFavoriteController::class)->name('destroy');
+        });
+
+    Route::middleware('auth:sanctum')
+        ->prefix('profile')
+        ->name('profile.')
+        ->group(function (): void {
+            Route::patch('/', UpdateUserProfileController::class)->name('update');
+            Route::delete('/', DeleteUserAccountController::class)->name('destroy');
+            Route::post('change-password', ChangeUserPasswordController::class)->name('change-password');
+            Route::post('avatar', UploadUserAvatarController::class)->name('avatar.store');
+            Route::delete('avatar', RemoveUserAvatarController::class)->name('avatar.destroy');
         });
 
     Route::middleware('auth:sanctum')

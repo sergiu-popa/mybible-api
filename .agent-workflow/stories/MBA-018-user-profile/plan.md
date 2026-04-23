@@ -101,29 +101,29 @@ No new table for profile — all profile columns live on `users`.
 
 ## Tasks
 
-- [ ] 1. Create migration `add_profile_fields_to_users_table` adding `preferred_version` and `deleted_at` columns; guard each column with a `Schema::hasColumn` check so the migration is safe against the shared Symfony DB.
-- [ ] 2. Create migration `change_users_email_unique_to_composite_with_deleted_at` that swaps the unique index; guard via `doctrine/dbal`-free `Schema::hasIndex` check and cover both fresh and reconciled paths.
-- [ ] 3. Add the `avatars` filesystem disk to `config/filesystems.php` — S3-backed via the same env vars as `s3`, with `root` set to a configurable prefix (`AVATAR_DISK_ROOT`, default `avatars`) so Symfony-era paths continue to resolve.
-- [ ] 4. Update `App\Models\User`: add `SoftDeletes`, add `preferred_version` to `$fillable`, add `avatar_url` accessor reading from `Storage::disk('avatars')`.
-- [ ] 5. Update `App\Http\Resources\Auth\UserResource` to expose `language`, `preferred_version`, `avatar_url` keys alongside the existing fields.
-- [ ] 6. Update `App\Domain\Auth\Actions\LoginUserAction` to treat a soft-deleted user the same as a non-existent one (the `User::where('email', ...)->first()` already excludes soft-deleted rows by default — verify and add a regression feature test in task 18).
-- [ ] 7. Register `Password::defaults()` in `AppServiceProvider::boot()` with min 8 + mixed case + numbers + symbols; update `RegisterUserRequest` and `ResetPasswordRequest` to use `Password::defaults()` in place of the current `min:8`.
-- [ ] 8. Create `App\Domain\User\Profile\Events\UserAccountDeleted` with primitive `userId` and `email` public readonly properties and a TODO comment pointing to the deferred cascade listener story.
-- [ ] 9. Create `App\Domain\User\Profile\Exceptions\IncorrectCurrentPasswordException` extending `ValidationException` with a `forField(string $field): self` factory that seeds the validator's error bag for that field.
-- [ ] 10. Create the four DTOs in `App\Domain\User\Profile\DataTransferObjects` (`UpdateUserProfileData`, `ChangeUserPasswordData`, `DeleteUserAccountData`, `UploadUserAvatarData`) each with a `from(array)` factory.
-- [ ] 11. Create `UpdateUserProfileAction` + matching PHPUnit unit test covering all-fields-set, single-field-set, enum language cast, and preferred_version persisted.
-- [ ] 12. Create `ChangeUserPasswordAction` + unit test: happy path (password replaced, other tokens deleted, current token retained), wrong current password (throws `IncorrectCurrentPasswordException`, no state change), same-password guard (Request handles it, but action-level sanity test for the hash-change assertion).
-- [ ] 13. Create `DeleteUserAccountAction` + unit test: happy path (tokens revoked, event dispatched via `Event::fake()`, user soft-deleted), wrong password (throws, no tokens revoked, no event, no soft-delete).
-- [ ] 14. Create `UploadUserAvatarAction` + unit test using `Storage::fake('avatars')`: new upload stores the file, previous avatar is removed when replaced, user's `avatar` column stores the relative path.
-- [ ] 15. Create `RemoveUserAvatarAction` + unit test using `Storage::fake('avatars')`: file is removed, column nulled, no-op when `avatar` was already null.
-- [ ] 16. Create the four Form Requests in `App\Http\Requests\Profile` (`UpdateUserProfileRequest`, `ChangeUserPasswordRequest`, `DeleteUserAccountRequest`, `UploadUserAvatarRequest`) + unit tests on validation rules including the "at least one field" cross-field rule and the `bible_versions` conditional `exists` guard.
-- [ ] 17. Create the five controllers in `App\Http\Controllers\Api\V1\Profile` (single-action invokables) and wire the route group in `routes/api.php` with named routes under `profile.*`.
-- [ ] 18. Feature test `UpdateUserProfileTest`: partial payload, full payload, missing-all-fields 422, invalid language 422, unknown preferred_version 422, unauthenticated 401.
-- [ ] 19. Feature test `ChangeUserPasswordTest`: happy path (200 + all-other-tokens revoked + current token still works + login with new password succeeds), wrong current password 422, weak new password 422, new-equals-current 422.
-- [ ] 20. Feature test `DeleteUserAccountTest`: happy path (204 + all tokens revoked + user soft-deleted + `UserAccountDeleted` event dispatched via `Event::fake`), wrong password 422 + account untouched, login after delete returns the standard 401 "invalid credentials" shape, re-registration with the same email succeeds (covers the composite unique index).
-- [ ] 21. Feature test `UploadUserAvatarTest` using `Storage::fake('avatars')` + `UploadedFile::fake()->image()`: happy path, >5 MB rejected 422, gif rejected 422, replace flow removes the old file.
-- [ ] 22. Feature test `RemoveUserAvatarTest`: happy path deletes the file and nulls the column, no-op when the column is already null still returns 200.
-- [ ] 23. Run `make lint-fix`, `make stan`, then `make test filter=Profile`; finally `make test` before marking the story ready for review.
+- [x] 1. Create migration `add_profile_fields_to_users_table` adding `preferred_version` and `deleted_at` columns; guard each column with a `Schema::hasColumn` check so the migration is safe against the shared Symfony DB.
+- [x] 2. Create migration `change_users_email_unique_to_composite_with_deleted_at` that swaps the unique index; guard via `doctrine/dbal`-free `Schema::hasIndex` check and cover both fresh and reconciled paths.
+- [x] 3. Add the `avatars` filesystem disk to `config/filesystems.php` — S3-backed via the same env vars as `s3`, with `root` set to a configurable prefix (`AVATAR_DISK_ROOT`, default `avatars`) so Symfony-era paths continue to resolve.
+- [x] 4. Update `App\Models\User`: add `SoftDeletes`, add `preferred_version` to `$fillable`, add `avatar_url` accessor reading from `Storage::disk('avatars')`.
+- [x] 5. Update `App\Http\Resources\Auth\UserResource` to expose `language`, `preferred_version`, `avatar_url` keys alongside the existing fields.
+- [x] 6. Update `App\Domain\Auth\Actions\LoginUserAction` to treat a soft-deleted user the same as a non-existent one (the `User::where('email', ...)->first()` already excludes soft-deleted rows by default — verify and add a regression feature test in task 18).
+- [x] 7. Register `Password::defaults()` in `AppServiceProvider::boot()` with min 8 + mixed case + numbers + symbols; update `RegisterUserRequest` and `ResetPasswordRequest` to use `Password::defaults()` in place of the current `min:8`.
+- [x] 8. Create `App\Domain\User\Profile\Events\UserAccountDeleted` with primitive `userId` and `email` public readonly properties and a TODO comment pointing to the deferred cascade listener story.
+- [x] 9. Create `App\Domain\User\Profile\Exceptions\IncorrectCurrentPasswordException` extending `ValidationException` with a `forField(string $field): self` factory that seeds the validator's error bag for that field.
+- [x] 10. Create the four DTOs in `App\Domain\User\Profile\DataTransferObjects` (`UpdateUserProfileData`, `ChangeUserPasswordData`, `DeleteUserAccountData`, `UploadUserAvatarData`) each with a `from(array)` factory.
+- [x] 11. Create `UpdateUserProfileAction` + matching PHPUnit unit test covering all-fields-set, single-field-set, enum language cast, and preferred_version persisted.
+- [x] 12. Create `ChangeUserPasswordAction` + unit test: happy path (password replaced, other tokens deleted, current token retained), wrong current password (throws `IncorrectCurrentPasswordException`, no state change), same-password guard (Request handles it, but action-level sanity test for the hash-change assertion).
+- [x] 13. Create `DeleteUserAccountAction` + unit test: happy path (tokens revoked, event dispatched via `Event::fake()`, user soft-deleted), wrong password (throws, no tokens revoked, no event, no soft-delete).
+- [x] 14. Create `UploadUserAvatarAction` + unit test using `Storage::fake('avatars')`: new upload stores the file, previous avatar is removed when replaced, user's `avatar` column stores the relative path.
+- [x] 15. Create `RemoveUserAvatarAction` + unit test using `Storage::fake('avatars')`: file is removed, column nulled, no-op when `avatar` was already null.
+- [x] 16. Create the four Form Requests in `App\Http\Requests\Profile` (`UpdateUserProfileRequest`, `ChangeUserPasswordRequest`, `DeleteUserAccountRequest`, `UploadUserAvatarRequest`) + unit tests on validation rules including the "at least one field" cross-field rule and the `bible_versions` conditional `exists` guard.
+- [x] 17. Create the five controllers in `App\Http\Controllers\Api\V1\Profile` (single-action invokables) and wire the route group in `routes/api.php` with named routes under `profile.*`.
+- [x] 18. Feature test `UpdateUserProfileTest`: partial payload, full payload, missing-all-fields 422, invalid language 422, unknown preferred_version 422, unauthenticated 401.
+- [x] 19. Feature test `ChangeUserPasswordTest`: happy path (200 + all-other-tokens revoked + current token still works + login with new password succeeds), wrong current password 422, weak new password 422, new-equals-current 422.
+- [x] 20. Feature test `DeleteUserAccountTest`: happy path (204 + all tokens revoked + user soft-deleted + `UserAccountDeleted` event dispatched via `Event::fake`), wrong password 422 + account untouched, login after delete returns the standard 401 "invalid credentials" shape, re-registration with the same email succeeds (covers the composite unique index).
+- [x] 21. Feature test `UploadUserAvatarTest` using `Storage::fake('avatars')` + `UploadedFile::fake()->image()`: happy path, >5 MB rejected 422, gif rejected 422, replace flow removes the old file.
+- [x] 22. Feature test `RemoveUserAvatarTest`: happy path deletes the file and nulls the column, no-op when the column is already null still returns 200.
+- [x] 23. Run `make lint-fix`, `make stan`, then `make test filter=Profile`; finally `make test` before marking the story ready for review.
 
 ## Risks & notes
 
