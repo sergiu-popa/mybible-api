@@ -30,7 +30,13 @@ final class Note extends Model
     /** @use HasFactory<NoteFactory> */
     use HasFactory;
 
-    protected $guarded = [];
+    /** @var list<string> */
+    protected $fillable = [
+        'user_id',
+        'reference',
+        'book',
+        'content',
+    ];
 
     /**
      * @return BelongsTo<User, $this>

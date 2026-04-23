@@ -34,9 +34,9 @@ final class StripHtmlTest extends TestCase
 
     public function test_length_is_measured_after_stripping(): void
     {
-        // `<b></b>` adds 7 chars; after strip_tags the string is empty and
-        // the `max:5` check sees 0. The field would fail `max` only if we
-        // still saw the pre-strip value.
+        // `<b>hi</b>` is 9 chars; after strip_tags it becomes `hi` (2 chars)
+        // and the `max:5` check sees 2. The field would fail `max` only if
+        // we still saw the pre-strip 9-char value.
         $validator = Validator::make(
             ['content' => '<b>hi</b>'],
             ['content' => ['required', 'string', new StripHtml, 'max:5']],
