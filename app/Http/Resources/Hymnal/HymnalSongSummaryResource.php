@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Resources\Hymnal;
+
+use App\Domain\Hymnal\Models\HymnalSong;
+use App\Domain\ReadingPlans\Support\LanguageResolver;
+use App\Domain\Shared\Enums\Language;
+use App\Http\Middleware\ResolveRequestLanguage;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * @mixin HymnalSong
+ */
+final class HymnalSongSummaryResource extends JsonResource
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        $language = $request->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY, Language::En);
+
+        return [
+            'id' => $this->id,
+            'number' => $this->number,
+            'title' => LanguageResolver::resolve($this->title, $language),
+            'book' => [
+                'id' => $this->hymnal_book_id,
+                'slug' => $this->whenLoaded('book', fn () => $this->book->slug),
+            ],
+        ];
+    }
+}
