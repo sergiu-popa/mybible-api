@@ -35,6 +35,8 @@ use App\Http\Controllers\Api\V1\Notes\DeleteNoteController;
 use App\Http\Controllers\Api\V1\Notes\ListNotesController;
 use App\Http\Controllers\Api\V1\Notes\StoreNoteController;
 use App\Http\Controllers\Api\V1\Notes\UpdateNoteController;
+use App\Http\Controllers\Api\V1\Olympiad\ListOlympiadThemesController;
+use App\Http\Controllers\Api\V1\Olympiad\ShowOlympiadThemeController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
 use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
@@ -101,6 +103,16 @@ Route::prefix('v1')->group(function (): void {
             Route::post('{plan:slug}/subscriptions', StartReadingPlanSubscriptionController::class)
                 ->middleware('auth:sanctum')
                 ->name('subscriptions.store');
+        });
+
+    Route::prefix('olympiad')
+        ->name('olympiad.')
+        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->group(function (): void {
+            Route::get('themes', ListOlympiadThemesController::class)->name('themes.index');
+            Route::get('themes/{book}/{chapters}', ShowOlympiadThemeController::class)
+                ->where('book', '[A-Za-z0-9]+')
+                ->name('themes.show');
         });
 
     Route::middleware(['api-key-or-sanctum', 'resolve-language', 'cache.headers:public;max_age=3600;etag'])
