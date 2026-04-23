@@ -4,7 +4,7 @@
 Sabbath School — lessons, answers, highlights, favorites
 
 ## Status
-`in-review`
+`qa-ready`
 
 ## Description
 Sabbath School is a structured weekly study program: users progress
