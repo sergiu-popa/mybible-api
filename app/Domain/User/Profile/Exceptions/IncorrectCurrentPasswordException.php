@@ -19,13 +19,14 @@ final class IncorrectCurrentPasswordException extends ValidationException
     /**
      * Seeds the validator's error bag with a field-targeted message, so the
      * 422 JSON response carries `errors.<field> = ["..."]` for the caller.
+     *
+     * `parent::withMessages()` uses `new static(...)` internally, so late
+     * static binding resolves it to this subclass — no manual rebuild needed.
      */
     public static function forField(string $field): self
     {
-        $exception = parent::withMessages([
+        return parent::withMessages([
             $field => [__('The provided password is incorrect.')],
         ]);
-
-        return new self($exception->validator, $exception->response, $exception->errorBag);
     }
 }

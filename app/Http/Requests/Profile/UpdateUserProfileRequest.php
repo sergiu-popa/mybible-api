@@ -8,7 +8,6 @@ use App\Domain\Shared\Enums\Language;
 use App\Domain\User\Profile\DataTransferObjects\UpdateUserProfileData;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 final class UpdateUserProfileRequest extends FormRequest
@@ -26,26 +25,13 @@ final class UpdateUserProfileRequest extends FormRequest
         return [
             'name' => ['sometimes', 'nullable', 'string', 'max:50'],
             'language' => ['sometimes', 'nullable', Rule::enum(Language::class)],
-            'preferred_version' => array_merge(
-                ['sometimes', 'nullable', 'string', 'max:16'],
-                Schema::hasTable('bible_versions')
-                    ? [Rule::exists('bible_versions', 'abbreviation')]
-                    : [],
-            ),
-        ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        if (Schema::hasTable('bible_versions')) {
-            return [];
-        }
-
-        return [
-            'preferred_version.*' => 'The preferred_version field is not yet available.',
+            'preferred_version' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:16',
+                Rule::exists('bible_versions', 'abbreviation'),
+            ],
         ];
     }
 
