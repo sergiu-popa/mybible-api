@@ -133,6 +133,14 @@ final class ListResourceCategoriesTest extends TestCase
         $this->assertStringContainsString('max-age=3600', $header);
     }
 
+    public function test_it_rejects_an_unsupported_language(): void
+    {
+        $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('resource-categories.index', ['language' => 'fr']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['language']);
+    }
+
     public function test_it_rejects_missing_api_key(): void
     {
         $this->getJson(route('resource-categories.index'))

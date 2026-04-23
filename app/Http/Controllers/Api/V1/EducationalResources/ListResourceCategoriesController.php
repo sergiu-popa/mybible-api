@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\EducationalResources;
 
 use App\Domain\EducationalResources\Models\ResourceCategory;
-use App\Domain\Shared\Enums\Language;
-use App\Http\Middleware\ResolveRequestLanguage;
 use App\Http\Requests\EducationalResources\ListResourceCategoriesRequest;
 use App\Http\Resources\EducationalResources\ResourceCategoryResource;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,11 +25,11 @@ final class ListResourceCategoriesController
      */
     public function __invoke(ListResourceCategoriesRequest $request): Response
     {
-        $language = $request->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY, Language::En);
-
         $query = ResourceCategory::query()->withResourceCount();
 
-        if ($request->query('language') !== null && $language instanceof Language) {
+        $language = $request->languageFilter();
+
+        if ($language !== null) {
             $query->forLanguage($language);
         }
 

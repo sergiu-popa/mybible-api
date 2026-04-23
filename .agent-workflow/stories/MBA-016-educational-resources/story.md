@@ -4,7 +4,7 @@
 Educational resources — categorized content library
 
 ## Status
-`qa-passed`
+`done`
 
 ## Description
 Clients surface a library of educational resources (articles, videos,
