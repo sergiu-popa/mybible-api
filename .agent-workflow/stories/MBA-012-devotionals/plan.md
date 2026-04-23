@@ -122,38 +122,38 @@ No duplicate suites: controller tests already cover routing/auth, and the query 
 
 ## Tasks
 
-- [ ] 1. Create `App\Domain\Devotional\Enums\DevotionalType` with `Adults` / `Kids` cases.
-- [ ] 2. Create migration `create_devotionals_table` (columns + indexes per Data & migrations). Reconcile with any existing Symfony table before creating.
-- [ ] 3. Create migration `create_devotional_favorites_table` with composite-unique `(user_id, devotional_id)`.
-- [ ] 4. Create `App\Domain\Devotional\Models\Devotional` with casts, `DevotionalType` enum cast, `favorites()` hasMany, and `newEloquentBuilder()` returning `DevotionalQueryBuilder`.
-- [ ] 5. Create `App\Domain\Devotional\Models\DevotionalFavorite` with `user()` / `devotional()` belongs-to, `newEloquentBuilder()` returning `DevotionalFavoriteQueryBuilder`.
-- [ ] 6. Create `App\Domain\Devotional\QueryBuilders\DevotionalQueryBuilder` with the methods listed in Key types.
-- [ ] 7. Create `App\Domain\Devotional\QueryBuilders\DevotionalFavoriteQueryBuilder` with the methods listed in Key types.
-- [ ] 8. Create `DevotionalFactory` + `DevotionalFavoriteFactory` with the states listed above.
-- [ ] 9. Create `App\Domain\Devotional\DataTransferObjects\FetchDevotionalData`, `ListDevotionalArchiveData`, `ToggleDevotionalFavoriteData` (readonly, `spatie/laravel-data`).
-- [ ] 10. Create `App\Domain\Devotional\Actions\FetchDevotionalAction` delegating to the query builder; throws `ModelNotFoundException` on miss.
-- [ ] 11. Create `App\Domain\Devotional\Actions\ToggleDevotionalFavoriteAction` (transaction-wrapped insert/delete returning `ToggleResult` DTO).
-- [ ] 12. Create `App\Http\Resources\Devotionals\DevotionalResource` with `whenNotNull` on `passage` / `author`.
-- [ ] 13. Create `App\Http\Resources\Devotionals\DevotionalFavoriteResource` embedding `DevotionalResource`.
-- [ ] 14. Create `App\Http\Requests\Devotionals\ShowDevotionalRequest` — validates `language`, `type` (`Rule::enum(DevotionalType::class)`), optional `date` (`YYYY-MM-DD`); builds `FetchDevotionalData`.
-- [ ] 15. Create `App\Http\Requests\Devotionals\ListDevotionalArchiveRequest` — validates `language`, `type`, optional `from` / `to` with `from <= to`, `per_page` (default engineer's choice ≤ 30, max 30); builds `ListDevotionalArchiveData`.
-- [ ] 16. Create `App\Http\Requests\Devotionals\ListDevotionalFavoritesRequest` — authenticated-only; validates pagination params.
-- [ ] 17. Create `App\Http\Requests\Devotionals\ToggleDevotionalFavoriteRequest` — authenticated-only; validates `devotional_id` (`integer`, `exists:devotionals,id`); builds `ToggleDevotionalFavoriteData`.
-- [ ] 18. Create `App\Http\Controllers\Api\V1\Devotionals\ShowDevotionalController` — calls `FetchDevotionalAction`, returns `DevotionalResource` with `Cache-Control: public, max-age=3600`.
-- [ ] 19. Create `App\Http\Controllers\Api\V1\Devotionals\ListDevotionalArchiveController` — query-builder-driven pagination.
-- [ ] 20. Create `App\Http\Controllers\Api\V1\Devotionals\ListDevotionalFavoritesController` — `DevotionalFavorite::query()->forUser($request->user())->withDevotional()->newestFirst()->paginate(...)`.
-- [ ] 21. Create `App\Http\Controllers\Api\V1\Devotionals\ToggleDevotionalFavoriteController` — calls the action; returns `201` with `DevotionalFavoriteResource` on create, `200 { deleted: true }` on delete.
-- [ ] 22. Register routes in `routes/api.php` under the `v1` prefix: archive **before** show on the `/devotionals` prefix; favorites group under `/devotional-favorites` with `auth:sanctum`.
-- [ ] 23. Write `DevotionalQueryBuilderTest` covering `onDate` / `withinRange` / `publishedUpTo` / `newestFirst`.
-- [ ] 24. Write `FetchDevotionalActionTest` (found + 404 paths).
-- [ ] 25. Write `ToggleDevotionalFavoriteActionTest` (insert + delete + transaction isolation).
-- [ ] 26. Write unit tests for `DevotionalResource` and `DevotionalFavoriteResource` (null-field omission, embedded devotional).
-- [ ] 27. Write Form Request unit tests for the four requests (valid / invalid / enum rejection / date format / `from <= to`).
-- [ ] 28. Write `ShowDevotionalControllerTest` (today, by date, 404, enum rejection, Cache-Control header).
-- [ ] 29. Write `ListDevotionalArchiveControllerTest` (pagination, newest-first, `from`/`to` window combinations, max per_page).
-- [ ] 30. Write `ListDevotionalFavoritesControllerTest` (owner list, cross-user scoping, 401, embedded shape).
-- [ ] 31. Write `ToggleDevotionalFavoriteControllerTest` (create 201, delete 200, unknown id 422, 401).
-- [ ] 32. Run `make lint-fix`, `make stan`, `make test --filter=Devotional`, then `make test` before marking ready.
+- [x] 1. Create `App\Domain\Devotional\Enums\DevotionalType` with `Adults` / `Kids` cases.
+- [x] 2. Create migration `create_devotionals_table` (columns + indexes per Data & migrations). Reconcile with any existing Symfony table before creating.
+- [x] 3. Create migration `create_devotional_favorites_table` with composite-unique `(user_id, devotional_id)`.
+- [x] 4. Create `App\Domain\Devotional\Models\Devotional` with casts, `DevotionalType` enum cast, `favorites()` hasMany, and `newEloquentBuilder()` returning `DevotionalQueryBuilder`.
+- [x] 5. Create `App\Domain\Devotional\Models\DevotionalFavorite` with `user()` / `devotional()` belongs-to, `newEloquentBuilder()` returning `DevotionalFavoriteQueryBuilder`.
+- [x] 6. Create `App\Domain\Devotional\QueryBuilders\DevotionalQueryBuilder` with the methods listed in Key types.
+- [x] 7. Create `App\Domain\Devotional\QueryBuilders\DevotionalFavoriteQueryBuilder` with the methods listed in Key types.
+- [x] 8. Create `DevotionalFactory` + `DevotionalFavoriteFactory` with the states listed above.
+- [x] 9. Create `App\Domain\Devotional\DataTransferObjects\FetchDevotionalData`, `ListDevotionalArchiveData`, `ToggleDevotionalFavoriteData` (readonly, `spatie/laravel-data`).
+- [x] 10. Create `App\Domain\Devotional\Actions\FetchDevotionalAction` delegating to the query builder; throws `ModelNotFoundException` on miss.
+- [x] 11. Create `App\Domain\Devotional\Actions\ToggleDevotionalFavoriteAction` (transaction-wrapped insert/delete returning `ToggleResult` DTO).
+- [x] 12. Create `App\Http\Resources\Devotionals\DevotionalResource` with `whenNotNull` on `passage` / `author`.
+- [x] 13. Create `App\Http\Resources\Devotionals\DevotionalFavoriteResource` embedding `DevotionalResource`.
+- [x] 14. Create `App\Http\Requests\Devotionals\ShowDevotionalRequest` — validates `language`, `type` (`Rule::enum(DevotionalType::class)`), optional `date` (`YYYY-MM-DD`); builds `FetchDevotionalData`.
+- [x] 15. Create `App\Http\Requests\Devotionals\ListDevotionalArchiveRequest` — validates `language`, `type`, optional `from` / `to` with `from <= to`, `per_page` (default engineer's choice ≤ 30, max 30); builds `ListDevotionalArchiveData`.
+- [x] 16. Create `App\Http\Requests\Devotionals\ListDevotionalFavoritesRequest` — authenticated-only; validates pagination params.
+- [x] 17. Create `App\Http\Requests\Devotionals\ToggleDevotionalFavoriteRequest` — authenticated-only; validates `devotional_id` (`integer`, `exists:devotionals,id`); builds `ToggleDevotionalFavoriteData`.
+- [x] 18. Create `App\Http\Controllers\Api\V1\Devotionals\ShowDevotionalController` — calls `FetchDevotionalAction`, returns `DevotionalResource` with `Cache-Control: public, max-age=3600`.
+- [x] 19. Create `App\Http\Controllers\Api\V1\Devotionals\ListDevotionalArchiveController` — query-builder-driven pagination.
+- [x] 20. Create `App\Http\Controllers\Api\V1\Devotionals\ListDevotionalFavoritesController` — `DevotionalFavorite::query()->forUser($request->user())->withDevotional()->newestFirst()->paginate(...)`.
+- [x] 21. Create `App\Http\Controllers\Api\V1\Devotionals\ToggleDevotionalFavoriteController` — calls the action; returns `201` with `DevotionalFavoriteResource` on create, `200 { deleted: true }` on delete.
+- [x] 22. Register routes in `routes/api.php` under the `v1` prefix: archive **before** show on the `/devotionals` prefix; favorites group under `/devotional-favorites` with `auth:sanctum`.
+- [x] 23. Write `DevotionalQueryBuilderTest` covering `onDate` / `withinRange` / `publishedUpTo` / `newestFirst`.
+- [x] 24. Write `FetchDevotionalActionTest` (found + 404 paths).
+- [x] 25. Write `ToggleDevotionalFavoriteActionTest` (insert + delete + transaction isolation).
+- [x] 26. Write unit tests for `DevotionalResource` and `DevotionalFavoriteResource` (null-field omission, embedded devotional).
+- [x] 27. Write Form Request unit tests for the four requests (valid / invalid / enum rejection / date format / `from <= to`).
+- [x] 28. Write `ShowDevotionalControllerTest` (today, by date, 404, enum rejection, Cache-Control header).
+- [x] 29. Write `ListDevotionalArchiveControllerTest` (pagination, newest-first, `from`/`to` window combinations, max per_page).
+- [x] 30. Write `ListDevotionalFavoritesControllerTest` (owner list, cross-user scoping, 401, embedded shape).
+- [x] 31. Write `ToggleDevotionalFavoriteControllerTest` (create 201, delete 200, unknown id 422, 401).
+- [x] 32. Run `make lint-fix`, `make stan`, `make test --filter=Devotional`, then `make test` before marking ready.
 
 ## Risks & notes
 

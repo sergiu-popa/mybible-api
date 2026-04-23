@@ -4,7 +4,7 @@
 Verse favorites and favorite categories
 
 ## Status
-`planned`
+`done`
 
 ## Description
 Users can bookmark verses (or verse ranges) and organize them into

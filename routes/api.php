@@ -17,6 +17,22 @@ use App\Http\Controllers\Api\V1\Hymnal\ListHymnalBookSongsController;
 use App\Http\Controllers\Api\V1\Hymnal\ListHymnalFavoritesController;
 use App\Http\Controllers\Api\V1\Hymnal\ShowHymnalSongController;
 use App\Http\Controllers\Api\V1\Hymnal\ToggleHymnalFavoriteController;
+use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalArchiveController;
+use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalFavoritesController;
+use App\Http\Controllers\Api\V1\Devotionals\ShowDevotionalController;
+use App\Http\Controllers\Api\V1\Devotionals\ToggleDevotionalFavoriteController;
+use App\Http\Controllers\Api\V1\Favorites\CreateFavoriteCategoryController;
+use App\Http\Controllers\Api\V1\Favorites\CreateFavoriteController;
+use App\Http\Controllers\Api\V1\Favorites\DeleteFavoriteCategoryController;
+use App\Http\Controllers\Api\V1\Favorites\DeleteFavoriteController;
+use App\Http\Controllers\Api\V1\Favorites\ListFavoriteCategoriesController;
+use App\Http\Controllers\Api\V1\Favorites\ListFavoritesController;
+use App\Http\Controllers\Api\V1\Favorites\UpdateFavoriteCategoryController;
+use App\Http\Controllers\Api\V1\Favorites\UpdateFavoriteController;
+use App\Http\Controllers\Api\V1\Notes\DeleteNoteController;
+use App\Http\Controllers\Api\V1\Notes\ListNotesController;
+use App\Http\Controllers\Api\V1\Notes\StoreNoteController;
+use App\Http\Controllers\Api\V1\Notes\UpdateNoteController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
 use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
@@ -93,6 +109,54 @@ Route::prefix('v1')->group(function (): void {
         ->group(function (): void {
             Route::get('/', ListHymnalFavoritesController::class)->name('index');
             Route::post('toggle', ToggleHymnalFavoriteController::class)->name('toggle');
+        });
+
+    Route::prefix('devotionals')
+        ->name('devotionals.')
+        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->group(function (): void {
+            // Register `/archive` before the root show route so a future
+            // `{devotional}` segment cannot shadow it.
+            Route::get('archive', ListDevotionalArchiveController::class)->name('archive');
+            Route::get('/', ShowDevotionalController::class)->name('show');
+        });
+
+    Route::prefix('devotional-favorites')
+        ->name('devotional-favorites.')
+        ->middleware('auth:sanctum')
+        ->group(function (): void {
+            Route::get('/', ListDevotionalFavoritesController::class)->name('index');
+            Route::post('toggle', ToggleDevotionalFavoriteController::class)->name('toggle');
+        });
+
+    Route::middleware('auth:sanctum')
+        ->prefix('notes')
+        ->name('notes.')
+        ->group(function (): void {
+            Route::get('/', ListNotesController::class)->name('index');
+            Route::post('/', StoreNoteController::class)->name('store');
+            Route::patch('{note}', UpdateNoteController::class)->name('update');
+            Route::delete('{note}', DeleteNoteController::class)->name('destroy');
+        });
+
+    Route::middleware(['auth:sanctum', 'resolve-language'])
+        ->prefix('favorite-categories')
+        ->name('favorite-categories.')
+        ->group(function (): void {
+            Route::get('/', ListFavoriteCategoriesController::class)->name('index');
+            Route::post('/', CreateFavoriteCategoryController::class)->name('store');
+            Route::patch('{category}', UpdateFavoriteCategoryController::class)->name('update');
+            Route::delete('{category}', DeleteFavoriteCategoryController::class)->name('destroy');
+        });
+
+    Route::middleware(['auth:sanctum', 'resolve-language'])
+        ->prefix('favorites')
+        ->name('favorites.')
+        ->group(function (): void {
+            Route::get('/', ListFavoritesController::class)->name('index');
+            Route::post('/', CreateFavoriteController::class)->name('store');
+            Route::patch('{favorite}', UpdateFavoriteController::class)->name('update');
+            Route::delete('{favorite}', DeleteFavoriteController::class)->name('destroy');
         });
 
     Route::middleware('auth:sanctum')
