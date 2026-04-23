@@ -27,9 +27,4 @@ final class DevotionalFavoriteQueryBuilder extends Builder
     {
         return $this->orderByDesc('created_at')->orderByDesc('id');
     }
-
-    public function matching(User $user, int $devotionalId): self
-    {
-        return $this->where('user_id', $user->id)->where('devotional_id', $devotionalId);
-    }
 }

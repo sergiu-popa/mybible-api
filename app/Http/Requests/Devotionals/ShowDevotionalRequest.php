@@ -51,12 +51,13 @@ final class ShowDevotionalRequest extends FormRequest
     {
         $raw = $this->query('date');
 
+        // `date_format:Y-m-d` has already passed by the time we build the DTO,
+        // so if a non-empty string is present it parses cleanly.
         if (is_string($raw) && $raw !== '') {
+            /** @var CarbonImmutable $parsed */
             $parsed = CarbonImmutable::createFromFormat('!Y-m-d', $raw);
 
-            if ($parsed instanceof CarbonImmutable) {
-                return $parsed;
-            }
+            return $parsed;
         }
 
         return CarbonImmutable::today();

@@ -10,7 +10,7 @@ final class ListDevotionalFavoritesRequest extends FormRequest
 {
     public const DEFAULT_PER_PAGE = 15;
 
-    public const MAX_PER_PAGE = 50;
+    public const MAX_PER_PAGE = 30;
 
     public function authorize(): bool
     {

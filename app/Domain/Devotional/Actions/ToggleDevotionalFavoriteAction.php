@@ -15,7 +15,8 @@ final class ToggleDevotionalFavoriteAction
     {
         return DB::transaction(function () use ($data): ToggleDevotionalFavoriteResult {
             $existing = DevotionalFavorite::query()
-                ->matching($data->user, $data->devotionalId)
+                ->forUser($data->user)
+                ->where('devotional_id', $data->devotionalId)
                 ->lockForUpdate()
                 ->first();
 

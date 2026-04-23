@@ -28,8 +28,8 @@ final class DevotionalFactory extends Factory
             'type' => DevotionalType::Adults,
             'title' => fake()->sentence(4),
             'content' => fake()->paragraphs(3, true),
-            'passage' => fake()->boolean() ? 'JHN.3:16' : null,
-            'author' => fake()->boolean() ? fake()->name() : null,
+            'passage' => 'JHN.3:16',
+            'author' => fake()->name(),
         ];
     }
 
@@ -51,5 +51,15 @@ final class DevotionalFactory extends Factory
     public function onDate(CarbonImmutable $date): self
     {
         return $this->state(['date' => $date->toDateString()]);
+    }
+
+    public function withoutPassage(): self
+    {
+        return $this->state(['passage' => null]);
+    }
+
+    public function anonymous(): self
+    {
+        return $this->state(['author' => null]);
     }
 }
