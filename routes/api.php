@@ -12,11 +12,8 @@ use App\Http\Controllers\Api\V1\Bible\ExportBibleVersionController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBookChaptersController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBooksController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleVersionsController;
-use App\Http\Controllers\Api\V1\Hymnal\ListHymnalBooksController;
-use App\Http\Controllers\Api\V1\Hymnal\ListHymnalBookSongsController;
-use App\Http\Controllers\Api\V1\Hymnal\ListHymnalFavoritesController;
-use App\Http\Controllers\Api\V1\Hymnal\ShowHymnalSongController;
-use App\Http\Controllers\Api\V1\Hymnal\ToggleHymnalFavoriteController;
+use App\Http\Controllers\Api\V1\Collections\ListCollectionTopicsController;
+use App\Http\Controllers\Api\V1\Collections\ShowCollectionTopicController;
 use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalArchiveController;
 use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalFavoritesController;
 use App\Http\Controllers\Api\V1\Devotionals\ShowDevotionalController;
@@ -29,6 +26,11 @@ use App\Http\Controllers\Api\V1\Favorites\ListFavoriteCategoriesController;
 use App\Http\Controllers\Api\V1\Favorites\ListFavoritesController;
 use App\Http\Controllers\Api\V1\Favorites\UpdateFavoriteCategoryController;
 use App\Http\Controllers\Api\V1\Favorites\UpdateFavoriteController;
+use App\Http\Controllers\Api\V1\Hymnal\ListHymnalBooksController;
+use App\Http\Controllers\Api\V1\Hymnal\ListHymnalBookSongsController;
+use App\Http\Controllers\Api\V1\Hymnal\ListHymnalFavoritesController;
+use App\Http\Controllers\Api\V1\Hymnal\ShowHymnalSongController;
+use App\Http\Controllers\Api\V1\Hymnal\ToggleHymnalFavoriteController;
 use App\Http\Controllers\Api\V1\Notes\DeleteNoteController;
 use App\Http\Controllers\Api\V1\Notes\ListNotesController;
 use App\Http\Controllers\Api\V1\Notes\StoreNoteController;
@@ -81,6 +83,14 @@ Route::prefix('v1')->group(function (): void {
         Route::get('verses', ResolveVersesController::class)->name('verses.index');
         Route::get('daily-verse', GetDailyVerseController::class)->name('daily-verse.show');
     });
+
+    Route::prefix('collections')
+        ->name('collections.')
+        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->group(function (): void {
+            Route::get('/', ListCollectionTopicsController::class)->name('index');
+            Route::get('{topic}', ShowCollectionTopicController::class)->name('show');
+        });
 
     Route::prefix('reading-plans')
         ->name('reading-plans.')
