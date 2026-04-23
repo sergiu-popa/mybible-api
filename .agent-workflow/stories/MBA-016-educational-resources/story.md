@@ -4,7 +4,7 @@
 Educational resources — categorized content library
 
 ## Status
-`in-review`
+`qa-ready`
 
 ## Description
 Clients surface a library of educational resources (articles, videos,
