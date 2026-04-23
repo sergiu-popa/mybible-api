@@ -55,7 +55,10 @@ final class SabbathSchoolLesson extends Model
 
     /**
      * Restrict route-model binding to published lessons so draft ids 404
-     * before controllers ever see them. Mirrors the ReadingPlan precedent.
+     * before controllers ever see them. Eager-loads the lesson detail
+     * graph in the same query so controllers do not duplicate the
+     * relation list — see {@see SabbathSchoolLessonQueryBuilder::withLessonDetail()}.
+     * Mirrors the ReadingPlan precedent.
      */
     public function resolveRouteBinding($value, $field = null): ?Model
     {
@@ -63,6 +66,7 @@ final class SabbathSchoolLesson extends Model
 
         return SabbathSchoolLesson::query()
             ->published()
+            ->withLessonDetail()
             ->where($field, $value)
             ->first();
     }
