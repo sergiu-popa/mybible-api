@@ -4,7 +4,7 @@
 Symfony cutover — forced logout, traffic flip, decommission plan
 
 ## Status
-`qa-ready`
+`qa-passed`
 
 ## Description
 Final migration story. Switch production traffic from the Symfony API
