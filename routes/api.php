@@ -44,6 +44,15 @@ use App\Http\Controllers\Api\V1\ReadingPlans\ListReadingPlansController;
 use App\Http\Controllers\Api\V1\ReadingPlans\RescheduleReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\ShowReadingPlanController;
 use App\Http\Controllers\Api\V1\ReadingPlans\StartReadingPlanSubscriptionController;
+use App\Http\Controllers\Api\V1\SabbathSchool\DeleteSabbathSchoolAnswerController;
+use App\Http\Controllers\Api\V1\SabbathSchool\ListSabbathSchoolFavoritesController;
+use App\Http\Controllers\Api\V1\SabbathSchool\ListSabbathSchoolHighlightsController;
+use App\Http\Controllers\Api\V1\SabbathSchool\ListSabbathSchoolLessonsController;
+use App\Http\Controllers\Api\V1\SabbathSchool\ShowSabbathSchoolAnswerController;
+use App\Http\Controllers\Api\V1\SabbathSchool\ShowSabbathSchoolLessonController;
+use App\Http\Controllers\Api\V1\SabbathSchool\ToggleSabbathSchoolFavoriteController;
+use App\Http\Controllers\Api\V1\SabbathSchool\ToggleSabbathSchoolHighlightController;
+use App\Http\Controllers\Api\V1\SabbathSchool\UpsertSabbathSchoolAnswerController;
 use App\Http\Controllers\Api\V1\Verses\GetDailyVerseController;
 use App\Http\Controllers\Api\V1\Verses\ResolveVersesController;
 use Illuminate\Support\Facades\Route;
@@ -194,5 +203,35 @@ Route::prefix('v1')->group(function (): void {
                 ->name('finish');
             Route::post('{subscription}/abandon', AbandonReadingPlanSubscriptionController::class)
                 ->name('abandon');
+        });
+
+    Route::prefix('sabbath-school')
+        ->name('sabbath-school.')
+        ->group(function (): void {
+            Route::middleware(['api-key-or-sanctum', 'resolve-language'])->group(function (): void {
+                Route::get('lessons', ListSabbathSchoolLessonsController::class)
+                    ->name('lessons.index');
+                Route::get('lessons/{lesson}', ShowSabbathSchoolLessonController::class)
+                    ->name('lessons.show');
+            });
+
+            Route::middleware('auth:sanctum')->group(function (): void {
+                Route::get('questions/{question}/answer', ShowSabbathSchoolAnswerController::class)
+                    ->name('answers.show');
+                Route::post('questions/{question}/answer', UpsertSabbathSchoolAnswerController::class)
+                    ->name('answers.upsert');
+                Route::delete('questions/{question}/answer', DeleteSabbathSchoolAnswerController::class)
+                    ->name('answers.destroy');
+
+                Route::get('highlights', ListSabbathSchoolHighlightsController::class)
+                    ->name('highlights.index');
+                Route::post('highlights/toggle', ToggleSabbathSchoolHighlightController::class)
+                    ->name('highlights.toggle');
+
+                Route::get('favorites', ListSabbathSchoolFavoritesController::class)
+                    ->name('favorites.index');
+                Route::post('favorites/toggle', ToggleSabbathSchoolFavoriteController::class)
+                    ->name('favorites.toggle');
+            });
         });
 });
