@@ -4,7 +4,7 @@
 Bible olympiad — themed quiz questions
 
 ## Status
-`qa-ready`
+`qa-passed`
 
 ## Description
 A public quiz endpoint serving trivia-style questions keyed by Bible
