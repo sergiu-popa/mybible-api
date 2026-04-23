@@ -20,11 +20,11 @@ final class HymnalSongFactory extends Factory
      */
     public function definition(): array
     {
-        $title = fake()->unique()->sentence(3);
+        $title = fake()->sentence(3);
 
         return [
             'hymnal_book_id' => HymnalBook::factory(),
-            'number' => fake()->unique()->numberBetween(1, 100_000),
+            'number' => fake()->numberBetween(1, 100_000),
             'title' => [
                 'en' => $title,
                 'ro' => 'RO: ' . $title,

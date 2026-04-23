@@ -52,6 +52,9 @@ final class ListHymnalBooksRequest extends FormRequest
             return null;
         }
 
-        return Language::tryFrom($value);
+        // The validator already guarantees the value is a valid Language
+        // case by the time this method is reached (see rules()); use from()
+        // to communicate the invariant.
+        return Language::from($value);
     }
 }

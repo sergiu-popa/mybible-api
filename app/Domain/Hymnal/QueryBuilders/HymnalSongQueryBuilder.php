@@ -32,13 +32,15 @@ final class HymnalSongQueryBuilder extends Builder
         $driver = $connection instanceof Connection ? $connection->getDriverName() : '';
 
         // MySQL JSON_UNQUOTE + JSON_EXTRACT lets us LIKE-match against the
-        // localised title value without pulling every row into PHP.
+        // localised title value without pulling every row into PHP. The JSON
+        // path flows through a bound parameter so the statement stays
+        // binding-driven even if a non-enum locale value ever slips in.
         $titleExpression = $driver === 'mysql'
-            ? "JSON_UNQUOTE(JSON_EXTRACT(title, '{$jsonPath}'))"
-            : "JSON_EXTRACT(title, '{$jsonPath}')";
+            ? 'JSON_UNQUOTE(JSON_EXTRACT(title, ?))'
+            : 'JSON_EXTRACT(title, ?)';
 
-        return $this->where(function (Builder $builder) use ($trimmed, $titleExpression): void {
-            $builder->whereRaw("{$titleExpression} LIKE ?", ['%' . $trimmed . '%']);
+        return $this->where(function (Builder $builder) use ($trimmed, $titleExpression, $jsonPath): void {
+            $builder->whereRaw("{$titleExpression} LIKE ?", [$jsonPath, '%' . $trimmed . '%']);
 
             if (ctype_digit($trimmed)) {
                 $builder->orWhere('number', (int) $trimmed);
