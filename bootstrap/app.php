@@ -5,6 +5,7 @@ use App\Domain\Olympiad\Exceptions\OlympiadThemeNotFoundException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionAlreadyCompletedException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionNotCompletableException;
 use App\Domain\Reference\Exceptions\InvalidReferenceException;
+use App\Domain\SabbathSchool\Exceptions\InvalidSabbathSchoolPassageException;
 use App\Domain\Verses\Exceptions\NoDailyVerseForDateException;
 use App\Http\Middleware\EnsureApiKeyOrSanctum;
 use App\Http\Middleware\EnsureValidApiKey;
@@ -81,6 +82,13 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'message' => $e->getMessage(),
                 'errors' => ['reference' => [$e->reason()]],
+            ], 422);
+        });
+
+        $exceptions->render(function (InvalidSabbathSchoolPassageException $e, Request $request) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'errors' => ['passage' => [$e->reason]],
             ], 422);
         });
 

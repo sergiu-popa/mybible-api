@@ -1,0 +1,93 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Domain\SabbathSchool\Actions;
+
+use App\Domain\SabbathSchool\Actions\ToggleSabbathSchoolFavoriteAction;
+use App\Domain\SabbathSchool\DataTransferObjects\ToggleSabbathSchoolFavoriteData;
+use App\Domain\SabbathSchool\Models\SabbathSchoolFavorite;
+use App\Domain\SabbathSchool\Models\SabbathSchoolLesson;
+use App\Domain\SabbathSchool\Models\SabbathSchoolSegment;
+use App\Domain\SabbathSchool\Support\SabbathSchoolFavoriteSentinel;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+final class ToggleSabbathSchoolFavoriteActionTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_it_inserts_whole_lesson_sentinel_favorite(): void
+    {
+        $user = User::factory()->create();
+        $lesson = SabbathSchoolLesson::factory()->create();
+
+        $result = $this->app->make(ToggleSabbathSchoolFavoriteAction::class)->execute(
+            new ToggleSabbathSchoolFavoriteData(
+                $user,
+                $lesson->id,
+                SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
+            ),
+        );
+
+        $this->assertTrue($result->created);
+        $this->assertNotNull($result->favorite);
+        $this->assertDatabaseHas('sabbath_school_favorites', [
+            'user_id' => $user->id,
+            'sabbath_school_lesson_id' => $lesson->id,
+            'sabbath_school_segment_id' => SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
+        ]);
+    }
+
+    public function test_it_deletes_the_sentinel_row_on_second_call(): void
+    {
+        $user = User::factory()->create();
+        $lesson = SabbathSchoolLesson::factory()->create();
+
+        SabbathSchoolFavorite::factory()
+            ->forUser($user)
+            ->forLesson($lesson)
+            ->create();
+
+        $result = $this->app->make(ToggleSabbathSchoolFavoriteAction::class)->execute(
+            new ToggleSabbathSchoolFavoriteData(
+                $user,
+                $lesson->id,
+                SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
+            ),
+        );
+
+        $this->assertFalse($result->created);
+        $this->assertDatabaseCount('sabbath_school_favorites', 0);
+    }
+
+    public function test_segment_level_insert_does_not_touch_the_sentinel_row(): void
+    {
+        $user = User::factory()->create();
+        $lesson = SabbathSchoolLesson::factory()->create();
+        $segment = SabbathSchoolSegment::factory()->forLesson($lesson)->create();
+
+        SabbathSchoolFavorite::factory()
+            ->forUser($user)
+            ->forLesson($lesson)
+            ->create();
+
+        $result = $this->app->make(ToggleSabbathSchoolFavoriteAction::class)->execute(
+            new ToggleSabbathSchoolFavoriteData($user, $lesson->id, $segment->id),
+        );
+
+        $this->assertTrue($result->created);
+        $this->assertDatabaseCount('sabbath_school_favorites', 2);
+        $this->assertDatabaseHas('sabbath_school_favorites', [
+            'user_id' => $user->id,
+            'sabbath_school_lesson_id' => $lesson->id,
+            'sabbath_school_segment_id' => SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
+        ]);
+        $this->assertDatabaseHas('sabbath_school_favorites', [
+            'user_id' => $user->id,
+            'sabbath_school_lesson_id' => $lesson->id,
+            'sabbath_school_segment_id' => $segment->id,
+        ]);
+    }
+}
