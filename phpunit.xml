@@ -11,7 +11,19 @@
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
+        <!-- Invoked explicitly by `make smoke` against a live target
+             URL. Also filtered by the <groups><exclude> below so a
+             forgotten SMOKE_TARGET_URL never red-lights the default
+             `make test` run. -->
+        <testsuite name="Smoke">
+            <directory>tests/Smoke</directory>
+        </testsuite>
     </testsuites>
+    <groups>
+        <exclude>
+            <group>smoke</group>
+        </exclude>
+    </groups>
     <source>
         <include>
             <directory>app</directory>
