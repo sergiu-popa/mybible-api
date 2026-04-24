@@ -18,6 +18,9 @@ use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalArchiveController;
 use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalFavoritesController;
 use App\Http\Controllers\Api\V1\Devotionals\ShowDevotionalController;
 use App\Http\Controllers\Api\V1\Devotionals\ToggleDevotionalFavoriteController;
+use App\Http\Controllers\Api\V1\EducationalResources\ListResourceCategoriesController;
+use App\Http\Controllers\Api\V1\EducationalResources\ListResourcesByCategoryController;
+use App\Http\Controllers\Api\V1\EducationalResources\ShowEducationalResourceController;
 use App\Http\Controllers\Api\V1\Favorites\CreateFavoriteCategoryController;
 use App\Http\Controllers\Api\V1\Favorites\CreateFavoriteController;
 use App\Http\Controllers\Api\V1\Favorites\DeleteFavoriteCategoryController;
@@ -180,6 +183,15 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('{favorite}', UpdateFavoriteController::class)->name('update');
             Route::delete('{favorite}', DeleteFavoriteController::class)->name('destroy');
         });
+
+    Route::middleware(['api-key-or-sanctum', 'resolve-language'])->group(function (): void {
+        Route::get('resource-categories', ListResourceCategoriesController::class)
+            ->name('resource-categories.index');
+        Route::get('resource-categories/{category}/resources', ListResourcesByCategoryController::class)
+            ->name('resource-categories.resources.index');
+        Route::get('resources/{resource:uuid}', ShowEducationalResourceController::class)
+            ->name('resources.show');
+    });
 
     Route::middleware('auth:sanctum')
         ->prefix('reading-plan-subscriptions')
