@@ -47,6 +47,15 @@ return [
             'report' => false,
         ],
 
+        'qr' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/qr'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/') . '/storage/qr',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -56,6 +65,26 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+            'report' => false,
+        ],
+
+        // Avatar storage — proxies to S3 in production, or to the local
+        // `public` disk when `AVATAR_DISK_DRIVER` is set to `local`. The
+        // root prefix (default `avatars`) keeps Symfony-era avatar paths
+        // resolvable under `Storage::disk('avatars')->url(...)` without any
+        // PHP client changes at the call sites.
+        'avatars' => [
+            'driver' => env('AVATAR_DISK_DRIVER', 's3'),
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'root' => env('AVATAR_DISK_ROOT', 'avatars'),
+            'visibility' => 'public',
             'throw' => false,
             'report' => false,
         ],

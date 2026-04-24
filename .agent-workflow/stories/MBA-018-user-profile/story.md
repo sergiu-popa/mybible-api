@@ -4,7 +4,7 @@
 User profile — update profile, change password, delete account, avatar
 
 ## Status
-`planned`
+`done`
 
 ## Description
 Self-service account management for authenticated users. Covers:

@@ -26,18 +26,18 @@ final class ResetPasswordTest extends TestCase
         $this->postJson(route('auth.reset-password'), [
             'email' => 'jane@example.com',
             'token' => $token,
-            'password' => 'brand-new-pass',
-            'password_confirmation' => 'brand-new-pass',
+            'password' => 'Brand-new-pass1',
+            'password_confirmation' => 'Brand-new-pass1',
         ])
             ->assertOk()
             ->assertJsonStructure(['message']);
 
         $user->refresh();
-        $this->assertTrue(Hash::check('brand-new-pass', $user->password));
+        $this->assertTrue(Hash::check('Brand-new-pass1', $user->password));
 
         $this->postJson(route('auth.login'), [
             'email' => 'jane@example.com',
-            'password' => 'brand-new-pass',
+            'password' => 'Brand-new-pass1',
         ])->assertOk();
     }
 
@@ -52,8 +52,8 @@ final class ResetPasswordTest extends TestCase
         $this->postJson(route('auth.reset-password'), [
             'email' => 'jane@example.com',
             'token' => 'this-is-not-the-real-token',
-            'password' => 'brand-new-pass',
-            'password_confirmation' => 'brand-new-pass',
+            'password' => 'Brand-new-pass1',
+            'password_confirmation' => 'Brand-new-pass1',
         ])
             ->assertStatus(422)
             ->assertJsonStructure(['message']);
@@ -73,8 +73,8 @@ final class ResetPasswordTest extends TestCase
         $this->postJson(route('auth.reset-password'), [
             'email' => 'jane@example.com',
             'token' => $token,
-            'password' => 'brand-new-pass',
-            'password_confirmation' => 'brand-new-pass',
+            'password' => 'Brand-new-pass1',
+            'password_confirmation' => 'Brand-new-pass1',
         ])
             ->assertStatus(422)
             ->assertJsonStructure(['message']);
@@ -97,8 +97,8 @@ final class ResetPasswordTest extends TestCase
         $this->postJson(route('auth.reset-password'), [
             'email' => 'jane@example.com',
             'token' => 'anything',
-            'password' => 'brand-new-pass',
-            'password_confirmation' => 'something-else',
+            'password' => 'Brand-new-pass1',
+            'password_confirmation' => 'Something-else1',
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['password']);

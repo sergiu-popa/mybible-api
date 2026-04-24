@@ -132,34 +132,34 @@ Both paths converge on the same target schema. The reconciliation migration is o
 
 ## Tasks
 
-- [ ] 1. Create `App\Domain\EducationalResources\Enums\ResourceType` (string-backed, cases `Article=article`, `Video=video`, `Pdf=pdf`, `Audio=audio`).
-- [ ] 2. Add migration `create_resource_categories_and_educational_resources_table.php` per the target schemas above, guarded by `! Schema::hasTable('resource')` so prod short-circuits.
-- [ ] 3. Add migration `reconcile_symfony_resource_tables.php` that early-returns when Symfony tables are absent; otherwise renames + reconciles columns, backfills `uuid` per row, and adds the `(resource_category_id, type, published_at)` index. Down-path reverses the renames; no attempt to restore dropped Symfony-only columns.
-- [ ] 4. Add `config/educational_resources.php` with `'media_disk' => env('EDUCATIONAL_RESOURCES_DISK', 'public')`.
-- [ ] 5. Create `App\Domain\EducationalResources\Models\ResourceCategory` with translatable JSON casts, `resources()` `HasMany` relation, and `newEloquentBuilder()` wiring.
-- [ ] 6. Create `App\Domain\EducationalResources\Models\EducationalResource` with `uuid` as route key (`getRouteKeyName()`), `type` cast to `ResourceType`, translatable JSON casts, `category()` `BelongsTo`, and `newEloquentBuilder()` wiring.
-- [ ] 7. Create `App\Domain\EducationalResources\QueryBuilders\ResourceCategoryQueryBuilder` with `withResourceCount()` and `forLanguage(Language)`.
-- [ ] 8. Create `App\Domain\EducationalResources\QueryBuilders\EducationalResourceQueryBuilder` with `ofType(ResourceType)` and `latestPublished()`.
-- [ ] 9. Create `App\Domain\EducationalResources\Support\MediaUrlResolver::absoluteUrl()`.
-- [ ] 10. Create `ResourceCategoryFactory` with localised name/description faker arrays and a random `language` among `en|ro|hu`.
-- [ ] 11. Create `EducationalResourceFactory` with a stable `uuid()` call, `type` picked from `ResourceType` cases, localised title/summary/content, `published_at` in the past, nullable media columns, and a `forCategory(ResourceCategory)` state helper.
-- [ ] 12. Create `App\Http\Requests\EducationalResources\ListResourceCategoriesRequest` with `DEFAULT_PER_PAGE=50`, `MAX_PER_PAGE=100`, `language` + `per_page` validation, and `perPage()` accessor.
-- [ ] 13. Create `App\Http\Requests\EducationalResources\ListResourcesByCategoryRequest` with `DEFAULT_PER_PAGE=25`, `MAX_PER_PAGE=100`, `type` validated via `Rule::enum(ResourceType::class)`, `perPage()` accessor, and `resourceType(): ?ResourceType` accessor.
-- [ ] 14. Create `App\Http\Requests\EducationalResources\ShowEducationalResourceRequest` (empty rules, `authorize(): true`) for sibling parity.
-- [ ] 15. Create `App\Http\Resources\EducationalResources\ResourceCategoryResource` emitting `{ id, name, description, language, resource_count }`, using `LanguageResolver` for translatable fields and reading `resource_count` from the aggregate.
-- [ ] 16. Create `App\Http\Resources\EducationalResources\EducationalResourceListResource` emitting `{ uuid, type, title, summary, thumbnail_url, published_at }` via `LanguageResolver` and `MediaUrlResolver`.
-- [ ] 17. Create `App\Http\Resources\EducationalResources\EducationalResourceDetailResource` emitting the full detail shape incl. nested category mini-object; uses `LanguageResolver` and `MediaUrlResolver`.
-- [ ] 18. Create `App\Http\Controllers\Api\V1\EducationalResources\ListResourceCategoriesController` (invokable): paginates `ResourceCategory::query()->withResourceCount()` filtered by `forLanguage()` when the request provides it, and attaches `Cache-Control: public, max-age=3600` to the response.
-- [ ] 19. Create `App\Http\Controllers\Api\V1\EducationalResources\ListResourcesByCategoryController` (invokable): paginates `$category->resources()->latestPublished()` scoped via `->ofType($request->resourceType())` when present.
-- [ ] 20. Create `App\Http\Controllers\Api\V1\EducationalResources\ShowEducationalResourceController` (invokable): eager-loads `category` and returns the detail resource.
-- [ ] 21. Register the three routes inside `routes/api.php` under a new `Route::prefix('v1')` group entry with `['api-key-or-sanctum', 'resolve-language']` middleware; name them `resource-categories.index`, `resource-categories.resources.index`, `resources.show`.
-- [ ] 22. Add feature test `tests/Feature/Api/V1/EducationalResources/ListResourceCategoriesTest` covering the happy path, language filter, `resource_count` accuracy, pagination default 50, `Cache-Control` header, and unauthenticated (no api-key, no sanctum) = 401.
-- [ ] 23. Add feature test `tests/Feature/Api/V1/EducationalResources/ListResourcesByCategoryTest` covering happy path, `type` filter for each enum case, invalid `type` = 422, newest-first ordering, pagination default 25, and unknown category id = 404.
-- [ ] 24. Add feature test `tests/Feature/Api/V1/EducationalResources/ShowEducationalResourceTest` covering happy path (JSON structure, media URL absolute-isation with `Storage::fake`), unknown uuid = 404, category nested object present.
-- [ ] 25. Add unit test `tests/Unit/Domain/EducationalResources/QueryBuilders/ResourceCategoryQueryBuilderTest` — `withResourceCount()` populates the aggregate; `forLanguage()` filters.
-- [ ] 26. Add unit test `tests/Unit/Domain/EducationalResources/QueryBuilders/EducationalResourceQueryBuilderTest` — `ofType()` filters by type value; `latestPublished()` orders correctly.
-- [ ] 27. Add unit test `tests/Unit/Domain/EducationalResources/Support/MediaUrlResolverTest` — null/empty path returns null; valid path returns the disk's absolute URL; disk name is honoured.
-- [ ] 28. Run `make lint-fix && make stan && make test --filter=EducationalResources`, then `make test` before marking the story ready for review.
+- [x] 1. Create `App\Domain\EducationalResources\Enums\ResourceType` (string-backed, cases `Article=article`, `Video=video`, `Pdf=pdf`, `Audio=audio`).
+- [x] 2. Add migration `create_resource_categories_and_educational_resources_table.php` per the target schemas above, guarded by `! Schema::hasTable('resource')` so prod short-circuits.
+- [x] 3. Add migration `reconcile_symfony_resource_tables.php` that early-returns when Symfony tables are absent; otherwise renames + reconciles columns, backfills `uuid` per row, and adds the `(resource_category_id, type, published_at)` index. Down-path reverses the renames; no attempt to restore dropped Symfony-only columns.
+- [x] 4. Add `config/educational_resources.php` with `'media_disk' => env('EDUCATIONAL_RESOURCES_DISK', 'public')`.
+- [x] 5. Create `App\Domain\EducationalResources\Models\ResourceCategory` with translatable JSON casts, `resources()` `HasMany` relation, and `newEloquentBuilder()` wiring.
+- [x] 6. Create `App\Domain\EducationalResources\Models\EducationalResource` with `uuid` as route key (`getRouteKeyName()`), `type` cast to `ResourceType`, translatable JSON casts, `category()` `BelongsTo`, and `newEloquentBuilder()` wiring.
+- [x] 7. Create `App\Domain\EducationalResources\QueryBuilders\ResourceCategoryQueryBuilder` with `withResourceCount()` and `forLanguage(Language)`.
+- [x] 8. Create `App\Domain\EducationalResources\QueryBuilders\EducationalResourceQueryBuilder` with `ofType(ResourceType)` and `latestPublished()`.
+- [x] 9. Create `App\Domain\EducationalResources\Support\MediaUrlResolver::absoluteUrl()`.
+- [x] 10. Create `ResourceCategoryFactory` with localised name/description faker arrays and a random `language` among `en|ro|hu`.
+- [x] 11. Create `EducationalResourceFactory` with a stable `uuid()` call, `type` picked from `ResourceType` cases, localised title/summary/content, `published_at` in the past, nullable media columns, and a `forCategory(ResourceCategory)` state helper.
+- [x] 12. Create `App\Http\Requests\EducationalResources\ListResourceCategoriesRequest` with `DEFAULT_PER_PAGE=50`, `MAX_PER_PAGE=100`, `language` + `per_page` validation, and `perPage()` accessor.
+- [x] 13. Create `App\Http\Requests\EducationalResources\ListResourcesByCategoryRequest` with `DEFAULT_PER_PAGE=25`, `MAX_PER_PAGE=100`, `type` validated via `Rule::enum(ResourceType::class)`, `perPage()` accessor, and `resourceType(): ?ResourceType` accessor.
+- [x] 14. Create `App\Http\Requests\EducationalResources\ShowEducationalResourceRequest` (empty rules, `authorize(): true`) for sibling parity.
+- [x] 15. Create `App\Http\Resources\EducationalResources\ResourceCategoryResource` emitting `{ id, name, description, language, resource_count }`, using `LanguageResolver` for translatable fields and reading `resource_count` from the aggregate.
+- [x] 16. Create `App\Http\Resources\EducationalResources\EducationalResourceListResource` emitting `{ uuid, type, title, summary, thumbnail_url, published_at }` via `LanguageResolver` and `MediaUrlResolver`.
+- [x] 17. Create `App\Http\Resources\EducationalResources\EducationalResourceDetailResource` emitting the full detail shape incl. nested category mini-object; uses `LanguageResolver` and `MediaUrlResolver`.
+- [x] 18. Create `App\Http\Controllers\Api\V1\EducationalResources\ListResourceCategoriesController` (invokable): paginates `ResourceCategory::query()->withResourceCount()` filtered by `forLanguage()` when the request provides it, and attaches `Cache-Control: public, max-age=3600` to the response.
+- [x] 19. Create `App\Http\Controllers\Api\V1\EducationalResources\ListResourcesByCategoryController` (invokable): paginates `$category->resources()->latestPublished()` scoped via `->ofType($request->resourceType())` when present.
+- [x] 20. Create `App\Http\Controllers\Api\V1\EducationalResources\ShowEducationalResourceController` (invokable): eager-loads `category` and returns the detail resource.
+- [x] 21. Register the three routes inside `routes/api.php` under a new `Route::prefix('v1')` group entry with `['api-key-or-sanctum', 'resolve-language']` middleware; name them `resource-categories.index`, `resource-categories.resources.index`, `resources.show`.
+- [x] 22. Add feature test `tests/Feature/Api/V1/EducationalResources/ListResourceCategoriesTest` covering the happy path, language filter, `resource_count` accuracy, pagination default 50, `Cache-Control` header, and unauthenticated (no api-key, no sanctum) = 401.
+- [x] 23. Add feature test `tests/Feature/Api/V1/EducationalResources/ListResourcesByCategoryTest` covering happy path, `type` filter for each enum case, invalid `type` = 422, newest-first ordering, pagination default 25, and unknown category id = 404.
+- [x] 24. Add feature test `tests/Feature/Api/V1/EducationalResources/ShowEducationalResourceTest` covering happy path (JSON structure, media URL absolute-isation with `Storage::fake`), unknown uuid = 404, category nested object present.
+- [x] 25. Add unit test `tests/Unit/Domain/EducationalResources/QueryBuilders/ResourceCategoryQueryBuilderTest` — `withResourceCount()` populates the aggregate; `forLanguage()` filters.
+- [x] 26. Add unit test `tests/Unit/Domain/EducationalResources/QueryBuilders/EducationalResourceQueryBuilderTest` — `ofType()` filters by type value; `latestPublished()` orders correctly.
+- [x] 27. Add unit test `tests/Unit/Domain/EducationalResources/Support/MediaUrlResolverTest` — null/empty path returns null; valid path returns the disk's absolute URL; disk name is honoured.
+- [x] 28. Run `make lint-fix && make stan && make test --filter=EducationalResources`, then `make test` before marking the story ready for review.
 
 ## Risks & notes
 

@@ -163,27 +163,35 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 # Docker Development Environment
 
-This application runs in Docker. All commands (linting, static analysis, tests, artisan) must be executed inside the container.
+This app runs as one of three sibling containers in the **MyBible monorepo**
+at `../../` (i.e. `/Users/sergiu/Code/mybible`). The Docker stack
+(compose + Makefile) is owned by the monorepo root, NOT this folder.
 
-## Local Domain
-
-The application is available at `http://api.mybible.local` when containers are running.
+- This container's name: **`mybible-api`** (web) and **`mybible-api-worker`** (queue).
+- Local URL: `http://api.mybible.local` (Traefik routes by host header).
+- Database: shared `mybible-mysql` container — only THIS app has DB access.
 
 ## Running Commands
 
-Always use `make` targets or `docker exec` to run commands inside the container:
+`make` targets live at the **monorepo root**. From this folder you can either
+`cd ../..` and run them, or call them directly from the root in another terminal.
 
-- **Linting:** `make lint` (check) / `make lint-fix` (auto-fix)
-- **Static analysis:** `make stan`
-- **Tests:** `make test` or `make test filter=testName`
-- **All checks:** `make check` (lint + stan + test)
-- **Artisan:** `docker exec mybible-api-app php artisan <command>`
-- **Shell:** `make bash`
+The API-specific targets are namespaced with `-api`:
 
-Do not run `php artisan`, `vendor/bin/pint`, `vendor/bin/phpstan`, or `php artisan test` directly on the host. Always prefix with `docker exec mybible-api-app` or use the corresponding `make` target.
+- **Lint:** `make lint-api` / `make lint-fix-api`
+- **Static analysis:** `make stan-api`
+- **Tests:** `make test-api` (auto-migrates against `mybible-mysql-test`)
+  - Filter: `make test-api filter=testName`
+- **All checks:** `make check` (runs across all 3 apps)
+- **Artisan / shell:** `docker exec -it mybible-api php artisan <cmd>` or `make api-bash` / `make api-tinker`
 
-## Container Setup
+Do not run `php artisan`, `vendor/bin/pint`, `vendor/bin/phpstan`, or `php
+artisan test` directly on the host. Always exec inside the container.
 
-- `make setup` — full initialization (env, containers, composer, key, migrate)
-- `make up` / `make down` — start/stop containers
-- `make migrate` / `make fresh` / `make seed` — database management
+## Lifecycle
+
+From the monorepo root:
+
+- `make up` / `make down` — start/stop the whole stack
+- `make migrate-api` / `make fresh-api` / `make seed-api` — DB management
+- `make worker-logs` — tail the queue worker

@@ -83,24 +83,24 @@ No migration for mobile version — `config/mobile.php` is the source of truth, 
 
 ## Tasks
 
-- [ ] 1. Create `config/mobile.php` with `ios` and `android` keys whose inner shape matches AC 9 verbatim, all values env-driven. Append the new env vars to `.env.example` (not `.env`).
-- [ ] 2. Create `news` and `qr_codes` migrations with `Schema::hasTable()` guards. Add the composite index `(language, published_at desc)` on `news` and `unique(reference)` on `qr_codes`. Create factories for both models.
-- [ ] 3. Create `App\Domain\News\Models\News` with casts, `$fillable`, and `newEloquentBuilder()` wiring to `NewsQueryBuilder`. Unit test: cast of `published_at`, mass-assignment surface.
-- [ ] 4. Create `App\Domain\News\QueryBuilders\NewsQueryBuilder` with `published()`, `forLanguage(Language)`, `newestFirst()`. Unit test (`RefreshDatabase`): published filter excludes future-dated and null rows; language filter narrows; ordering is `published_at DESC, id DESC` for deterministic pagination.
-- [ ] 5. Create `App\Domain\QrCode\Models\QrCode` with `imageUrl()` accessor (resolved via `Storage::disk('qr')`) and `newEloquentBuilder()` wiring to `QrCodeQueryBuilder`. Unit test: `imageUrl()` returns a URL string, and returns `null` when `image_path` is null.
-- [ ] 6. Create `App\Domain\QrCode\QueryBuilders\QrCodeQueryBuilder::forReference(string)` — exact canonical-string match. Unit test: returns the single matching row; returns empty on miss.
-- [ ] 7. Create `ListNewsRequest` extending `FormRequest`: rules for `language` (nullable iso2), `page`, `per_page` (default 20, max 50). `validated()` falls back to `$request->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY)` when `language` is absent. Unit test: validation rules + language fallback.
-- [ ] 8. Create `ShowQrCodeRequest`: rule `reference` required. Override `prepareForValidation()` to run `ReferenceParser::parseOne()` and attach the canonical string to `$request->attributes` under a new `public const CANONICAL_REFERENCE` on the Request class. Catch `InvalidReferenceException` and rethrow as a 422 via `failedValidation()` (or add a custom validation rule wrapping the parser). Unit test: happy path exposes the canonical on the attributes bag; invalid input produces a 422 JSON envelope.
-- [ ] 9. Create `ShowMobileVersionRequest`: rule `platform` required, `in:ios,android`. Unit test: accepts both platforms; rejects missing / unknown.
-- [ ] 10. Create `NewsResource` (+ `NewsCollection` for the paginated shape) matching AC 2. Unit test: structure match via `assertJsonStructure`.
-- [ ] 11. Create `QrCodeResource` matching AC 6. Unit test: structure match.
-- [ ] 12. Create `MobileVersionResource`. Its `toArray()` reads `config('mobile.'.$platform)` directly — no model. Preserve field names from AC 9 verbatim. Unit test: structure match; field names are NOT renamed.
-- [ ] 13. Create `NewsController`, `QrCodeController`, `MobileVersionController` as invokable single-action controllers.
-- [ ] 14. Register routes in `routes/api.php` under the `/api/v1` group with the `api-key-or-sanctum` stack. Wrap News in `resolve-language` middleware. Apply `cache.headers` middleware per endpoint with the max-ages in the table above; include `etag` for news and qr-codes.
-- [ ] 15. Feature test `NewsControllerTest`: list with explicit `?language=ro`; list with language fallback from `ResolveRequestLanguage` attribute; pagination (`per_page`, default + max); `Cache-Control` header; auth required (401 without api-key/sanctum).
-- [ ] 16. Feature test `QrCodeControllerTest`: happy path for a reference with a stored QR; `404` for a reference that has no stored QR; `422` for an unparseable reference; `Cache-Control: public, max-age=86400` header; auth required.
-- [ ] 17. Feature test `MobileVersionControllerTest`: `ios` and `android` return their config shape; `422` for missing/unknown platform; `Cache-Control: public, max-age=300` header; auth required (`X-Api-Key` alone is sufficient).
-- [ ] 18. Run `make lint-fix`, `make stan`, then `make test --filter='News|QrCode|MobileVersion'`; finally run `make check` before marking the story ready for review.
+- [x] 1. Create `config/mobile.php` with `ios` and `android` keys whose inner shape matches AC 9 verbatim, all values env-driven. Append the new env vars to `.env.example` (not `.env`).
+- [x] 2. Create `news` and `qr_codes` migrations with `Schema::hasTable()` guards. Add the composite index `(language, published_at desc)` on `news` and `unique(reference)` on `qr_codes`. Create factories for both models.
+- [x] 3. Create `App\Domain\News\Models\News` with casts, `$fillable`, and `newEloquentBuilder()` wiring to `NewsQueryBuilder`. Unit test: cast of `published_at`, mass-assignment surface.
+- [x] 4. Create `App\Domain\News\QueryBuilders\NewsQueryBuilder` with `published()`, `forLanguage(Language)`, `newestFirst()`. Unit test (`RefreshDatabase`): published filter excludes future-dated and null rows; language filter narrows; ordering is `published_at DESC, id DESC` for deterministic pagination.
+- [x] 5. Create `App\Domain\QrCode\Models\QrCode` with `imageUrl()` accessor (resolved via `Storage::disk('qr')`) and `newEloquentBuilder()` wiring to `QrCodeQueryBuilder`. Unit test: `imageUrl()` returns a URL string, and returns `null` when `image_path` is null.
+- [x] 6. Create `App\Domain\QrCode\QueryBuilders\QrCodeQueryBuilder::forReference(string)` — exact canonical-string match. Unit test: returns the single matching row; returns empty on miss.
+- [x] 7. Create `ListNewsRequest` extending `FormRequest`: rules for `language` (nullable iso2), `page`, `per_page` (default 20, max 50). `validated()` falls back to `$request->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY)` when `language` is absent. Unit test: validation rules + language fallback.
+- [x] 8. Create `ShowQrCodeRequest`: rule `reference` required. Reuses the existing `ValidReference` rule (which parses and stashes the parsed `Reference` on the request attribute bag); `canonicalReference(ReferenceFormatter)` re-renders the parsed reference into canonical string form for `QrCode::query()->forReference(...)`. Unit test: happy path exposes the canonical via the helper; invalid input produces 422.
+- [x] 9. Create `ShowMobileVersionRequest`: rule `platform` required, `in:ios,android`. Unit test: accepts both platforms; rejects missing / unknown.
+- [x] 10. Create `NewsResource` matching AC 2 (pagination shape emitted by `NewsResource::collection(...)`). Unit test: structure match via `assertJsonStructure`.
+- [x] 11. Create `QrCodeResource` matching AC 6. Unit test: structure match.
+- [x] 12. Create `MobileVersionResource`. Its `toArray()` reads a pre-built payload (controller composes `['platform' => $p] + config('mobile.'.$p)`). Preserves AC 9 field names verbatim.
+- [x] 13. Create `ListNewsController`, `ShowQrCodeController`, `ShowMobileVersionController` as invokable single-action controllers.
+- [x] 14. Register routes in `routes/api.php` under the `/api/v1` group with the `api-key-or-sanctum` stack. Wrap News in `resolve-language` middleware. Apply `cache.headers` middleware per endpoint with the max-ages in the table above; include `etag` for news and qr-codes.
+- [x] 15. Feature test `ListNewsTest`: list with explicit `?language=ro`; list with language fallback from `ResolveRequestLanguage` attribute; pagination (`per_page`, default + max); `Cache-Control` header; auth required (401 without api-key/sanctum).
+- [x] 16. Feature test `ShowQrCodeTest`: happy path for a reference with a stored QR; `404` for a reference that has no stored QR; `422` for an unparseable reference; `Cache-Control: public, max-age=86400` header; auth required.
+- [x] 17. Feature test `ShowMobileVersionTest`: `ios` and `android` return their config shape; `422` for missing/unknown platform; `Cache-Control: public, max-age=300` header; auth required (`X-Api-Key` alone is sufficient).
+- [x] 18. Run `make lint-fix`, `make stan`, then `make test --filter='News|QrCode|MobileVersion'`; finally run `make check` before marking the story ready for review.
 
 ## Risks & notes
 
