@@ -17,8 +17,8 @@ final class RegisterUserTest extends TestCase
         $response = $this->postJson(route('auth.register'), [
             'name' => 'Jane Doe',
             'email' => 'jane@example.com',
-            'password' => 'secret-pass',
-            'password_confirmation' => 'secret-pass',
+            'password' => 'Secret-pass1',
+            'password_confirmation' => 'Secret-pass1',
         ]);
 
         $response->assertCreated()
@@ -39,8 +39,8 @@ final class RegisterUserTest extends TestCase
         $token = $this->postJson(route('auth.register'), [
             'name' => 'Jane Doe',
             'email' => 'jane@example.com',
-            'password' => 'secret-pass',
-            'password_confirmation' => 'secret-pass',
+            'password' => 'Secret-pass1',
+            'password_confirmation' => 'Secret-pass1',
         ])->json('data.token');
 
         $this->assertIsString($token);
@@ -65,8 +65,8 @@ final class RegisterUserTest extends TestCase
         $this->postJson(route('auth.register'), [
             'name' => 'Jane Doe',
             'email' => 'jane@example.com',
-            'password' => 'secret-pass',
-            'password_confirmation' => 'secret-pass',
+            'password' => 'Secret-pass1',
+            'password_confirmation' => 'Secret-pass1',
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['email']);
@@ -77,8 +77,8 @@ final class RegisterUserTest extends TestCase
         $this->postJson(route('auth.register'), [
             'name' => 'Jane Doe',
             'email' => 'jane@example.com',
-            'password' => 'secret-pass',
-            'password_confirmation' => 'other-pass',
+            'password' => 'Secret-pass1',
+            'password_confirmation' => 'Other-pass1',
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['password']);

@@ -4,7 +4,7 @@
 Sabbath School — lessons, answers, highlights, favorites
 
 ## Status
-`planned`
+`done`
 
 ## Description
 Sabbath School is a structured weekly study program: users progress

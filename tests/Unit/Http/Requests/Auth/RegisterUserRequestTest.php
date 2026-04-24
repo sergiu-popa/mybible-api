@@ -24,8 +24,8 @@ final class RegisterUserRequestTest extends TestCase
         $this->assertFalse($this->validator([
             'name' => 'Jane',
             'email' => 'jane@example.com',
-            'password' => 'secret-pass',
-            'password_confirmation' => 'secret-pass',
+            'password' => 'Secret-pass1',
+            'password_confirmation' => 'Secret-pass1',
         ])->fails());
     }
 
@@ -45,8 +45,8 @@ final class RegisterUserRequestTest extends TestCase
         $validator = $this->validator([
             'name' => 'Jane',
             'email' => 'not-an-email',
-            'password' => 'secret-pass',
-            'password_confirmation' => 'secret-pass',
+            'password' => 'Secret-pass1',
+            'password_confirmation' => 'Secret-pass1',
         ]);
 
         $this->assertTrue($validator->fails());
@@ -60,8 +60,8 @@ final class RegisterUserRequestTest extends TestCase
         $validator = $this->validator([
             'name' => 'Jane',
             'email' => 'jane@example.com',
-            'password' => 'secret-pass',
-            'password_confirmation' => 'secret-pass',
+            'password' => 'Secret-pass1',
+            'password_confirmation' => 'Secret-pass1',
         ]);
 
         $this->assertTrue($validator->fails());
@@ -86,8 +86,8 @@ final class RegisterUserRequestTest extends TestCase
         $validator = $this->validator([
             'name' => 'Jane',
             'email' => 'jane@example.com',
-            'password' => 'secret-pass',
-            'password_confirmation' => 'other-pass',
+            'password' => 'Secret-pass1',
+            'password_confirmation' => 'Other-pass1',
         ]);
 
         $this->assertTrue($validator->fails());

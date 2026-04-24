@@ -100,45 +100,45 @@ Legacy data: if the Symfony `sabbath_school_*` tables already exist in the share
 
 ## Tasks
 
-- [ ] 1. Inspect the legacy `sabbath_school_*` tables via `mcp__laravel-boost__database-schema` and confirm the column list for each table. Note any camelCase columns that need renaming to snake_case.
-- [ ] 2. Create migrations for `sabbath_school_lessons`, `sabbath_school_segments`, `sabbath_school_questions` with the columns and indexes listed in Data & migrations. Include FKs with cascade.
-- [ ] 3. Create migrations for `sabbath_school_answers`, `sabbath_school_highlights`, `sabbath_school_favorites` with the unique indexes and sentinel default on `segment_id`.
-- [ ] 4. Create `SabbathSchoolLesson` model with `segments()` HasMany, `resolveRouteBinding()` scoped to `published()`, and `newEloquentBuilder()` returning `SabbathSchoolLessonQueryBuilder`.
-- [ ] 5. Create `SabbathSchoolSegment` and `SabbathSchoolQuestion` models with their BelongsTo / HasMany relations and positional ordering on `questions()`.
-- [ ] 6. Create `SabbathSchoolAnswer`, `SabbathSchoolHighlight`, `SabbathSchoolFavorite` models with their respective QueryBuilders and relations.
-- [ ] 7. Create `SabbathSchoolLessonQueryBuilder` with `published()`, `forLanguage(Language)`, and `withLessonDetail()`. Verify `withLessonDetail()` eager-loads `segments.questions` via a DB-query count assertion in the feature test for AC 2.
-- [ ] 8. Create `SabbathSchoolAnswerQueryBuilder`, `SabbathSchoolHighlightQueryBuilder`, `SabbathSchoolFavoriteQueryBuilder` with the scopes listed in Key types.
-- [ ] 9. Create `SabbathSchoolFavoriteSentinel` with `public const int WHOLE_LESSON = 0`.
-- [ ] 10. Create `InvalidSabbathSchoolPassageException` and wire it into `bootstrap/app.php` to render as `422` with the standard error envelope.
-- [ ] 11. Create DTOs `UpsertSabbathSchoolAnswerData`, `ToggleSabbathSchoolHighlightData`, `ToggleSabbathSchoolFavoriteData` as readonly classes.
-- [ ] 12. Create `UpsertSabbathSchoolAnswerAction` implementing `updateOrCreate` semantics; return the row with an "inserted" flag for the controller's status-code decision.
-- [ ] 13. Create `DeleteSabbathSchoolAnswerAction` that deletes the caller's single answer row (no-op safe).
-- [ ] 14. Create `ToggleSabbathSchoolHighlightAction`. Parse `passage` via `App\Domain\Reference\Parser\ReferenceParser::parseOne()`; rethrow as `InvalidSabbathSchoolPassageException`. Toggle on `(user_id, segment_id, passage)`.
-- [ ] 15. Create `ToggleSabbathSchoolFavoriteAction`. Coalesce missing `segment_id` to `SabbathSchoolFavoriteSentinel::WHOLE_LESSON`. Toggle on `(user_id, lesson_id, segment_id)`.
-- [ ] 16. Create `ListSabbathSchoolLessonsRequest` (pagination + language attribute read from `ResolveRequestLanguage::ATTRIBUTE_KEY`), `ShowSabbathSchoolLessonRequest` (no body; language attribute reader).
-- [ ] 17. Create `ShowSabbathSchoolAnswerRequest`, `UpsertSabbathSchoolAnswerRequest` (validates `content` max 10000; `authorize` confirms question's lesson is published), `DeleteSabbathSchoolAnswerRequest`.
-- [ ] 18. Create `ToggleSabbathSchoolHighlightRequest` (validates `segment_id` exists, `passage` is a non-empty string — full parse runs in the Action), `ListSabbathSchoolHighlightsRequest` (required `segment_id`).
-- [ ] 19. Create `ToggleSabbathSchoolFavoriteRequest` (validates `lesson_id` exists, `segment_id` optional and must belong to the given lesson), `ListSabbathSchoolFavoritesRequest`.
-- [ ] 20. Create API resources `SabbathSchoolLessonSummaryResource` (list shape: id, title, week_start, week_end, language), `SabbathSchoolLessonResource` (detail shape per AC 2 including `segments.questions`).
-- [ ] 21. Create `SabbathSchoolAnswerResource`, `SabbathSchoolHighlightResource`, `SabbathSchoolFavoriteResource` with the fields listed in Key types; exclude `user_id` from the payload.
-- [ ] 22. Create `ListSabbathSchoolLessonsController` and `ShowSabbathSchoolLessonController`; both set `Cache-Control: public, max-age=3600` on the response.
-- [ ] 23. Create `ShowSabbathSchoolAnswerController`, `UpsertSabbathSchoolAnswerController` (201 on insert, 200 on update), `DeleteSabbathSchoolAnswerController` (204).
-- [ ] 24. Create `ToggleSabbathSchoolHighlightController` and `ListSabbathSchoolHighlightsController`. Toggle returns `201` + resource on insert, `200` + `{ deleted: true }` on delete.
-- [ ] 25. Create `ToggleSabbathSchoolFavoriteController` and `ListSabbathSchoolFavoritesController` with the same status code contract.
-- [ ] 26. Wire routes in `routes/api.php` under the `v1` prefix. Group lesson catalog under `api-key-or-sanctum` + `resolve-language`; group caller-data endpoints under `auth:sanctum`. Use `scopeBindings()` where `{question}` nests under a parent in future but not needed here (flat paths).
-- [ ] 27. Create factories for each of the six models under `database/factories/`.
-- [ ] 28. Feature test: lesson listing filters by `language`, paginates at 30, returns newest first; `Cache-Control` header set; 200 under api-key and 200 under Sanctum.
-- [ ] 29. Feature test: lesson detail returns the nested `segments.questions` shape from AC 2; DB query count assertion proves `withLessonDetail()` avoids N+1 on a 7-segment × 5-question fixture.
-- [ ] 30. Feature test: answer upsert — first POST returns 201, second POST overwrites and returns 200 with the new `content`; GET returns the caller's answer; DELETE returns 204.
-- [ ] 31. Feature test: answer endpoints reject cross-user access (User B cannot read, overwrite, or delete User A's answer — returns 404, never 403 with identifying info).
-- [ ] 32. Feature test: highlight toggle — first POST returns 201 with resource, second POST with the same `segment_id` + `passage` returns 200 + `{ deleted: true }`; list endpoint returns only caller's highlights.
-- [ ] 33. Feature test: highlight rejects unparseable `passage` as 422 via `InvalidSabbathSchoolPassageException`.
-- [ ] 34. Feature test: favorite toggle with `segment_id` omitted stores sentinel 0 (whole lesson); toggling again removes it; toggling with a `segment_id` creates a second row independent of the whole-lesson favorite.
-- [ ] 35. Feature test: anonymous (no auth) requests to every caller-data endpoint return 401.
-- [ ] 36. Unit test `UpsertSabbathSchoolAnswerAction`: insert branch, update branch, content is trimmed/untrimmed as spec'd.
-- [ ] 37. Unit test `ToggleSabbathSchoolHighlightAction`: insert branch, delete branch, invalid passage wraps `InvalidReferenceException` as `InvalidSabbathSchoolPassageException`.
-- [ ] 38. Unit test `ToggleSabbathSchoolFavoriteAction`: sentinel insert, sentinel delete, segment-scoped insert alongside sentinel row.
-- [ ] 39. Run `make lint-fix`, `make stan`, then the SabbathSchool filter `make test filter=SabbathSchool`; finally `make test` before handing off.
+- [x] 1. Inspect the legacy `sabbath_school_*` tables via `mcp__laravel-boost__database-schema` and confirm the column list for each table. Note any camelCase columns that need renaming to snake_case.
+- [x] 2. Create migrations for `sabbath_school_lessons`, `sabbath_school_segments`, `sabbath_school_questions` with the columns and indexes listed in Data & migrations. Include FKs with cascade.
+- [x] 3. Create migrations for `sabbath_school_answers`, `sabbath_school_highlights`, `sabbath_school_favorites` with the unique indexes and sentinel default on `segment_id`.
+- [x] 4. Create `SabbathSchoolLesson` model with `segments()` HasMany, `resolveRouteBinding()` scoped to `published()`, and `newEloquentBuilder()` returning `SabbathSchoolLessonQueryBuilder`.
+- [x] 5. Create `SabbathSchoolSegment` and `SabbathSchoolQuestion` models with their BelongsTo / HasMany relations and positional ordering on `questions()`.
+- [x] 6. Create `SabbathSchoolAnswer`, `SabbathSchoolHighlight`, `SabbathSchoolFavorite` models with their respective QueryBuilders and relations.
+- [x] 7. Create `SabbathSchoolLessonQueryBuilder` with `published()`, `forLanguage(Language)`, and `withLessonDetail()`. Verify `withLessonDetail()` eager-loads `segments.questions` via a DB-query count assertion in the feature test for AC 2.
+- [x] 8. Create `SabbathSchoolAnswerQueryBuilder`, `SabbathSchoolHighlightQueryBuilder`, `SabbathSchoolFavoriteQueryBuilder` with the scopes listed in Key types.
+- [x] 9. Create `SabbathSchoolFavoriteSentinel` with `public const int WHOLE_LESSON = 0`.
+- [x] 10. Create `InvalidSabbathSchoolPassageException` and wire it into `bootstrap/app.php` to render as `422` with the standard error envelope.
+- [x] 11. Create DTOs `UpsertSabbathSchoolAnswerData`, `ToggleSabbathSchoolHighlightData`, `ToggleSabbathSchoolFavoriteData` as readonly classes.
+- [x] 12. Create `UpsertSabbathSchoolAnswerAction` implementing `updateOrCreate` semantics; return the row with an "inserted" flag for the controller's status-code decision.
+- [x] 13. Create `DeleteSabbathSchoolAnswerAction` that deletes the caller's single answer row (no-op safe).
+- [x] 14. Create `ToggleSabbathSchoolHighlightAction`. Parse `passage` via `App\Domain\Reference\Parser\ReferenceParser::parseOne()`; rethrow as `InvalidSabbathSchoolPassageException`. Toggle on `(user_id, segment_id, passage)`.
+- [x] 15. Create `ToggleSabbathSchoolFavoriteAction`. Coalesce missing `segment_id` to `SabbathSchoolFavoriteSentinel::WHOLE_LESSON`. Toggle on `(user_id, lesson_id, segment_id)`.
+- [x] 16. Create `ListSabbathSchoolLessonsRequest` (pagination + language attribute read from `ResolveRequestLanguage::ATTRIBUTE_KEY`), `ShowSabbathSchoolLessonRequest` (no body; language attribute reader).
+- [x] 17. Create `ShowSabbathSchoolAnswerRequest`, `UpsertSabbathSchoolAnswerRequest` (validates `content` max 10000; `authorize` confirms question's lesson is published), `DeleteSabbathSchoolAnswerRequest`.
+- [x] 18. Create `ToggleSabbathSchoolHighlightRequest` (validates `segment_id` exists, `passage` is a non-empty string — full parse runs in the Action), `ListSabbathSchoolHighlightsRequest` (required `segment_id`).
+- [x] 19. Create `ToggleSabbathSchoolFavoriteRequest` (validates `lesson_id` exists, `segment_id` optional and must belong to the given lesson), `ListSabbathSchoolFavoritesRequest`.
+- [x] 20. Create API resources `SabbathSchoolLessonSummaryResource` (list shape: id, title, week_start, week_end, language), `SabbathSchoolLessonResource` (detail shape per AC 2 including `segments.questions`).
+- [x] 21. Create `SabbathSchoolAnswerResource`, `SabbathSchoolHighlightResource`, `SabbathSchoolFavoriteResource` with the fields listed in Key types; exclude `user_id` from the payload.
+- [x] 22. Create `ListSabbathSchoolLessonsController` and `ShowSabbathSchoolLessonController`; both set `Cache-Control: public, max-age=3600` on the response.
+- [x] 23. Create `ShowSabbathSchoolAnswerController`, `UpsertSabbathSchoolAnswerController` (201 on insert, 200 on update), `DeleteSabbathSchoolAnswerController` (204).
+- [x] 24. Create `ToggleSabbathSchoolHighlightController` and `ListSabbathSchoolHighlightsController`. Toggle returns `201` + resource on insert, `200` + `{ deleted: true }` on delete.
+- [x] 25. Create `ToggleSabbathSchoolFavoriteController` and `ListSabbathSchoolFavoritesController` with the same status code contract.
+- [x] 26. Wire routes in `routes/api.php` under the `v1` prefix. Group lesson catalog under `api-key-or-sanctum` + `resolve-language`; group caller-data endpoints under `auth:sanctum`. Use `scopeBindings()` where `{question}` nests under a parent in future but not needed here (flat paths).
+- [x] 27. Create factories for each of the six models under `database/factories/`.
+- [x] 28. Feature test: lesson listing filters by `language`, paginates at 30, returns newest first; `Cache-Control` header set; 200 under api-key and 200 under Sanctum.
+- [x] 29. Feature test: lesson detail returns the nested `segments.questions` shape from AC 2; DB query count assertion proves `withLessonDetail()` avoids N+1 on a 7-segment × 5-question fixture.
+- [x] 30. Feature test: answer upsert — first POST returns 201, second POST overwrites and returns 200 with the new `content`; GET returns the caller's answer; DELETE returns 204.
+- [x] 31. Feature test: answer endpoints reject cross-user access (User B cannot read, overwrite, or delete User A's answer — returns 404, never 403 with identifying info).
+- [x] 32. Feature test: highlight toggle — first POST returns 201 with resource, second POST with the same `segment_id` + `passage` returns 200 + `{ deleted: true }`; list endpoint returns only caller's highlights.
+- [x] 33. Feature test: highlight rejects unparseable `passage` as 422 via `InvalidSabbathSchoolPassageException`.
+- [x] 34. Feature test: favorite toggle with `segment_id` omitted stores sentinel 0 (whole lesson); toggling again removes it; toggling with a `segment_id` creates a second row independent of the whole-lesson favorite.
+- [x] 35. Feature test: anonymous (no auth) requests to every caller-data endpoint return 401.
+- [x] 36. Unit test `UpsertSabbathSchoolAnswerAction`: insert branch, update branch, content is trimmed/untrimmed as spec'd.
+- [x] 37. Unit test `ToggleSabbathSchoolHighlightAction`: insert branch, delete branch, invalid passage wraps `InvalidReferenceException` as `InvalidSabbathSchoolPassageException`.
+- [x] 38. Unit test `ToggleSabbathSchoolFavoriteAction`: sentinel insert, sentinel delete, segment-scoped insert alongside sentinel row.
+- [x] 39. Run `make lint-fix`, `make stan`, then the SabbathSchool filter `make test filter=SabbathSchool`; finally `make test` before handing off.
 
 ## Risks & notes
 
