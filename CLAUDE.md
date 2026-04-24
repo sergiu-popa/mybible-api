@@ -173,17 +173,18 @@ at `../../` (i.e. `/Users/sergiu/Code/mybible`). The Docker stack
 
 ## Running Commands
 
-`make` targets live at the **monorepo root**. From this folder you can either
-`cd ../..` and run them, or call them directly from the root in another terminal.
+Dev tooling is split between this folder and the monorepo root:
 
-The API-specific targets are namespaced with `-api`:
-
-- **Lint:** `make lint-api` / `make lint-fix-api`
-- **Static analysis:** `make stan-api`
-- **Tests:** `make test-api` (auto-migrates against `mybible-mysql-test`)
-  - Filter: `make test-api filter=testName`
-- **All checks:** `make check` (runs across all 3 apps)
-- **Artisan / shell:** `docker exec -it mybible-api php artisan <cmd>` or `make api-bash` / `make api-tinker`
+- **From this folder** (`apps/api/Makefile`) — everyday inner-loop tooling:
+  - **Lint:** `make lint` / `make lint-fix`
+  - **Static analysis:** `make stan`
+  - **Shell:** `make bash`
+- **From the monorepo root** — infra, DB, tests, cross-app orchestration:
+  - **Tests:** `make test-api` (auto-migrates against `mybible-mysql-test`)
+    - Filter: `make test-api filter=testName`
+  - **All checks:** `make check` (runs lint + stan + test across all 3 apps)
+  - **Tinker:** `make api-tinker`
+  - **Artisan ad-hoc:** `docker exec -it mybible-api php artisan <cmd>`
 
 Do not run `php artisan`, `vendor/bin/pint`, `vendor/bin/phpstan`, or `php
 artisan test` directly on the host. Always exec inside the container.
