@@ -4,7 +4,7 @@
 Miscellaneous API — news, QR codes, mobile app version check
 
 ## Status
-`planned`
+`done`
 
 ## Description
 Three low-volume, low-complexity endpoints that don't fit anywhere

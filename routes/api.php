@@ -40,11 +40,7 @@ use App\Http\Controllers\Api\V1\Notes\StoreNoteController;
 use App\Http\Controllers\Api\V1\Notes\UpdateNoteController;
 use App\Http\Controllers\Api\V1\Olympiad\ListOlympiadThemesController;
 use App\Http\Controllers\Api\V1\Olympiad\ShowOlympiadThemeController;
-use App\Http\Controllers\Api\V1\Profile\ChangeUserPasswordController;
-use App\Http\Controllers\Api\V1\Profile\DeleteUserAccountController;
-use App\Http\Controllers\Api\V1\Profile\RemoveUserAvatarController;
-use App\Http\Controllers\Api\V1\Profile\UpdateUserProfileController;
-use App\Http\Controllers\Api\V1\Profile\UploadUserAvatarController;
+use App\Http\Controllers\Api\V1\QrCode\ShowQrCodeController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
 use App\Http\Controllers\Api\V1\ReadingPlans\FinishReadingPlanSubscriptionController;
@@ -232,6 +228,28 @@ Route::prefix('v1')->group(function (): void {
             Route::post('{subscription}/abandon', AbandonReadingPlanSubscriptionController::class)
                 ->name('abandon');
         });
+
+    Route::middleware([
+        'api-key-or-sanctum',
+        'resolve-language',
+        'cache.headers:public;max_age=300;etag',
+    ])->group(function (): void {
+        Route::get('news', ListNewsController::class)->name('news.index');
+    });
+
+    Route::middleware([
+        'api-key-or-sanctum',
+        'cache.headers:public;max_age=86400;etag',
+    ])->group(function (): void {
+        Route::get('qr-codes', ShowQrCodeController::class)->name('qr-codes.show');
+    });
+
+    Route::middleware([
+        'api-key-or-sanctum',
+        'cache.headers:public;max_age=300',
+    ])->group(function (): void {
+        Route::get('mobile/version', ShowMobileVersionController::class)->name('mobile.version');
+    });
 
     Route::prefix('sabbath-school')
         ->name('sabbath-school.')
