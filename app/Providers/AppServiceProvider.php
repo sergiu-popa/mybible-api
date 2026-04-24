@@ -17,6 +17,7 @@ use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -48,5 +49,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Note::class, NotePolicy::class);
         Gate::policy(Favorite::class, FavoritePolicy::class);
         Gate::policy(FavoriteCategory::class, FavoriteCategoryPolicy::class);
+
+        // Shared password policy for every user-supplied new password
+        // (registration, reset, change). Keeping this in one place avoids
+        // drift between the three entry points. Symbols are intentionally
+        // omitted so the policy does not break existing onboarding flows
+        // that require only `min 8, mixed case, number`.
+        Password::defaults(function (): Password {
+            return Password::min(8)->mixedCase()->numbers();
+        });
     }
 }
