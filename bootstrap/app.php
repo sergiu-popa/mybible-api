@@ -28,6 +28,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         apiPrefix: 'api',
     )
+    ->withCommands([
+        __DIR__ . '/../app/Application/Commands',
+    ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'api-key' => EnsureValidApiKey::class,
