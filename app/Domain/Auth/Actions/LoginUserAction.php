@@ -30,8 +30,18 @@ final class LoginUserAction
             throw new InvalidCredentialsException;
         }
 
-        if (! Hash::check($data->password, $user->password)) {
+        $driver = self::driverForHash($user->password);
+
+        if ($driver === null || ! Hash::driver($driver)->check($data->password, $user->password)) {
             throw new InvalidCredentialsException;
+        }
+
+        if ($driver !== 'argon2id') {
+            // Symfony stored some passwords as bcrypt under its `auto` hasher.
+            // Re-hash to the configured Argon2id driver on first successful
+            // login so legacy rows converge without forcing a password reset.
+            $user->password = $data->password;
+            $user->save();
         }
 
         $token = $user->createToken('auth')->plainTextToken;
@@ -40,6 +50,16 @@ final class LoginUserAction
             user: $user,
             plainTextToken: $token,
         );
+    }
+
+    private static function driverForHash(string $hash): ?string
+    {
+        return match (Hash::info($hash)['algoName'] ?? null) {
+            'argon2id' => 'argon2id',
+            'argon2i' => 'argon',
+            'bcrypt' => 'bcrypt',
+            default => null,
+        };
     }
 
     private static function dummyHash(): string
