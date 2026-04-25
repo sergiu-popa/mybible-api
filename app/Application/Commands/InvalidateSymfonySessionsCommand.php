@@ -33,12 +33,14 @@ final class InvalidateSymfonySessionsCommand extends Command
 
     public function handle(InvalidateAllSymfonySessionsAction $action): int
     {
-        $cutoverAtOption = $this->option('cutover-at');
-        $reasonOption = $this->option('reason');
+        $cutoverAtOptionRaw = $this->option('cutover-at');
+        $cutoverAtOption = is_string($cutoverAtOptionRaw) ? $cutoverAtOptionRaw : null;
+        $reasonOptionRaw = $this->option('reason');
+        $reasonOption = is_string($reasonOptionRaw) ? $reasonOptionRaw : null;
         $dryRun = (bool) $this->option('dry-run');
 
         try {
-            $cutoverAt = is_string($cutoverAtOption) && $cutoverAtOption !== ''
+            $cutoverAt = $cutoverAtOption !== null && $cutoverAtOption !== ''
                 ? Carbon::parse($cutoverAtOption)
                 : Carbon::now();
         } catch (Throwable) {
@@ -50,7 +52,7 @@ final class InvalidateSymfonySessionsCommand extends Command
         try {
             $result = $action->execute(
                 cutoverAt: $cutoverAt,
-                reason: is_string($reasonOption) && $reasonOption !== ''
+                reason: $reasonOption !== null && $reasonOption !== ''
                     ? $reasonOption
                     : 'Symfony → Laravel API cutover forced logout.',
                 dryRun: $dryRun,
