@@ -17,20 +17,21 @@ final class GetDailyVerseActionTest extends TestCase
 
     public function test_it_returns_the_daily_verse_for_a_known_date(): void
     {
-        $expected = DailyVerse::factory()->create([
+        DailyVerse::factory()->create([
             'for_date' => '2025-01-01',
             'reference' => 'GEN.1:1.VDC',
         ]);
 
-        $actual = (new GetDailyVerseAction)->handle(new DateTimeImmutable('2025-01-01'));
+        $payload = app(GetDailyVerseAction::class)->handle(new DateTimeImmutable('2025-01-01'));
 
-        $this->assertTrue($expected->is($actual));
+        $this->assertSame('2025-01-01', $payload['data']['date']);
+        $this->assertSame('GEN.1:1.VDC', $payload['data']['reference']);
     }
 
     public function test_it_throws_when_no_verse_is_configured_for_the_date(): void
     {
         $this->expectException(NoDailyVerseForDateException::class);
 
-        (new GetDailyVerseAction)->handle(new DateTimeImmutable('2025-01-01'));
+        app(GetDailyVerseAction::class)->handle(new DateTimeImmutable('2025-01-01'));
     }
 }

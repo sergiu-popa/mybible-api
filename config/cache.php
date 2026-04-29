@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Support\Str;
-
 return [
 
     /*
@@ -112,7 +110,21 @@ return [
     |
     */
 
-    'prefix' => env('CACHE_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')) . '-cache-'),
+    'prefix' => env('CACHE_PREFIX', 'mybible-api'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Stale-While-Revalidate Grace Window
+    |--------------------------------------------------------------------------
+    |
+    | Seconds appended to a cached value's TTL when used through
+    | Cache::flexible(). During this grace window, a stale value is served
+    | while exactly one request rebuilds the entry under an atomic lock,
+    | so a hot-key cold miss cannot stampede the underlying store.
+    |
+    */
+
+    'flexible_grace_seconds' => (int) env('CACHE_FLEXIBLE_GRACE', 60),
 
     /*
     |--------------------------------------------------------------------------

@@ -6,8 +6,7 @@ namespace App\Http\Controllers\Api\V1\Devotionals;
 
 use App\Domain\Devotional\Actions\FetchDevotionalAction;
 use App\Http\Requests\Devotionals\ShowDevotionalRequest;
-use App\Http\Resources\Devotionals\DevotionalResource;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\JsonResponse;
 
 /**
  * @tags Devotionals
@@ -28,11 +27,10 @@ final class ShowDevotionalController
     public function __invoke(
         ShowDevotionalRequest $request,
         FetchDevotionalAction $action,
-    ): Response {
-        $devotional = $action->execute($request->toData());
+    ): JsonResponse {
+        $payload = $action->execute($request->toData());
 
-        return DevotionalResource::make($devotional)
-            ->response($request)
+        return response()->json($payload)
             ->header('Cache-Control', 'public, max-age=' . self::CACHE_MAX_AGE);
     }
 }

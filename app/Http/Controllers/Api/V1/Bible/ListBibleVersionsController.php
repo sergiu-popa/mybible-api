@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Bible;
 
+use App\Domain\Bible\Actions\ListBibleVersionsAction;
 use App\Domain\Bible\Models\BibleVersion;
 use App\Domain\Bible\Support\BibleCacheHeaders;
 use App\Http\Requests\Bible\ListBibleVersionsRequest;
-use App\Http\Resources\Bible\BibleVersionResource;
+use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -15,10 +16,14 @@ use Symfony\Component\HttpFoundation\Response;
  */
 final class ListBibleVersionsController
 {
-    public function __invoke(ListBibleVersionsRequest $request): Response
-    {
+    public function __invoke(
+        ListBibleVersionsRequest $request,
+        ListBibleVersionsAction $action,
+    ): Response {
+        // ETag is computed off the underlying versions table (max(updated_at)
+        // + count) so Cloudflare/clients short-circuit before the application
+        // cache. Same query the cache build closure runs internally.
         $query = BibleVersion::query()->orderBy('abbreviation');
-
         $language = $request->language();
         if ($language !== null) {
             $query->forLanguage($language);
@@ -30,8 +35,15 @@ final class ListBibleVersionsController
             return response('', 304)->withHeaders($headers);
         }
 
-        return BibleVersionResource::collection($query->paginate($request->perPage()))
-            ->response($request)
-            ->withHeaders($headers);
+        $page = max(1, (int) $request->query('page', '1'));
+
+        $payload = $action->execute($language, $page, $request->perPage());
+
+        $response = new JsonResponse($payload);
+        foreach ($headers as $name => $value) {
+            $response->headers->set($name, $value);
+        }
+
+        return $response;
     }
 }
