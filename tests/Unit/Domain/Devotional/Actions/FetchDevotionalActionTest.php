@@ -29,20 +29,20 @@ final class FetchDevotionalActionTest extends TestCase
         Devotional::factory()->kids()->forLanguage(Language::Ro)->onDate(CarbonImmutable::parse('2026-04-22'))->create();
         Devotional::factory()->adults()->forLanguage(Language::Hu)->onDate(CarbonImmutable::parse('2026-04-22'))->create();
 
-        $result = (new FetchDevotionalAction)->execute(new FetchDevotionalData(
+        $result = app(FetchDevotionalAction::class)->execute(new FetchDevotionalData(
             language: Language::Ro,
             type: DevotionalType::Adults,
             date: CarbonImmutable::parse('2026-04-22'),
         ));
 
-        $this->assertTrue($expected->is($result));
+        $this->assertSame($expected->id, $result['data']['id']);
     }
 
     public function test_it_throws_model_not_found_when_no_devotional_matches(): void
     {
         $this->expectException(ModelNotFoundException::class);
 
-        (new FetchDevotionalAction)->execute(new FetchDevotionalData(
+        app(FetchDevotionalAction::class)->execute(new FetchDevotionalData(
             language: Language::Ro,
             type: DevotionalType::Adults,
             date: CarbonImmutable::parse('2026-04-22'),
@@ -59,7 +59,7 @@ final class FetchDevotionalActionTest extends TestCase
 
         $this->expectException(ModelNotFoundException::class);
 
-        (new FetchDevotionalAction)->execute(new FetchDevotionalData(
+        app(FetchDevotionalAction::class)->execute(new FetchDevotionalData(
             language: Language::Ro,
             type: DevotionalType::Adults,
             date: CarbonImmutable::parse('2026-04-22'),

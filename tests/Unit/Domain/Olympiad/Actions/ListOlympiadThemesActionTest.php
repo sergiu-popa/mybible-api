@@ -23,23 +23,25 @@ final class ListOlympiadThemesActionTest extends TestCase
 
         $filter = new OlympiadThemeFilter(Language::En, 50);
 
-        $paginator = (new ListOlympiadThemesAction)->execute($filter);
+        $payload = app(ListOlympiadThemesAction::class)->execute($filter, 1);
 
-        $this->assertSame(2, $paginator->total());
+        $this->assertSame(2, $payload['meta']['total']);
 
-        $items = collect($paginator->items())
-            ->map(fn (OlympiadQuestion $q): string => sprintf(
+        $rows = [];
+        /** @var array<int, array<string, mixed>> $data */
+        $data = $payload['data'];
+        foreach ($data as $row) {
+            $rows[] = sprintf(
                 '%s|%d-%d|%d',
-                (string) $q->getAttribute('book'),
-                (int) $q->getAttribute('chapters_from'),
-                (int) $q->getAttribute('chapters_to'),
-                (int) $q->getAttribute('question_count'),
-            ))
-            ->sort()
-            ->values()
-            ->all();
+                (string) $row['book'],
+                (int) $row['chapters_from'],
+                (int) $row['chapters_to'],
+                (int) $row['question_count'],
+            );
+        }
+        sort($rows);
 
-        $this->assertSame(['GEN|1-3|2', 'GEN|5-5|3'], $items);
+        $this->assertSame(['GEN|1-3|2', 'GEN|5-5|3'], $rows);
     }
 
     public function test_paginates_per_page(): void
@@ -48,11 +50,11 @@ final class ListOlympiadThemesActionTest extends TestCase
         OlympiadQuestion::factory()->forTheme('GEN', 5, 5)->create();
         OlympiadQuestion::factory()->forTheme('EXO', 1, 1)->create();
 
-        $paginator = (new ListOlympiadThemesAction)
-            ->execute(new OlympiadThemeFilter(Language::En, 2));
+        $payload = app(ListOlympiadThemesAction::class)
+            ->execute(new OlympiadThemeFilter(Language::En, 2), 1);
 
-        $this->assertSame(2, $paginator->perPage());
-        $this->assertSame(3, $paginator->total());
-        $this->assertCount(2, $paginator->items());
+        $this->assertSame(2, $payload['meta']['per_page']);
+        $this->assertSame(3, $payload['meta']['total']);
+        $this->assertCount(2, $payload['data']);
     }
 }

@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\EducationalResources;
 
-use App\Domain\EducationalResources\Models\ResourceCategory;
+use App\Domain\EducationalResources\Actions\ListResourceCategoriesAction;
 use App\Http\Requests\EducationalResources\ListResourceCategoriesRequest;
-use App\Http\Resources\EducationalResources\ResourceCategoryResource;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\JsonResponse;
 
 /**
  * @tags Educational Resources
@@ -23,20 +22,19 @@ final class ListResourceCategoriesController
      * optionally filtered by the requested language. The response is
      * cacheable for an hour by public caches.
      */
-    public function __invoke(ListResourceCategoriesRequest $request): Response
-    {
-        $query = ResourceCategory::query()->withResourceCount();
+    public function __invoke(
+        ListResourceCategoriesRequest $request,
+        ListResourceCategoriesAction $action,
+    ): JsonResponse {
+        $page = max(1, (int) $request->query('page', '1'));
 
-        $language = $request->languageFilter();
+        $payload = $action->execute(
+            $request->languageFilter(),
+            $page,
+            $request->perPage(),
+        );
 
-        if ($language !== null) {
-            $query->forLanguage($language);
-        }
-
-        $paginator = $query->orderBy('id')->paginate($request->perPage());
-
-        return ResourceCategoryResource::collection($paginator)
-            ->response($request)
+        return response()->json($payload)
             ->header('Cache-Control', self::CACHE_CONTROL);
     }
 }

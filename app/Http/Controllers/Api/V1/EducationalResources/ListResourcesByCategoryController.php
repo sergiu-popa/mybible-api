@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\EducationalResources;
 
-use App\Domain\EducationalResources\Models\EducationalResource;
+use App\Domain\EducationalResources\Actions\ListResourcesByCategoryAction;
 use App\Domain\EducationalResources\Models\ResourceCategory;
 use App\Http\Requests\EducationalResources\ListResourcesByCategoryRequest;
-use App\Http\Resources\EducationalResources\EducationalResourceListResource;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\JsonResponse;
 
 /**
  * @tags Educational Resources
@@ -25,19 +24,17 @@ final class ListResourcesByCategoryController
     public function __invoke(
         ListResourcesByCategoryRequest $request,
         ResourceCategory $category,
-    ): AnonymousResourceCollection {
-        $query = EducationalResource::query()
-            ->where('resource_category_id', $category->id)
-            ->latestPublished();
+        ListResourcesByCategoryAction $action,
+    ): JsonResponse {
+        $page = max(1, (int) $request->query('page', '1'));
 
-        $type = $request->resourceType();
-
-        if ($type !== null) {
-            $query->ofType($type);
-        }
-
-        return EducationalResourceListResource::collection(
-            $query->paginate($request->perPage()),
+        $payload = $action->execute(
+            $category->id,
+            $page,
+            $request->perPage(),
+            $request->resourceType(),
         );
+
+        return response()->json($payload);
     }
 }

@@ -6,8 +6,7 @@ namespace App\Http\Controllers\Api\V1\Olympiad;
 
 use App\Domain\Olympiad\Actions\ListOlympiadThemesAction;
 use App\Http\Requests\Olympiad\ListOlympiadThemesRequest;
-use App\Http\Resources\Olympiad\OlympiadThemeResource;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\JsonResponse;
 
 /**
  * @tags Olympiad
@@ -26,11 +25,12 @@ final class ListOlympiadThemesController
     public function __invoke(
         ListOlympiadThemesRequest $request,
         ListOlympiadThemesAction $action,
-    ): Response {
-        $paginator = $action->execute($request->toFilter());
+    ): JsonResponse {
+        $page = max(1, (int) $request->query('page', '1'));
 
-        return OlympiadThemeResource::collection($paginator)
-            ->response($request)
+        $payload = $action->execute($request->toFilter(), $page);
+
+        return response()->json($payload)
             ->header('Cache-Control', self::CACHE_CONTROL);
     }
 }

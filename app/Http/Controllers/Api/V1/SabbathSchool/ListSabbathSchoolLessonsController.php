@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\SabbathSchool;
 
-use App\Domain\SabbathSchool\Models\SabbathSchoolLesson;
+use App\Domain\SabbathSchool\Actions\ListSabbathSchoolLessonsAction;
 use App\Http\Requests\SabbathSchool\ListSabbathSchoolLessonsRequest;
-use App\Http\Resources\SabbathSchool\SabbathSchoolLessonSummaryResource;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -14,6 +13,8 @@ use Illuminate\Http\JsonResponse;
  */
 final class ListSabbathSchoolLessonsController
 {
+    private const CACHE_MAX_AGE = 3600;
+
     /**
      * List Sabbath School lessons.
      *
@@ -21,17 +22,19 @@ final class ListSabbathSchoolLessonsController
      * newest first. Intermediate caches MAY keep the response for 1 hour; the
      * payload never embeds per-user state.
      */
-    public function __invoke(ListSabbathSchoolLessonsRequest $request): JsonResponse
-    {
-        $paginator = SabbathSchoolLesson::query()
-            ->published()
-            ->forLanguage($request->resolvedLanguage())
-            ->orderByDesc('published_at')
-            ->orderByDesc('id')
-            ->paginate($request->perPage());
+    public function __invoke(
+        ListSabbathSchoolLessonsRequest $request,
+        ListSabbathSchoolLessonsAction $action,
+    ): JsonResponse {
+        $page = max(1, (int) $request->query('page', '1'));
 
-        return SabbathSchoolLessonSummaryResource::collection($paginator)
-            ->response()
-            ->header('Cache-Control', 'public, max-age=3600');
+        $payload = $action->execute(
+            $request->resolvedLanguage(),
+            $page,
+            $request->perPage(),
+        );
+
+        return response()->json($payload)
+            ->header('Cache-Control', 'public, max-age=' . self::CACHE_MAX_AGE);
     }
 }

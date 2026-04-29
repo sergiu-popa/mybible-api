@@ -7,6 +7,7 @@ use App\Domain\ReadingPlans\Exceptions\SubscriptionNotCompletableException;
 use App\Domain\Reference\Exceptions\InvalidReferenceException;
 use App\Domain\SabbathSchool\Exceptions\InvalidSabbathSchoolPassageException;
 use App\Domain\Verses\Exceptions\NoDailyVerseForDateException;
+use App\Http\Controllers\HealthCheckController;
 use App\Http\Middleware\EnsureApiKeyOrSanctum;
 use App\Http\Middleware\EnsureValidApiKey;
 use App\Http\Middleware\ResolveRequestLanguage;
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -25,8 +27,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         api: __DIR__ . '/../routes/api.php',
         commands: __DIR__ . '/../routes/console.php',
-        health: '/up',
         apiPrefix: 'api',
+        then: function (): void {
+            // Custom `/up` health probe — pings Redis + DB instead of the
+            // framework default (which only confirms PHP is up). Replaces
+            // the `health: '/up'` shorthand that would otherwise live here.
+            Route::get('up', HealthCheckController::class)->name('health');
+        },
     )
     ->withCommands([
         __DIR__ . '/../app/Application/Commands',

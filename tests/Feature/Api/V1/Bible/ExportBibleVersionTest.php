@@ -66,7 +66,7 @@ final class ExportBibleVersionTest extends TestCase
         return $version;
     }
 
-    public function test_it_streams_the_full_version_as_structured_json(): void
+    public function test_it_returns_the_full_version_as_structured_json(): void
     {
         $version = $this->seedTinyVersion();
 
@@ -78,7 +78,8 @@ final class ExportBibleVersionTest extends TestCase
         $response->assertHeader('Cache-Control', 'max-age=86400, public');
         $this->assertNotEmpty($response->headers->get('ETag'));
 
-        $payload = json_decode($response->streamedContent(), true);
+        $body = (string) $response->getContent();
+        $payload = json_decode($body, true);
 
         $this->assertSame('TNY', $payload['version']['abbreviation']);
         $this->assertSame($version->id, $payload['version']['id']);
@@ -134,8 +135,7 @@ final class ExportBibleVersionTest extends TestCase
         $this
             ->withHeaders($this->apiKeyHeaders())
             ->get(route('bible-versions.export', ['version' => 'TNY']))
-            ->assertOk()
-            ->streamedContent();
+            ->assertOk();
 
         $queries = DB::getQueryLog();
 

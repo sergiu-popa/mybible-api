@@ -9,7 +9,6 @@ use App\Domain\Olympiad\DataTransferObjects\OlympiadThemeRequest;
 use App\Domain\Olympiad\Exceptions\OlympiadThemeNotFoundException;
 use App\Domain\Olympiad\Models\OlympiadAnswer;
 use App\Domain\Olympiad\Models\OlympiadQuestion;
-use App\Domain\Olympiad\Support\SeededShuffler;
 use App\Domain\Reference\ChapterRange;
 use App\Domain\Shared\Enums\Language;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,7 +22,7 @@ final class FetchOlympiadThemeQuestionsActionTest extends TestCase
     {
         $this->expectException(OlympiadThemeNotFoundException::class);
 
-        $action = new FetchOlympiadThemeQuestionsAction(new SeededShuffler);
+        $action = app(FetchOlympiadThemeQuestionsAction::class);
 
         $action->execute(new OlympiadThemeRequest(
             book: 'GEN',
@@ -37,7 +36,7 @@ final class FetchOlympiadThemeQuestionsActionTest extends TestCase
     {
         $this->seedTheme('GEN', 1, 3, Language::En, 12);
 
-        $action = new FetchOlympiadThemeQuestionsAction(new SeededShuffler);
+        $action = app(FetchOlympiadThemeQuestionsAction::class);
 
         $request = new OlympiadThemeRequest(
             book: 'GEN',
@@ -68,7 +67,7 @@ final class FetchOlympiadThemeQuestionsActionTest extends TestCase
     {
         $this->seedTheme('GEN', 1, 3, Language::En, 12);
 
-        $action = new FetchOlympiadThemeQuestionsAction(new SeededShuffler);
+        $action = app(FetchOlympiadThemeQuestionsAction::class);
 
         $a = $action->execute(new OlympiadThemeRequest('GEN', new ChapterRange(1, 3), Language::En, 1));
         $b = $action->execute(new OlympiadThemeRequest('GEN', new ChapterRange(1, 3), Language::En, 9_999_999));
@@ -83,7 +82,7 @@ final class FetchOlympiadThemeQuestionsActionTest extends TestCase
     {
         $this->seedTheme('GEN', 1, 3, Language::En, 3);
 
-        $action = new FetchOlympiadThemeQuestionsAction(new SeededShuffler);
+        $action = app(FetchOlympiadThemeQuestionsAction::class);
 
         $result = $action->execute(new OlympiadThemeRequest(
             book: 'GEN',

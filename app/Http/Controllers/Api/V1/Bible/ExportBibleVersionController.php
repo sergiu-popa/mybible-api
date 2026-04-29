@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Bible;
 
+use App\Domain\Bible\Actions\ExportBibleVersionAction;
 use App\Domain\Bible\Models\BibleVersion;
 use App\Domain\Bible\Support\BibleCacheHeaders;
-use App\Domain\Bible\Support\BibleVersionExporter;
 use App\Http\Requests\Bible\ExportBibleVersionRequest;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -18,7 +18,7 @@ final class ExportBibleVersionController
     public function __invoke(
         ExportBibleVersionRequest $request,
         BibleVersion $version,
-        BibleVersionExporter $exporter,
+        ExportBibleVersionAction $action,
     ): Response {
         $headers = BibleCacheHeaders::forVersionExport($version);
 
@@ -26,10 +26,10 @@ final class ExportBibleVersionController
             return response('', 304)->withHeaders($headers);
         }
 
-        $stream = $exporter->stream($version);
-        $stream->headers->add($headers);
-        $stream->headers->set('Content-Type', 'application/json');
+        $body = $action->execute($version);
 
-        return $stream;
+        return response($body)
+            ->withHeaders($headers)
+            ->header('Content-Type', 'application/json');
     }
 }

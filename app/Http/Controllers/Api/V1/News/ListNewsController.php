@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\News;
 
-use App\Domain\News\Models\News;
+use App\Domain\News\Actions\ListNewsAction;
 use App\Http\Requests\News\ListNewsRequest;
-use App\Http\Resources\News\NewsResource;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\JsonResponse;
 
 /**
  * @tags News
@@ -21,13 +20,18 @@ final class ListNewsController
      * newest first. `language` query parameter overrides the resolved
      * request language; defaults apply when absent.
      */
-    public function __invoke(ListNewsRequest $request): AnonymousResourceCollection
-    {
-        $query = News::query()
-            ->published()
-            ->forLanguage($request->resolvedLanguage())
-            ->newestFirst();
+    public function __invoke(
+        ListNewsRequest $request,
+        ListNewsAction $action,
+    ): JsonResponse {
+        $page = max(1, (int) $request->query('page', '1'));
 
-        return NewsResource::collection($query->paginate($request->perPage()));
+        $payload = $action->execute(
+            $request->resolvedLanguage(),
+            $page,
+            $request->perPage(),
+        );
+
+        return response()->json($payload);
     }
 }

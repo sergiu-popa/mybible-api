@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Collections;
 
-use App\Domain\Collections\Actions\ResolveCollectionReferencesAction;
+use App\Domain\Collections\Actions\ShowCollectionTopicAction;
 use App\Domain\Collections\Models\CollectionTopic;
 use App\Domain\Shared\Enums\Language;
 use App\Http\Middleware\ResolveRequestLanguage;
 use App\Http\Requests\Collections\ShowCollectionTopicRequest;
-use App\Http\Resources\Collections\CollectionTopicDetailResource;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\JsonResponse;
 
 /**
  * @tags Collections
@@ -22,17 +21,14 @@ final class ShowCollectionTopicController
     public function __invoke(
         ShowCollectionTopicRequest $request,
         CollectionTopic $topic,
-        ResolveCollectionReferencesAction $action,
-    ): Response {
-        $topic->load('references');
+        ShowCollectionTopicAction $action,
+    ): JsonResponse {
+        $resolved = $request->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY, Language::En);
+        $language = $resolved instanceof Language ? $resolved : Language::En;
 
-        $language = $request->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY, Language::En);
-        $language = $language instanceof Language ? $language : Language::En;
+        $payload = $action->execute($topic, $language);
 
-        $resolved = $action->handle($topic->references, $language);
-
-        return (new CollectionTopicDetailResource($topic, $resolved))
-            ->response($request)
+        return response()->json($payload)
             ->header('Cache-Control', 'public, max-age=' . self::CACHE_MAX_AGE);
     }
 }

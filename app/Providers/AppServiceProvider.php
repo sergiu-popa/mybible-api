@@ -12,6 +12,8 @@ use App\Policies\FavoriteCategoryPolicy;
 use App\Policies\FavoritePolicy;
 use App\Policies\NotePolicy;
 use App\Policies\ReadingPlanSubscriptionPolicy;
+use App\Support\Caching\CacheStoreGuard;
+use App\Support\Caching\ClearCacheTagCommand;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Support\Facades\Gate;
@@ -58,5 +60,18 @@ class AppServiceProvider extends ServiceProvider
         Password::defaults(function (): Password {
             return Password::min(8)->mixedCase()->numbers();
         });
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([ClearCacheTagCommand::class]);
+        }
+
+        // Tag-based invalidation is load-bearing across cached read endpoints.
+        // Fail at boot if the configured store cannot support tags so a
+        // misconfigured CACHE_STORE surfaces on deploy, not at the first
+        // write-side flush. Skipped during testing because PHPUnit may swap
+        // drivers per-test (e.g. forcing 'database' to assert the guard).
+        if (! $this->app->environment('testing')) {
+            CacheStoreGuard::ensureTaggable();
+        }
     }
 }
