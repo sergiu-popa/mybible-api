@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1\Admin\Olympiad;
 
+use App\Domain\Olympiad\Models\OlympiadAnswer;
 use App\Domain\Olympiad\Models\OlympiadQuestion;
+use App\Domain\Olympiad\Support\OlympiadCacheKeys;
+use App\Domain\Reference\ChapterRange;
 use App\Domain\Shared\Enums\Language;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Tests\Concerns\WithApiKeyClient;
 use Tests\TestCase;
 
 final class ReorderOlympiadQuestionsTest extends TestCase
 {
     use RefreshDatabase;
+    use WithApiKeyClient;
 
     private function actingAsAdmin(): void
     {
@@ -123,6 +129,42 @@ final class ReorderOlympiadQuestionsTest extends TestCase
             ]),
             ['ids' => [1]],
         )->assertUnprocessable();
+    }
+
+    public function test_reorder_invalidates_the_public_read_cache(): void
+    {
+        $this->setUpApiKeyClient();
+
+        $a = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create();
+        $b = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create();
+        $c = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create();
+        foreach ([$a, $b, $c] as $question) {
+            OlympiadAnswer::factory()->create(['olympiad_question_id' => $question->id]);
+        }
+
+        // Prime the cache via the public read path.
+        $this->withHeader('X-Api-Key', 'mobile-valid-key')
+            ->getJson(route('olympiad.themes.show', $this->genTheme()))
+            ->assertOk();
+
+        $cacheKey = OlympiadCacheKeys::themeQuestions(
+            'GEN',
+            new ChapterRange(1, 3),
+            Language::En,
+        );
+        $cacheTags = OlympiadCacheKeys::tagsForTheme(
+            'GEN',
+            new ChapterRange(1, 3),
+            Language::En,
+        );
+        $this->assertNotNull(Cache::tags($cacheTags)->get($cacheKey));
+
+        $this->actingAsAdmin();
+        $this->postJson(route('admin.olympiad.themes.questions.reorder', $this->genTheme()), [
+            'ids' => [$c->id, $a->id, $b->id],
+        ])->assertOk();
+
+        $this->assertNull(Cache::tags($cacheTags)->get($cacheKey));
     }
 
     public function test_it_blocks_non_admin_users(): void

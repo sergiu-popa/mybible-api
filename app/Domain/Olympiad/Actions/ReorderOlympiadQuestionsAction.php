@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Olympiad\Actions;
 
 use App\Domain\Olympiad\Models\OlympiadQuestion;
+use App\Domain\Olympiad\Support\OlympiadCacheKeys;
 use App\Domain\Reference\ChapterRange;
 use App\Domain\Shared\Enums\Language;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -52,5 +54,7 @@ final class ReorderOlympiadQuestionsAction
                     ->update(['position' => $position + 1]);
             }
         });
+
+        Cache::tags(OlympiadCacheKeys::tagsForTheme($book, $range, $language))->flush();
     }
 }
