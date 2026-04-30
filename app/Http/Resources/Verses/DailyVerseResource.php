@@ -20,6 +20,7 @@ final class DailyVerseResource extends JsonResource
     {
         return [
             'date' => $this->for_date->format('Y-m-d'),
+            'language' => $this->language,
             'reference' => $this->reference,
             'image_url' => $this->image_cdn_url,
         ];

@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @property int $id
  * @property DateTimeImmutable $for_date
+ * @property ?string $language
  * @property string $reference
  * @property ?string $image_cdn_url
  */
