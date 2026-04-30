@@ -279,8 +279,8 @@ Route::prefix('v1')->group(function (): void {
                     Route::get('imports/{job}', ShowImportJobController::class)
                         ->name('imports.show');
 
-                    Route::post('uploads', IssuePresignedUploadController::class)
-                        ->name('uploads.store');
+                    Route::post('uploads/presign', IssuePresignedUploadController::class)
+                        ->name('uploads.presign');
 
                     Route::prefix('sabbath-school')
                         ->name('sabbath-school.')
@@ -296,8 +296,13 @@ Route::prefix('v1')->group(function (): void {
                             )->name('segments.questions.reorder');
                         });
 
-                    Route::post('olympiad/questions/reorder', ReorderOlympiadQuestionsController::class)
-                        ->name('olympiad.questions.reorder');
+                    Route::post(
+                        'olympiad/themes/{book}/{chapters}/{language}/questions/reorder',
+                        ReorderOlympiadQuestionsController::class,
+                    )
+                        ->where('book', '[A-Za-z0-9]+')
+                        ->where('language', '[a-z]{2}')
+                        ->name('olympiad.themes.questions.reorder');
                 });
         });
 

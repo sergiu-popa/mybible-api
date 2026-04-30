@@ -53,7 +53,7 @@ final class IssuePresignedUploadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson(route('admin.uploads.store'), [
+        $this->postJson(route('admin.uploads.presign'), [
             'filename' => 'hero.jpg',
             'content_type' => 'image/jpeg',
             'size' => 1024 * 512,
@@ -68,7 +68,7 @@ final class IssuePresignedUploadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson(route('admin.uploads.store'), [
+        $this->postJson(route('admin.uploads.presign'), [
             'filename' => 'evil.exe',
             'content_type' => 'application/x-msdownload',
             'size' => 1024,
@@ -81,7 +81,7 @@ final class IssuePresignedUploadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson(route('admin.uploads.store'), [
+        $this->postJson(route('admin.uploads.presign'), [
             'filename' => 'huge.zip',
             'content_type' => 'application/zip',
             'size' => 200 * 1024 * 1024,
@@ -94,7 +94,7 @@ final class IssuePresignedUploadTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson(route('admin.uploads.store'), [])
+        $this->postJson(route('admin.uploads.presign'), [])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['filename', 'content_type', 'size']);
     }
@@ -105,7 +105,7 @@ final class IssuePresignedUploadTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson(route('admin.uploads.store'), [
+            ->postJson(route('admin.uploads.presign'), [
                 'filename' => 'hero.jpg',
                 'content_type' => 'image/jpeg',
                 'size' => 1024,
