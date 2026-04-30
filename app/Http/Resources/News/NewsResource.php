@@ -32,10 +32,10 @@ final class NewsResource extends JsonResource
 
     private function resolveImageUrl(): ?string
     {
-        if ($this->image_path === null || $this->image_path === '') {
+        if ($this->image_url === null || $this->image_url === '') {
             return null;
         }
 
-        return Storage::disk('public')->url($this->image_path);
+        return Storage::disk('public')->url($this->image_url);
     }
 }

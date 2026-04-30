@@ -30,7 +30,10 @@ final class ListResourceCategoriesAction
                     $query->forLanguage($language);
                 }
 
-                $paginator = $query->orderBy('id')->paginate($perPage, page: $page);
+                $paginator = $query
+                    ->orderBy('position')
+                    ->orderBy('id')
+                    ->paginate($perPage, page: $page);
 
                 return ResourceCategoryResource::collection($paginator)
                     ->response(request())

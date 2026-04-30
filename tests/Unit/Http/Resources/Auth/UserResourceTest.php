@@ -20,7 +20,19 @@ final class UserResourceTest extends TestCase
         $array = UserResource::make($user)->resolve();
 
         $this->assertSame(
-            ['id', 'name', 'email', 'language', 'preferred_version', 'avatar_url', 'created_at'],
+            [
+                'id',
+                'name',
+                'email',
+                'language',
+                'languages',
+                'ui_locale',
+                'preferred_version',
+                'avatar_url',
+                'is_super',
+                'active',
+                'created_at',
+            ],
             array_keys($array),
         );
 
@@ -28,8 +40,12 @@ final class UserResourceTest extends TestCase
         $this->assertSame($user->name, $array['name']);
         $this->assertSame($user->email, $array['email']);
         $this->assertSame($user->language, $array['language']);
+        $this->assertSame($user->languages, $array['languages']);
+        $this->assertSame($user->ui_locale, $array['ui_locale']);
         $this->assertSame($user->preferred_version, $array['preferred_version']);
         $this->assertNull($array['avatar_url']);
+        $this->assertFalse($array['is_super']);
+        $this->assertTrue($array['active']);
     }
 
     public function test_it_does_not_leak_sensitive_fields(): void

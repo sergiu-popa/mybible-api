@@ -2,6 +2,19 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderEducationalResourcesController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceCategoriesController;
+use App\Http\Controllers\Api\V1\Admin\Imports\ShowImportJobController;
+use App\Http\Controllers\Api\V1\Admin\Olympiad\ReorderOlympiadQuestionsController;
+use App\Http\Controllers\Api\V1\Admin\References\ValidateReferenceController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ReorderLessonSegmentsController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ReorderSegmentQuestionsController;
+use App\Http\Controllers\Api\V1\Admin\Uploads\IssuePresignedUploadController;
+use App\Http\Controllers\Api\V1\Admin\Users\CreateAdminUserController;
+use App\Http\Controllers\Api\V1\Admin\Users\DisableAdminUserController;
+use App\Http\Controllers\Api\V1\Admin\Users\EnableAdminUserController;
+use App\Http\Controllers\Api\V1\Admin\Users\ListAdminUsersController;
+use App\Http\Controllers\Api\V1\Admin\Users\SendAdminPasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
@@ -86,14 +99,17 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('api-key-or-sanctum')
         ->group(function (): void {
             Route::get('/', ListBibleVersionsController::class)
-                ->middleware('resolve-language')
+                ->middleware(['resolve-language', 'cache.headers:public;max_age=3600;etag'])
                 ->name('index');
+            // ExportBibleVersionController sets its own long-window
+            // Cache-Control (86400 s) — leave it intact instead of layering
+            // a shorter middleware default on top.
             Route::get('{version:abbreviation}/export', ExportBibleVersionController::class)->name('export');
         });
 
     Route::prefix('books')
         ->name('books.')
-        ->middleware('api-key-or-sanctum')
+        ->middleware(['api-key-or-sanctum', 'cache.headers:public;max_age=3600;etag'])
         ->group(function (): void {
             Route::get('/', ListBibleBooksController::class)
                 ->middleware('resolve-language')
@@ -102,7 +118,12 @@ Route::prefix('v1')->group(function (): void {
         });
 
     Route::middleware(['api-key-or-sanctum', 'resolve-language'])->group(function (): void {
-        Route::get('verses', ResolveVersesController::class)->name('verses.index');
+        // ResolveVerses gets a short cache window — the response is content-
+        // addressable by query string and the underlying tables only change
+        // on Bible imports. The daily-verse endpoint sets its own header.
+        Route::get('verses', ResolveVersesController::class)
+            ->middleware('cache.headers:public;max_age=600;etag')
+            ->name('verses.index');
         Route::get('daily-verse', GetDailyVerseController::class)->name('daily-verse.show');
     });
 
@@ -201,14 +222,21 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('{favorite}', DeleteFavoriteController::class)->name('destroy');
         });
 
-    Route::middleware(['api-key-or-sanctum', 'resolve-language'])->group(function (): void {
-        Route::get('resource-categories', ListResourceCategoriesController::class)
-            ->name('resource-categories.index');
-        Route::get('resource-categories/{category}/resources', ListResourcesByCategoryController::class)
-            ->name('resource-categories.resources.index');
-        Route::get('resources/{resource:uuid}', ShowEducationalResourceController::class)
-            ->name('resources.show');
-    });
+    Route::middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->group(function (): void {
+            // ListResourceCategoriesController sets its own Cache-Control
+            // (1 hour) — keep it; do not stack a shorter middleware on top.
+            Route::get('resource-categories', ListResourceCategoriesController::class)
+                ->name('resource-categories.index');
+
+            Route::get('resource-categories/{category}/resources', ListResourcesByCategoryController::class)
+                ->middleware('cache.headers:public;max_age=600;etag')
+                ->name('resource-categories.resources.index');
+
+            Route::get('resources/{resource:uuid}', ShowEducationalResourceController::class)
+                ->middleware('cache.headers:public;max_age=3600;etag')
+                ->name('resources.show');
+        });
 
     Route::middleware('auth:sanctum')
         ->prefix('profile')
@@ -219,6 +247,63 @@ Route::prefix('v1')->group(function (): void {
             Route::post('change-password', ChangeUserPasswordController::class)->name('change-password');
             Route::post('avatar', UploadUserAvatarController::class)->name('avatar.store');
             Route::delete('avatar', RemoveUserAvatarController::class)->name('avatar.destroy');
+        });
+
+    Route::prefix('admin')
+        ->name('admin.')
+        ->group(function (): void {
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('users')
+                ->name('users.')
+                ->group(function (): void {
+                    Route::get('/', ListAdminUsersController::class)->name('index');
+                    Route::post('/', CreateAdminUserController::class)->name('store');
+                    Route::patch('{user}/enable', EnableAdminUserController::class)->name('enable');
+                    Route::patch('{user}/disable', DisableAdminUserController::class)->name('disable');
+                    Route::post('{user}/password-reset', SendAdminPasswordResetController::class)
+                        ->name('password-reset');
+                });
+
+            Route::middleware(['auth:sanctum', 'admin'])
+                ->group(function (): void {
+                    Route::post('resource-categories/reorder', ReorderResourceCategoriesController::class)
+                        ->name('resource-categories.reorder');
+                    Route::post(
+                        'resource-categories/{category}/resources/reorder',
+                        ReorderEducationalResourcesController::class,
+                    )->name('resource-categories.resources.reorder');
+
+                    Route::post('references/validate', ValidateReferenceController::class)
+                        ->name('references.validate');
+
+                    Route::get('imports/{job}', ShowImportJobController::class)
+                        ->name('imports.show');
+
+                    Route::post('uploads/presign', IssuePresignedUploadController::class)
+                        ->name('uploads.presign');
+
+                    Route::prefix('sabbath-school')
+                        ->name('sabbath-school.')
+                        ->group(function (): void {
+                            Route::post(
+                                'lessons/{lesson}/segments/reorder',
+                                ReorderLessonSegmentsController::class,
+                            )->name('lessons.segments.reorder');
+
+                            Route::post(
+                                'segments/{segment}/questions/reorder',
+                                ReorderSegmentQuestionsController::class,
+                            )->name('segments.questions.reorder');
+                        });
+
+                    Route::post(
+                        'olympiad/themes/{book}/{chapters}/{language}/questions/reorder',
+                        ReorderOlympiadQuestionsController::class,
+                    )
+                        ->where('book', '[A-Za-z0-9]+')
+                        ->where('language', '[a-z]{2}')
+                        ->name('olympiad.themes.questions.reorder');
+                });
         });
 
     Route::middleware('auth:sanctum')

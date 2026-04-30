@@ -130,6 +130,24 @@ final class LoginUserTest extends TestCase
             ->assertJson(['message' => 'Invalid credentials.']);
     }
 
+    public function test_it_returns_401_for_an_inactive_user(): void
+    {
+        // Disabled users must not be able to mint a fresh token via login;
+        // the response shape is identical to the wrong-credentials case so
+        // the endpoint does not disclose account state.
+        User::factory()->inactive()->create([
+            'email' => 'disabled@example.com',
+            'password' => 'secret-pass',
+        ]);
+
+        $this->postJson(route('auth.login'), [
+            'email' => 'disabled@example.com',
+            'password' => 'secret-pass',
+        ])
+            ->assertUnauthorized()
+            ->assertJson(['message' => 'Invalid credentials.']);
+    }
+
     public function test_it_logs_in_a_user_with_a_symfony_argon2id_hash(): void
     {
         // Pre-baked Argon2id hash of the plaintext "symfony-original-pass",

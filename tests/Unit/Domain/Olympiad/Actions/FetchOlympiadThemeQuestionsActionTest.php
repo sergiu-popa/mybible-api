@@ -9,6 +9,7 @@ use App\Domain\Olympiad\DataTransferObjects\OlympiadThemeRequest;
 use App\Domain\Olympiad\Exceptions\OlympiadThemeNotFoundException;
 use App\Domain\Olympiad\Models\OlympiadAnswer;
 use App\Domain\Olympiad\Models\OlympiadQuestion;
+use App\Domain\Olympiad\Support\SeededShuffler;
 use App\Domain\Reference\ChapterRange;
 use App\Domain\Shared\Enums\Language;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -75,6 +76,38 @@ final class FetchOlympiadThemeQuestionsActionTest extends TestCase
         $this->assertNotSame(
             $a->questions->pluck('id')->all(),
             $b->questions->pluck('id')->all(),
+        );
+    }
+
+    public function test_canonical_order_follows_position_before_shuffle(): void
+    {
+        // Bind an identity shuffler so the canonical question ordering is
+        // observable directly. Questions inserted in id order but with
+        // mixed positions must come out sorted by `(position, id)`.
+        $this->app->instance(SeededShuffler::class, new class extends SeededShuffler
+        {
+            public function shuffle(array $items, int $seed): array
+            {
+                return array_values($items);
+            }
+        });
+
+        $first = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create(['position' => 3]);
+        $second = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create(['position' => 1]);
+        $third = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create(['position' => 2]);
+
+        $action = app(FetchOlympiadThemeQuestionsAction::class);
+
+        $result = $action->execute(new OlympiadThemeRequest(
+            book: 'GEN',
+            range: new ChapterRange(1, 3),
+            language: Language::En,
+            seed: 1,
+        ));
+
+        $this->assertSame(
+            [$second->id, $third->id, $first->id],
+            $result->questions->pluck('id')->all(),
         );
     }
 

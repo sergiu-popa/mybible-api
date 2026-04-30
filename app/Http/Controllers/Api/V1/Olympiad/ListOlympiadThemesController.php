@@ -18,9 +18,28 @@ final class ListOlympiadThemesController
     /**
      * List olympiad themes.
      *
-     * Returns a paginated list of distinct theme tuples
-     * (`book`, `chapters_from`, `chapters_to`, `language`) with their
-     * question counts, filtered by the resolved request language.
+     * # Aggregation contract
+     *
+     * A theme is a distinct tuple of
+     * `(book, chapters_from, chapters_to, language)` present in
+     * `olympiad_questions`. The list groups by that tuple, projects
+     * `question_count = COUNT(*)`, and orders by
+     * `language ASC, book ASC, chapters_from ASC, chapters_to ASC` so
+     * pagination is stable across calls.
+     *
+     * Filters: only the resolved request language is honoured server-
+     * side; book / chapter range filters are not exposed on the list
+     * endpoint by design — clients drive into a specific theme via
+     * `GET /olympiad/themes/{book}/{chapters}`. Pagination uses the
+     * standard `?page=` + `per_page` query params resolved by
+     * `ListOlympiadThemesRequest`.
+     *
+     * Response cached publicly for one hour. The cache is keyed by
+     * `(language, page, per_page)` and tagged so writes against
+     * `olympiad_questions` invalidate every theme list page in lockstep.
+     *
+     * The admin should *not* re-implement this aggregation client-side:
+     * compute counts and ordering server-side, then render directly.
      */
     public function __invoke(
         ListOlympiadThemesRequest $request,

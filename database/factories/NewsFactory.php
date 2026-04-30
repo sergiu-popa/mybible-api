@@ -26,7 +26,7 @@ final class NewsFactory extends Factory
             'title' => fake()->sentence(5),
             'summary' => fake()->paragraph(2),
             'content' => fake()->paragraphs(3, true),
-            'image_path' => null,
+            'image_url' => null,
             'published_at' => CarbonImmutable::now()->subDays(fake()->numberBetween(0, 30)),
         ];
     }
@@ -53,6 +53,6 @@ final class NewsFactory extends Factory
 
     public function withImage(string $path = 'news/sample.png'): self
     {
-        return $this->state(fn (): array => ['image_path' => $path]);
+        return $this->state(fn (): array => ['image_url' => $path]);
     }
 }

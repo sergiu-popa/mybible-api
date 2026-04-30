@@ -89,6 +89,8 @@ final class FetchOlympiadThemeQuestionsAction
                     ->forBook($request->book)
                     ->forChapterRange($request->range)
                     ->with('answers')
+                    ->orderBy('position')
+                    ->orderBy('id')
                     ->get();
 
                 $rows = [];

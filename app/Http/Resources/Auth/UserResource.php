@@ -23,8 +23,12 @@ final class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'language' => $this->language,
+            'languages' => $this->languages,
+            'ui_locale' => $this->ui_locale,
             'preferred_version' => $this->preferred_version,
             'avatar_url' => $this->avatar_url,
+            'is_super' => $this->is_super,
+            'active' => $this->is_active,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

@@ -23,7 +23,7 @@ final class NewsResourceTest extends TestCase
             'title' => 'Hello',
             'summary' => 'Summary here',
             'content' => 'Full body',
-            'image_path' => null,
+            'image_url' => null,
             'published_at' => CarbonImmutable::create(2026, 4, 23, 10),
         ]);
 
@@ -39,7 +39,7 @@ final class NewsResourceTest extends TestCase
         $this->assertStringStartsWith('2026-04-23', $array['published_at']);
     }
 
-    public function test_it_emits_a_storage_url_when_image_path_is_present(): void
+    public function test_it_emits_a_storage_url_when_image_url_is_present(): void
     {
         Storage::fake('public');
 

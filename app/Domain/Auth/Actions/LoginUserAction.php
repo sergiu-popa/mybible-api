@@ -36,6 +36,14 @@ final class LoginUserAction
             throw new InvalidCredentialsException;
         }
 
+        // Disabled users present the same generic credential error so the
+        // endpoint does not disclose whether an account is suspended vs.
+        // simply has wrong credentials. The disable flow already revokes
+        // existing tokens; this stops a re-login from minting a new one.
+        if (! $user->is_active) {
+            throw new InvalidCredentialsException;
+        }
+
         if ($driver !== 'argon2id') {
             // Symfony stored some passwords as bcrypt under its `auto` hasher.
             // Re-hash to the configured Argon2id driver on first successful

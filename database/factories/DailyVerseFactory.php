@@ -21,6 +21,7 @@ final class DailyVerseFactory extends Factory
     {
         return [
             'for_date' => fake()->date(),
+            'language' => null,
             'reference' => 'GEN.1:1.VDC',
             'image_cdn_url' => null,
         ];

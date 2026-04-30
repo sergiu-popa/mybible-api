@@ -89,7 +89,7 @@ jobs:
           php-version: ${{ env.PHP_VERSION }}
           tools: composer
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
         env:
           COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
       - name: Run lint

@@ -24,6 +24,18 @@ final class ShowOlympiadThemeController
      * with a seed that the client may supply (`?seed=`) for reproducible
      * orderings; if omitted, the server generates one and echoes it back
      * under `meta.seed`.
+     *
+     * # Scoring / aggregation
+     *
+     * The endpoint returns *raw* questions and answers — `is_correct`
+     * stays on each answer because the client (mobile app or admin
+     * preview) renders the explanation panel itself. There is no
+     * server-side scoring aggregation: scoring lives entirely on the
+     * client, which is why the seed contract matters (re-shuffling
+     * across reloads would break in-progress sessions). Theme-level
+     * counts come from the list endpoint (see
+     * {@see ListOlympiadThemesController}); do not reimplement them
+     * over `/themes/{book}/{chapters}`.
      */
     public function __invoke(
         ShowOlympiadThemeRequest $request,
