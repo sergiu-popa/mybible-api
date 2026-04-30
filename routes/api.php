@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\Users\CreateAdminUserController;
+use App\Http\Controllers\Api\V1\Admin\Users\DisableAdminUserController;
+use App\Http\Controllers\Api\V1\Admin\Users\EnableAdminUserController;
+use App\Http\Controllers\Api\V1\Admin\Users\ListAdminUsersController;
+use App\Http\Controllers\Api\V1\Admin\Users\SendAdminPasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
@@ -219,6 +224,22 @@ Route::prefix('v1')->group(function (): void {
             Route::post('change-password', ChangeUserPasswordController::class)->name('change-password');
             Route::post('avatar', UploadUserAvatarController::class)->name('avatar.store');
             Route::delete('avatar', RemoveUserAvatarController::class)->name('avatar.destroy');
+        });
+
+    Route::prefix('admin')
+        ->name('admin.')
+        ->middleware(['auth:sanctum', 'super-admin'])
+        ->group(function (): void {
+            Route::prefix('users')
+                ->name('users.')
+                ->group(function (): void {
+                    Route::get('/', ListAdminUsersController::class)->name('index');
+                    Route::post('/', CreateAdminUserController::class)->name('store');
+                    Route::patch('{user}/enable', EnableAdminUserController::class)->name('enable');
+                    Route::patch('{user}/disable', DisableAdminUserController::class)->name('disable');
+                    Route::post('{user}/password-reset', SendAdminPasswordResetController::class)
+                        ->name('password-reset');
+                });
         });
 
     Route::middleware('auth:sanctum')
