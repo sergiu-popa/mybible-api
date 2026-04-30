@@ -6,7 +6,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-final class ReorderRequest extends FormRequest
+class ReorderRequest extends FormRequest
 {
     public function authorize(): bool
     {

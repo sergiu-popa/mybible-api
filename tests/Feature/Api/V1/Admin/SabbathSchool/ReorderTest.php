@@ -42,7 +42,7 @@ final class ReorderTest extends TestCase
         $this->assertSame(3, $b->refresh()->position);
     }
 
-    public function test_segments_reorder_ignores_ids_from_other_lessons(): void
+    public function test_segments_reorder_returns_422_for_ids_from_other_lessons(): void
     {
         $this->actingAsAdmin();
 
@@ -58,9 +58,33 @@ final class ReorderTest extends TestCase
         $this->postJson(
             route('admin.sabbath-school.lessons.segments.reorder', ['lesson' => $lesson->id]),
             ['ids' => [$a->id, $foreigner->id]],
-        )->assertOk();
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['ids']);
 
-        $this->assertSame(1, $a->refresh()->position);
+        $this->assertSame(99, $foreigner->refresh()->position);
+    }
+
+    public function test_questions_reorder_returns_422_for_ids_from_other_segments(): void
+    {
+        $this->actingAsAdmin();
+
+        $segment = SabbathSchoolSegment::factory()->create();
+        $other = SabbathSchoolSegment::factory()->create();
+
+        $insider = SabbathSchoolQuestion::factory()->create(['sabbath_school_segment_id' => $segment->id]);
+        $foreigner = SabbathSchoolQuestion::factory()->create([
+            'sabbath_school_segment_id' => $other->id,
+            'position' => 99,
+        ]);
+
+        $this->postJson(
+            route('admin.sabbath-school.segments.questions.reorder', ['segment' => $segment->id]),
+            ['ids' => [$insider->id, $foreigner->id]],
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['ids']);
+
         $this->assertSame(99, $foreigner->refresh()->position);
     }
 
