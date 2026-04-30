@@ -33,6 +33,7 @@ class UserFactory extends Factory
             'roles' => [],
             'is_super' => false,
             'language' => null,
+            'languages' => [],
             'preferred_version' => null,
             'avatar' => null,
             'last_login' => null,
@@ -78,5 +79,17 @@ class UserFactory extends Factory
                 'is_super' => true,
             ];
         });
+    }
+
+    /**
+     * Scope the admin to a specific set of content languages (2-char codes).
+     *
+     * @param  list<string>  $codes
+     */
+    public function withLanguages(array $codes): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'languages' => $codes,
+        ]);
     }
 }

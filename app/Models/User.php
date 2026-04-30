@@ -17,6 +17,7 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * @property list<string> $roles
  * @property bool $is_super
+ * @property list<string> $languages
  */
 class User extends Authenticatable
 {
@@ -31,6 +32,7 @@ class User extends Authenticatable
         'roles',
         'is_super',
         'language',
+        'languages',
         'preferred_version',
         'avatar',
         'last_login',
@@ -53,6 +55,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'roles' => 'array',
             'is_super' => 'boolean',
+            'languages' => 'array',
         ];
     }
 
