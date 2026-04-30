@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderEducationalResourcesController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceCategoriesController;
+use App\Http\Controllers\Api\V1\Admin\References\ValidateReferenceController;
 use App\Http\Controllers\Api\V1\Admin\Users\CreateAdminUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\DisableAdminUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\EnableAdminUserController;
@@ -251,6 +252,9 @@ Route::prefix('v1')->group(function (): void {
                         'resource-categories/{category}/resources/reorder',
                         ReorderEducationalResourcesController::class,
                     )->name('resource-categories.resources.reorder');
+
+                    Route::post('references/validate', ValidateReferenceController::class)
+                        ->name('references.validate');
                 });
         });
 
