@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderEducationalResourcesController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceCategoriesController;
 use App\Http\Controllers\Api\V1\Admin\Imports\ShowImportJobController;
+use App\Http\Controllers\Api\V1\Admin\Olympiad\ReorderOlympiadQuestionsController;
 use App\Http\Controllers\Api\V1\Admin\References\ValidateReferenceController;
 use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ReorderLessonSegmentsController;
 use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ReorderSegmentQuestionsController;
@@ -279,6 +280,9 @@ Route::prefix('v1')->group(function (): void {
                                 ReorderSegmentQuestionsController::class,
                             )->name('segments.questions.reorder');
                         });
+
+                    Route::post('olympiad/questions/reorder', ReorderOlympiadQuestionsController::class)
+                        ->name('olympiad.questions.reorder');
                 });
         });
 
