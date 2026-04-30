@@ -35,12 +35,12 @@ final class NewsTest extends TestCase
             'title' => 'hello',
             'summary' => 'summary',
             'content' => 'content',
-            'image_path' => 'news/1.png',
+            'image_url' => 'news/1.png',
             'published_at' => CarbonImmutable::create(2026, 4, 23, 10),
         ]);
 
         $this->assertSame('hello', $news->title);
-        $this->assertSame('news/1.png', $news->image_path);
+        $this->assertSame('news/1.png', $news->image_url);
         $this->assertNotNull($news->published_at);
     }
 }

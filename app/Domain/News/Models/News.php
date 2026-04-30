@@ -18,7 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string $title
  * @property string $summary
  * @property ?string $content
- * @property ?string $image_path
+ * @property ?string $image_url
  * @property ?Carbon $published_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
