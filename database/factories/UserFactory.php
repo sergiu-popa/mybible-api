@@ -34,6 +34,8 @@ class UserFactory extends Factory
             'is_super' => false,
             'language' => null,
             'languages' => [],
+            'ui_locale' => null,
+            'is_active' => true,
             'preferred_version' => null,
             'avatar' => null,
             'last_login' => null,
@@ -90,6 +92,18 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'languages' => $codes,
+        ]);
+    }
+
+    /**
+     * Mark the user as disabled (cannot log in / has tokens revoked
+     * downstream). Separate from soft-delete: a disabled user is still
+     * present and can be reactivated.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
         ]);
     }
 }
