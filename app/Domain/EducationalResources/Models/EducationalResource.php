@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $uuid
  * @property int $resource_category_id
+ * @property int $position
  * @property ResourceType $type
  * @property array<string, string> $title
  * @property array<string, string>|null $summary

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderEducationalResourcesController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceCategoriesController;
 use App\Http\Controllers\Api\V1\Admin\Users\CreateAdminUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\DisableAdminUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\EnableAdminUserController;
@@ -228,9 +230,9 @@ Route::prefix('v1')->group(function (): void {
 
     Route::prefix('admin')
         ->name('admin.')
-        ->middleware(['auth:sanctum', 'super-admin'])
         ->group(function (): void {
-            Route::prefix('users')
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('users')
                 ->name('users.')
                 ->group(function (): void {
                     Route::get('/', ListAdminUsersController::class)->name('index');
@@ -239,6 +241,16 @@ Route::prefix('v1')->group(function (): void {
                     Route::patch('{user}/disable', DisableAdminUserController::class)->name('disable');
                     Route::post('{user}/password-reset', SendAdminPasswordResetController::class)
                         ->name('password-reset');
+                });
+
+            Route::middleware(['auth:sanctum', 'admin'])
+                ->group(function (): void {
+                    Route::post('resource-categories/reorder', ReorderResourceCategoriesController::class)
+                        ->name('resource-categories.reorder');
+                    Route::post(
+                        'resource-categories/{category}/resources/reorder',
+                        ReorderEducationalResourcesController::class,
+                    )->name('resource-categories.resources.reorder');
                 });
         });
 

@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property array<string, string> $name
  * @property array<string, string>|null $description
  * @property string $language
+ * @property int $position
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Collection<int, EducationalResource> $resources
