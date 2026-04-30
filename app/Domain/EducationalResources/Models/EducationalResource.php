@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\EducationalResources\Models;
 
+use App\Domain\Admin\Uploads\Jobs\DeleteUploadedObjectJob;
 use App\Domain\EducationalResources\Enums\ResourceType;
 use App\Domain\EducationalResources\QueryBuilders\EducationalResourceQueryBuilder;
 use Database\Factories\EducationalResourceFactory;
@@ -67,6 +68,25 @@ final class EducationalResource extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ResourceCategory::class, 'resource_category_id');
+    }
+
+    /**
+     * Schedule cleanup of any backing S3 objects when the row is
+     * deleted, so we don't leak storage. Runs once per deletion via the
+     * `deleted` model event; queued with a small delay to leave room
+     * for an undo window in calling controllers.
+     */
+    protected static function booted(): void
+    {
+        self::deleted(function (self $resource): void {
+            foreach ([$resource->thumbnail_path, $resource->media_path] as $path) {
+                if (! is_string($path) || $path === '') {
+                    continue;
+                }
+
+                DeleteUploadedObjectJob::dispatch('s3', $path)->delay(now()->addMinutes(5));
+            }
+        });
     }
 
     /**
