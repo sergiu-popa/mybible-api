@@ -14,6 +14,10 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * @property list<string> $roles
+ * @property bool $is_super
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -25,6 +29,7 @@ class User extends Authenticatable
         'email',
         'password',
         'roles',
+        'is_super',
         'language',
         'preferred_version',
         'avatar',
@@ -47,6 +52,7 @@ class User extends Authenticatable
             'last_login' => 'datetime',
             'password' => 'hashed',
             'roles' => 'array',
+            'is_super' => 'boolean',
         ];
     }
 
