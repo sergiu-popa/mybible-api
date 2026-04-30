@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderEducationalRes
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceCategoriesController;
 use App\Http\Controllers\Api\V1\Admin\Imports\ShowImportJobController;
 use App\Http\Controllers\Api\V1\Admin\References\ValidateReferenceController;
+use App\Http\Controllers\Api\V1\Admin\Uploads\IssuePresignedUploadController;
 use App\Http\Controllers\Api\V1\Admin\Users\CreateAdminUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\DisableAdminUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\EnableAdminUserController;
@@ -259,6 +260,9 @@ Route::prefix('v1')->group(function (): void {
 
                     Route::get('imports/{job}', ShowImportJobController::class)
                         ->name('imports.show');
+
+                    Route::post('uploads', IssuePresignedUploadController::class)
+                        ->name('uploads.store');
                 });
         });
 
