@@ -89,4 +89,32 @@ class User extends Authenticatable
     {
         $this->notify(new PasswordResetNotification($token));
     }
+
+    /**
+     * Whether this admin may mutate a row whose content language is
+     * `$code`. Super-admins always pass; other admins must have the code
+     * in their `languages[]` scope.
+     *
+     * Use this from policies and controllers handling admin mutations on
+     * language-scoped entities (devotionals, news, lessons, etc.). The
+     * admin UI hides out-of-scope rows, but the API is the security
+     * boundary.
+     */
+    public function canManageLanguage(string $code): bool
+    {
+        if ($this->is_super) {
+            return true;
+        }
+
+        return in_array($code, $this->languages, true);
+    }
+
+    /**
+     * Whether this admin may mutate a row that has no language (e.g.
+     * Bible catalog entries that are global). Only super-admins may.
+     */
+    public function canManageLanguageless(): bool
+    {
+        return $this->is_super;
+    }
 }
