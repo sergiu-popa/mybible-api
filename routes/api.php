@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderEducationalResourcesController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceCategoriesController;
+use App\Http\Controllers\Api\V1\Admin\Imports\ShowImportJobController;
 use App\Http\Controllers\Api\V1\Admin\References\ValidateReferenceController;
 use App\Http\Controllers\Api\V1\Admin\Users\CreateAdminUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\DisableAdminUserController;
@@ -255,6 +256,9 @@ Route::prefix('v1')->group(function (): void {
 
                     Route::post('references/validate', ValidateReferenceController::class)
                         ->name('references.validate');
+
+                    Route::get('imports/{job}', ShowImportJobController::class)
+                        ->name('imports.show');
                 });
         });
 
