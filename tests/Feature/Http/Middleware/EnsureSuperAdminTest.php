@@ -59,4 +59,14 @@ final class EnsureSuperAdminTest extends TestCase
             ->assertOk()
             ->assertJson(['user_id' => $user->id]);
     }
+
+    public function test_it_rejects_inactive_super_admins_with_403(): void
+    {
+        $user = User::factory()->super()->inactive()->create();
+        $token = $user->createToken('test')->plainTextToken;
+
+        $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson('/_test/super-only')
+            ->assertForbidden();
+    }
 }

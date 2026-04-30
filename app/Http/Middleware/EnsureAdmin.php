@@ -31,6 +31,13 @@ final class EnsureAdmin
             throw new AuthorizationException('Admin access required.');
         }
 
+        // Disabled admins keep their tokens revoked at the disable site,
+        // but we re-check `is_active` here so any token that survives the
+        // revoke (or is reissued via login) is still rejected at the gate.
+        if (! $user->is_active) {
+            throw new AuthorizationException('Admin access required.');
+        }
+
         return $next($request);
     }
 }

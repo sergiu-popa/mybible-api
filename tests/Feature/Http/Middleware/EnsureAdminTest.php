@@ -59,4 +59,14 @@ final class EnsureAdminTest extends TestCase
             ->getJson('/_test/admin-only')
             ->assertOk();
     }
+
+    public function test_it_rejects_inactive_admins_with_403(): void
+    {
+        $user = User::factory()->admin()->inactive()->create();
+        $token = $user->createToken('test')->plainTextToken;
+
+        $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson('/_test/admin-only')
+            ->assertForbidden();
+    }
 }

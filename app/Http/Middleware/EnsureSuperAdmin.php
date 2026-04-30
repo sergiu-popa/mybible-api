@@ -31,6 +31,12 @@ final class EnsureSuperAdmin
             throw new AuthorizationException('Admin access required.');
         }
 
+        // See `EnsureAdmin`: re-check `is_active` so a disabled admin
+        // can't ride a stale token into a super-admin endpoint.
+        if (! $user->is_active) {
+            throw new AuthorizationException('Admin access required.');
+        }
+
         if (! $user->is_super) {
             throw new AuthorizationException('Super-admin access required.');
         }
