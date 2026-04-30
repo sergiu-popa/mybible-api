@@ -99,14 +99,17 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('api-key-or-sanctum')
         ->group(function (): void {
             Route::get('/', ListBibleVersionsController::class)
-                ->middleware('resolve-language')
+                ->middleware(['resolve-language', 'cache.headers:public;max_age=3600;etag'])
                 ->name('index');
+            // ExportBibleVersionController sets its own long-window
+            // Cache-Control (86400 s) — leave it intact instead of layering
+            // a shorter middleware default on top.
             Route::get('{version:abbreviation}/export', ExportBibleVersionController::class)->name('export');
         });
 
     Route::prefix('books')
         ->name('books.')
-        ->middleware('api-key-or-sanctum')
+        ->middleware(['api-key-or-sanctum', 'cache.headers:public;max_age=3600;etag'])
         ->group(function (): void {
             Route::get('/', ListBibleBooksController::class)
                 ->middleware('resolve-language')
@@ -115,7 +118,12 @@ Route::prefix('v1')->group(function (): void {
         });
 
     Route::middleware(['api-key-or-sanctum', 'resolve-language'])->group(function (): void {
-        Route::get('verses', ResolveVersesController::class)->name('verses.index');
+        // ResolveVerses gets a short cache window — the response is content-
+        // addressable by query string and the underlying tables only change
+        // on Bible imports. The daily-verse endpoint sets its own header.
+        Route::get('verses', ResolveVersesController::class)
+            ->middleware('cache.headers:public;max_age=600;etag')
+            ->name('verses.index');
         Route::get('daily-verse', GetDailyVerseController::class)->name('daily-verse.show');
     });
 
@@ -214,14 +222,21 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('{favorite}', DeleteFavoriteController::class)->name('destroy');
         });
 
-    Route::middleware(['api-key-or-sanctum', 'resolve-language'])->group(function (): void {
-        Route::get('resource-categories', ListResourceCategoriesController::class)
-            ->name('resource-categories.index');
-        Route::get('resource-categories/{category}/resources', ListResourcesByCategoryController::class)
-            ->name('resource-categories.resources.index');
-        Route::get('resources/{resource:uuid}', ShowEducationalResourceController::class)
-            ->name('resources.show');
-    });
+    Route::middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->group(function (): void {
+            // ListResourceCategoriesController sets its own Cache-Control
+            // (1 hour) — keep it; do not stack a shorter middleware on top.
+            Route::get('resource-categories', ListResourceCategoriesController::class)
+                ->name('resource-categories.index');
+
+            Route::get('resource-categories/{category}/resources', ListResourcesByCategoryController::class)
+                ->middleware('cache.headers:public;max_age=600;etag')
+                ->name('resource-categories.resources.index');
+
+            Route::get('resources/{resource:uuid}', ShowEducationalResourceController::class)
+                ->middleware('cache.headers:public;max_age=3600;etag')
+                ->name('resources.show');
+        });
 
     Route::middleware('auth:sanctum')
         ->prefix('profile')
