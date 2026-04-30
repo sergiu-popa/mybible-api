@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api\V1\Admin\EducationalResources;
 
 use App\Domain\EducationalResources\Actions\ReorderEducationalResourcesAction;
 use App\Domain\EducationalResources\Models\ResourceCategory;
-use App\Http\Requests\Admin\EducationalResources\ReorderRequest;
+use App\Http\Requests\Admin\ReorderRequest;
 use Illuminate\Http\JsonResponse;
 
 final class ReorderEducationalResourcesController

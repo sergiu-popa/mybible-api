@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin\EducationalResources;
 
 use App\Domain\EducationalResources\Actions\ReorderResourceCategoriesAction;
-use App\Http\Requests\Admin\EducationalResources\ReorderRequest;
+use App\Http\Requests\Admin\ReorderRequest;
 use Illuminate\Http\JsonResponse;
 
 final class ReorderResourceCategoriesController

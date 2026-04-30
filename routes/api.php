@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderEducationalRes
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceCategoriesController;
 use App\Http\Controllers\Api\V1\Admin\Imports\ShowImportJobController;
 use App\Http\Controllers\Api\V1\Admin\References\ValidateReferenceController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ReorderLessonSegmentsController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ReorderSegmentQuestionsController;
 use App\Http\Controllers\Api\V1\Admin\Uploads\IssuePresignedUploadController;
 use App\Http\Controllers\Api\V1\Admin\Users\CreateAdminUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\DisableAdminUserController;
@@ -263,6 +265,20 @@ Route::prefix('v1')->group(function (): void {
 
                     Route::post('uploads', IssuePresignedUploadController::class)
                         ->name('uploads.store');
+
+                    Route::prefix('sabbath-school')
+                        ->name('sabbath-school.')
+                        ->group(function (): void {
+                            Route::post(
+                                'lessons/{lesson}/segments/reorder',
+                                ReorderLessonSegmentsController::class,
+                            )->name('lessons.segments.reorder');
+
+                            Route::post(
+                                'segments/{segment}/questions/reorder',
+                                ReorderSegmentQuestionsController::class,
+                            )->name('segments.questions.reorder');
+                        });
                 });
         });
 
