@@ -22,6 +22,14 @@ final class ReorderOlympiadQuestionsTest extends TestCase
         $this->withHeader('Authorization', 'Bearer ' . $token);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function genTheme(): array
+    {
+        return ['book' => 'GEN', 'chapters' => '1-3', 'language' => 'en'];
+    }
+
     public function test_it_persists_full_ordering_inside_a_theme(): void
     {
         $this->actingAsAdmin();
@@ -30,7 +38,7 @@ final class ReorderOlympiadQuestionsTest extends TestCase
         $b = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create();
         $c = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create();
 
-        $this->postJson(route('admin.olympiad.questions.reorder'), [
+        $this->postJson(route('admin.olympiad.themes.questions.reorder', $this->genTheme()), [
             'ids' => [$c->id, $a->id, $b->id],
         ])->assertOk();
 
@@ -39,23 +47,82 @@ final class ReorderOlympiadQuestionsTest extends TestCase
         $this->assertSame(3, $b->refresh()->position);
     }
 
-    public function test_it_ignores_questions_from_other_themes(): void
+    public function test_it_returns_422_when_ids_belong_to_a_different_theme(): void
     {
         $this->actingAsAdmin();
 
-        $anchor = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create();
-        $sibling = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create();
+        $insider = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create();
         $foreigner = OlympiadQuestion::factory()->forTheme('EXO', 1, 3, Language::En)->create([
             'position' => 99,
         ]);
 
-        $this->postJson(route('admin.olympiad.questions.reorder'), [
-            'ids' => [$anchor->id, $sibling->id, $foreigner->id],
-        ])->assertOk();
+        $this->postJson(route('admin.olympiad.themes.questions.reorder', $this->genTheme()), [
+            'ids' => [$insider->id, $foreigner->id],
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['ids']);
 
-        $this->assertSame(1, $anchor->refresh()->position);
-        $this->assertSame(2, $sibling->refresh()->position);
+        // Foreigner unchanged; insider not touched because the action aborted.
         $this->assertSame(99, $foreigner->refresh()->position);
+    }
+
+    public function test_it_returns_422_when_an_id_does_not_exist(): void
+    {
+        $this->actingAsAdmin();
+
+        $real = OlympiadQuestion::factory()->forTheme('GEN', 1, 3, Language::En)->create();
+
+        $this->postJson(route('admin.olympiad.themes.questions.reorder', $this->genTheme()), [
+            'ids' => [$real->id, 999_999],
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['ids']);
+    }
+
+    public function test_it_validates_book_in_path(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson(
+            route('admin.olympiad.themes.questions.reorder', [
+                'book' => 'XXX',
+                'chapters' => '1-3',
+                'language' => 'en',
+            ]),
+            ['ids' => [1]],
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['book']);
+    }
+
+    public function test_it_validates_language_in_path(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson(
+            route('admin.olympiad.themes.questions.reorder', [
+                'book' => 'GEN',
+                'chapters' => '1-3',
+                'language' => 'xx',
+            ]),
+            ['ids' => [1]],
+        )
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['language']);
+    }
+
+    public function test_it_returns_422_for_malformed_chapter_segment(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson(
+            route('admin.olympiad.themes.questions.reorder', [
+                'book' => 'GEN',
+                'chapters' => 'bad',
+                'language' => 'en',
+            ]),
+            ['ids' => [1]],
+        )->assertUnprocessable();
     }
 
     public function test_it_blocks_non_admin_users(): void
@@ -64,7 +131,7 @@ final class ReorderOlympiadQuestionsTest extends TestCase
         $token = $user->createToken('test')->plainTextToken;
 
         $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson(route('admin.olympiad.questions.reorder'), ['ids' => [1]])
+            ->postJson(route('admin.olympiad.themes.questions.reorder', $this->genTheme()), ['ids' => [1]])
             ->assertForbidden();
     }
 }
