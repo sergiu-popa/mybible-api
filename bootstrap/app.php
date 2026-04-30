@@ -8,6 +8,7 @@ use App\Domain\Reference\Exceptions\InvalidReferenceException;
 use App\Domain\SabbathSchool\Exceptions\InvalidSabbathSchoolPassageException;
 use App\Domain\Verses\Exceptions\NoDailyVerseForDateException;
 use App\Http\Controllers\HealthCheckController;
+use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureApiKeyOrSanctum;
 use App\Http\Middleware\EnsureValidApiKey;
 use App\Http\Middleware\ResolveRequestLanguage;
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api-key' => EnsureValidApiKey::class,
             'api-key-or-sanctum' => EnsureApiKeyOrSanctum::class,
             'resolve-language' => ResolveRequestLanguage::class,
+            'admin' => EnsureAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
