@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Olympiad\Support;
 
-final class SeededShuffler
+class SeededShuffler
 {
     /**
      * Deterministically shuffle `$items` using `$seed`.

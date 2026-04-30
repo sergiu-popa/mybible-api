@@ -15,9 +15,10 @@ return new class extends Migration
      * `(language, book, chapters_from, chapters_to)`.
      *
      * Backfills `position` per theme using the existing `id ASC` order
-     * so the legacy listing remains stable. Public endpoints continue
-     * to return shuffled questions seeded by the request — `position`
-     * is the admin reorder concern only.
+     * so the legacy listing remains stable. Public endpoints sort the
+     * canonical question set by `(position, id)` before applying the
+     * seed-driven shuffle, so admin reorders are honored as the natural
+     * ordering of each theme.
      */
     public function up(): void
     {
