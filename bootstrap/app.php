@@ -10,6 +10,7 @@ use App\Domain\Verses\Exceptions\NoDailyVerseForDateException;
 use App\Http\Controllers\HealthCheckController;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureApiKeyOrSanctum;
+use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureValidApiKey;
 use App\Http\Middleware\ResolveRequestLanguage;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -45,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api-key-or-sanctum' => EnsureApiKeyOrSanctum::class,
             'resolve-language' => ResolveRequestLanguage::class,
             'admin' => EnsureAdmin::class,
+            'super-admin' => EnsureSuperAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
