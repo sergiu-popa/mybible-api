@@ -6,7 +6,7 @@ Reconcile Laravel API schema with the live Symfony production database; standard
 
 ## Status
 
-`in-review`
+`done`
 
 ## Description
 

@@ -87,6 +87,31 @@ final class ResolveCollectionReferencesActionTest extends TestCase
         $this->assertSame([], $result);
     }
 
+    public function test_it_returns_parse_error_for_cross_chapter_ranges(): void
+    {
+        $spy = Log::spy();
+
+        $topic = CollectionTopic::factory()->english()->create();
+        $reference = CollectionReference::factory()->create([
+            'collection_topic_id' => $topic->id,
+            'reference' => 'MAT.19:27-20:16.VDC',
+        ]);
+
+        $result = (new ResolveCollectionReferencesAction)->handle([$reference], Language::En);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('MAT.19:27-20:16.VDC', $result[0]->raw);
+        $this->assertNull($result[0]->parsed);
+        $this->assertNull($result[0]->displayText);
+        $this->assertSame(
+            'Cross-chapter ranges are not supported in collections.',
+            $result[0]->parseError,
+        );
+
+        /** @phpstan-ignore-next-line method.notFound */
+        $spy->shouldHaveReceived('warning')->once();
+    }
+
     public function test_it_resolves_multi_reference_strings(): void
     {
         $topic = CollectionTopic::factory()->english()->create();

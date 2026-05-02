@@ -58,10 +58,25 @@ final class ResolveCollectionReferencesAction
             );
         }
 
-        $references = array_values(array_filter(
-            $parsed,
-            static fn (Reference|VerseRange $entry): bool => $entry instanceof Reference,
-        ));
+        foreach ($parsed as $entry) {
+            if ($entry instanceof VerseRange) {
+                Log::warning('Cross-chapter range encountered in collection reference', [
+                    'collection_topic_id' => $reference->collection_topic_id,
+                    'collection_reference_id' => $reference->id,
+                    'raw' => $raw,
+                ]);
+
+                return new ResolvedCollectionReference(
+                    raw: $raw,
+                    parsed: null,
+                    displayText: null,
+                    parseError: 'Cross-chapter ranges are not supported in collections.',
+                );
+            }
+        }
+
+        /** @var array<int, Reference> $references */
+        $references = $parsed;
 
         return new ResolvedCollectionReference(
             raw: $raw,

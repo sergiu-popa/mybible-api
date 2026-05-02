@@ -20,6 +20,13 @@ final class ReconcileTableHelper
      * Rename `$legacy` to `$target`, after dropping `$target` if it was
      * created empty by a sibling create migration. Returns whether a
      * rename actually happened.
+     *
+     * Not safe to re-run after a partially-failed cutover that has been
+     * hand-corrected: if an operator manually populated `$target` between
+     * attempts, the next run sees `count() > 0`, leaves `$target` alone,
+     * and skips the rename. Legacy and new tables would then coexist with
+     * diverging data. Verify both tables before re-running this helper
+     * after a manual recovery step.
      */
     public static function rename(string $legacy, string $target): bool
     {

@@ -9,6 +9,11 @@ namespace App\Domain\Migration\Support;
  * schema's `CHAR(2)` ISO-639-1 codes. Identity for codes that are
  * already 2-char keeps the action idempotent against a partially
  * backfilled column.
+ *
+ * `deu` and `ger` both resolve to `de` — `deu` is ISO-639-2/T (the
+ * terminological code listed in MBA-023 AC §12) and `ger` is the
+ * alternative bibliographic 639-2/B code; defensive entry covers data
+ * sourced from Bibliographic-leaning vocabularies.
  */
 final class LegacyLanguageCodeMap
 {
