@@ -17,7 +17,6 @@ final class ListCommentaryVerseTextsController
     ): AnonymousResourceCollection {
         $texts = $commentary->texts()
             ->coveringVerse($request->book(), $request->chapter(), $request->verse())
-            ->orderBy('position')
             ->get();
 
         return CommentaryTextResource::collection($texts);

@@ -31,6 +31,7 @@ return new class extends Migration
         $this->ensureSourceCommentaryColumn();
         $this->ensurePublishedColumn();
         $this->ensureSlugColumn();
+        $this->ensureLanguagePublishedIndex();
     }
 
     public function down(): void
@@ -184,5 +185,31 @@ return new class extends Migration
             $table->string('slug')->nullable(false)->change();
             $table->unique('slug');
         });
+    }
+
+    private function ensureLanguagePublishedIndex(): void
+    {
+        if (! Schema::hasColumn('commentaries', 'language') || ! Schema::hasColumn('commentaries', 'is_published')) {
+            return;
+        }
+
+        if ($this->hasIndex('commentaries_language_published_idx')) {
+            return;
+        }
+
+        Schema::table('commentaries', function (Blueprint $table): void {
+            $table->index(['language', 'is_published'], 'commentaries_language_published_idx');
+        });
+    }
+
+    private function hasIndex(string $name): bool
+    {
+        foreach (Schema::getIndexes('commentaries') as $index) {
+            if (($index['name'] ?? null) === $name) {
+                return true;
+            }
+        }
+
+        return false;
     }
 };

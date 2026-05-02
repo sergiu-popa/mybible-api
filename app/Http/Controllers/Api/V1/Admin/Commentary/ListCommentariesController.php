@@ -13,12 +13,16 @@ final class ListCommentariesController
 {
     public function __invoke(ListCommentariesRequest $request): AnonymousResourceCollection
     {
-        $query = Commentary::query()->orderBy('language')->orderBy('abbreviation');
+        $query = Commentary::query();
 
         $language = $request->languageFilter();
         if ($language !== null) {
             $query->forLanguage($language);
+        } else {
+            $query->orderBy('language');
         }
+
+        $query->orderBy('abbreviation');
 
         $published = $request->publishedFilter();
         if ($published !== null) {

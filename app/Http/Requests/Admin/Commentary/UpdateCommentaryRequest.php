@@ -29,7 +29,7 @@ final class UpdateCommentaryRequest extends FormRequest
                 'sometimes',
                 'string',
                 'max:255',
-                'alpha_dash',
+                'regex:/^[a-z0-9-]+$/',
                 Rule::unique('commentaries', 'slug')->ignore($commentaryId),
             ],
             'name' => ['sometimes', 'array'],

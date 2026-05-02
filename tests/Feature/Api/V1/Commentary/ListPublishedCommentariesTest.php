@@ -41,11 +41,11 @@ final class ListPublishedCommentariesTest extends TestCase
                     'slug',
                     'name',
                     'abbreviation',
-                    'language',
                 ]],
             ])
             ->assertJsonPath('data.0.slug', $expected->slug)
-            ->assertJsonPath('data.0.name', 'Comentariu Biblic SDA');
+            ->assertJsonPath('data.0.name', 'Comentariu Biblic SDA')
+            ->assertJsonMissingPath('data.0.language');
     }
 
     public function test_it_hides_drafts_from_public_listing(): void
@@ -61,14 +61,14 @@ final class ListPublishedCommentariesTest extends TestCase
 
     public function test_it_scopes_to_the_requested_language(): void
     {
-        Commentary::factory()->published()->forLanguage(Language::En)->create();
+        $expected = Commentary::factory()->published()->forLanguage(Language::En)->create();
         Commentary::factory()->published()->forLanguage(Language::Ro)->create();
 
         $this->withHeaders($this->apiKeyHeaders())
             ->getJson(route('commentaries.index', ['language' => 'en']))
             ->assertOk()
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.language', 'en');
+            ->assertJsonPath('data.0.slug', $expected->slug);
     }
 
     public function test_it_sets_public_cache_headers(): void

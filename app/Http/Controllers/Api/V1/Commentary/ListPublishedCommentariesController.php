@@ -18,6 +18,7 @@ final class ListPublishedCommentariesController
         $language = $request->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY, Language::En);
 
         $commentaries = Commentary::query()
+            ->with('sourceCommentary')
             ->published()
             ->forLanguage($language)
             ->orderBy('abbreviation')

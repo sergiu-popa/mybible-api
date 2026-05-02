@@ -22,7 +22,7 @@ final class CreateCommentaryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'slug' => ['nullable', 'string', 'max:255', 'alpha_dash', 'unique:commentaries,slug'],
+            'slug' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9-]+$/', 'unique:commentaries,slug'],
             'name' => ['required', 'array'],
             'name.*' => ['required', 'string', 'max:255'],
             'abbreviation' => ['required', 'string', 'max:32'],

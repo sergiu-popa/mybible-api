@@ -17,7 +17,6 @@ final class ListCommentaryChapterTextsController
     ): AnonymousResourceCollection {
         $texts = $commentary->texts()
             ->forBookChapter($request->book(), $request->chapter())
-            ->orderBy('position')
             ->get();
 
         return CommentaryTextResource::collection($texts);

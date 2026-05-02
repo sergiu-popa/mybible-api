@@ -17,7 +17,6 @@ final class ListCommentaryTextsController
     ): AnonymousResourceCollection {
         $paginator = $commentary->texts()
             ->forBookChapter($request->book(), $request->chapter())
-            ->orderBy('position')
             ->paginate($request->perPage());
 
         return AdminCommentaryTextResource::collection($paginator);

@@ -20,6 +20,7 @@ final class AdminCommentaryResource extends CommentaryResource
         return [
             'id' => $this->id,
             ...parent::toArray($request),
+            'language' => $this->language,
             'is_published' => $this->is_published,
             'source_commentary_id' => $this->source_commentary_id,
             'created_at' => $this->created_at?->toIso8601String(),

@@ -14,7 +14,7 @@ final class CreateCommentaryAction
     {
         $slug = $data->slug !== null && $data->slug !== ''
             ? $data->slug
-            : Str::slug(strtolower($data->abbreviation));
+            : $this->autoSlug($data->abbreviation, $data->language);
 
         return Commentary::create([
             'slug' => $slug,
@@ -24,5 +24,30 @@ final class CreateCommentaryAction
             'is_published' => false,
             'source_commentary_id' => $data->sourceCommentaryId,
         ]);
+    }
+
+    private function autoSlug(string $abbreviation, string $language): string
+    {
+        $base = Str::slug(strtolower($abbreviation));
+
+        if ($base === '') {
+            $base = 'commentary';
+        }
+
+        $candidate = $base;
+
+        if (! Commentary::where('slug', $candidate)->exists()) {
+            return $candidate;
+        }
+
+        $candidate = $base . '-' . $language;
+
+        $suffix = 2;
+        while (Commentary::where('slug', $candidate)->exists()) {
+            $candidate = $base . '-' . $language . '-' . $suffix;
+            $suffix++;
+        }
+
+        return $candidate;
     }
 }

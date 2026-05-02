@@ -27,7 +27,6 @@ class CommentaryResource extends JsonResource
             'slug' => $this->slug,
             'name' => LanguageResolver::resolve($this->name, $language),
             'abbreviation' => $this->abbreviation,
-            'language' => $this->language,
             'source_commentary' => $this->whenLoaded(
                 'sourceCommentary',
                 fn () => $this->sourceCommentary !== null

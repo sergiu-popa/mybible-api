@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Domain\Commentary;
+namespace Tests\Unit\Domain\Commentary;
 
 use App\Domain\Commentary\Models\Commentary;
 use App\Domain\Commentary\Models\CommentaryText;
