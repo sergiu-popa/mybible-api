@@ -2,6 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\Commentary\CreateCommentaryController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\CreateCommentaryTextController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\DeleteCommentaryTextController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\ListCommentariesController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\ListCommentaryTextsController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\PublishCommentaryController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\ReorderCommentaryTextsController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\UnpublishCommentaryController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\UpdateCommentaryController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\UpdateCommentaryTextController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderEducationalResourcesController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceCategoriesController;
 use App\Http\Controllers\Api\V1\Admin\Imports\ShowImportJobController;
@@ -27,6 +37,9 @@ use App\Http\Controllers\Api\V1\Bible\ListBibleBooksController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleVersionsController;
 use App\Http\Controllers\Api\V1\Collections\ListCollectionTopicsController;
 use App\Http\Controllers\Api\V1\Collections\ShowCollectionTopicController;
+use App\Http\Controllers\Api\V1\Commentary\ListCommentaryChapterTextsController;
+use App\Http\Controllers\Api\V1\Commentary\ListCommentaryVerseTextsController;
+use App\Http\Controllers\Api\V1\Commentary\ListPublishedCommentariesController;
 use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalArchiveController;
 use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalFavoritesController;
 use App\Http\Controllers\Api\V1\Devotionals\ShowDevotionalController;
@@ -162,6 +175,28 @@ Route::prefix('v1')->group(function (): void {
                 ->name('hymnal-songs.show');
         });
 
+    Route::prefix('commentaries')
+        ->name('commentaries.')
+        ->middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon', 'cache.headers:public;max_age=3600;etag'])
+        ->group(function (): void {
+            Route::get('/', ListPublishedCommentariesController::class)->name('index');
+            Route::get(
+                '{commentary:slug}/{book}/{chapter}',
+                ListCommentaryChapterTextsController::class,
+            )
+                ->where('book', '[A-Za-z0-9]+')
+                ->where('chapter', '[0-9]+')
+                ->name('chapter');
+            Route::get(
+                '{commentary:slug}/{book}/{chapter}/{verse}',
+                ListCommentaryVerseTextsController::class,
+            )
+                ->where('book', '[A-Za-z0-9]+')
+                ->where('chapter', '[0-9]+')
+                ->where('verse', '[0-9]+')
+                ->name('verse');
+        });
+
     Route::middleware(['auth:sanctum', 'throttle:per-user'])
         ->prefix('hymnal-favorites')
         ->name('hymnal-favorites.')
@@ -295,6 +330,33 @@ Route::prefix('v1')->group(function (): void {
                         ->where('book', '[A-Za-z0-9]+')
                         ->where('language', '[a-z]{2}')
                         ->name('olympiad.themes.questions.reorder');
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('commentaries')
+                ->name('commentaries.')
+                ->group(function (): void {
+                    Route::get('/', ListCommentariesController::class)->name('index');
+                    Route::post('/', CreateCommentaryController::class)->name('store');
+                    Route::patch('{commentary}', UpdateCommentaryController::class)->name('update');
+                    Route::post('{commentary}/publish', PublishCommentaryController::class)->name('publish');
+                    Route::post('{commentary}/unpublish', UnpublishCommentaryController::class)->name('unpublish');
+
+                    Route::post(
+                        '{commentary}/texts/reorder',
+                        ReorderCommentaryTextsController::class,
+                    )->name('texts.reorder');
+
+                    Route::scopeBindings()->group(function (): void {
+                        Route::get('{commentary}/texts', ListCommentaryTextsController::class)
+                            ->name('texts.index');
+                        Route::post('{commentary}/texts', CreateCommentaryTextController::class)
+                            ->name('texts.store');
+                        Route::patch('{commentary}/texts/{text}', UpdateCommentaryTextController::class)
+                            ->name('texts.update');
+                        Route::delete('{commentary}/texts/{text}', DeleteCommentaryTextController::class)
+                            ->name('texts.destroy');
+                    });
                 });
         });
 
