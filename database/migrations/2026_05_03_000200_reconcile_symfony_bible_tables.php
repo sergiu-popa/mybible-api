@@ -38,6 +38,18 @@ return new class extends Migration
         $this->reconcileVerseTable();
     }
 
+    /**
+     * Partial rollback by design. `up()` is data-bearing in two ways that
+     * cannot be reversed safely: the per-version `book` rows are deduped
+     * into a global `bible_books` table (the legacy `book.id` ↔ Bible
+     * mapping is preserved in `_legacy_book_map`, but the raw `book`
+     * table is dropped), and `bible_verses` keeps its renamed shape with
+     * nullable FK columns added in `up()`. `down()` un-renames
+     * `bible_versions → bible` and `bible_verses → verse` and drops the
+     * map table — it does not recreate `book` or remove the FK columns.
+     * Operators rolling back must restore from a pre-cutover snapshot
+     * if they need the legacy `book` table back.
+     */
     public function down(): void
     {
         if (Schema::hasTable('bible_verses') && Schema::hasColumn('bible_verses', 'bible_id')) {
@@ -112,7 +124,17 @@ return new class extends Migration
 
         $abbrevMap = $this->loadAbbreviationMap();
 
-        $rows = DB::table('book')->orderBy('id')->get();
+        // VDC bible wins on diverging metadata (per AC tie-break);
+        // otherwise the lowest legacy `book.id` wins. The CASE column
+        // forces VDC rows to sort first; the lateral join is unnecessary
+        // because Symfony's `book.bible_id` already points at the bible
+        // row carrying the abbreviation.
+        $rows = DB::table('book')
+            ->leftJoin('bible_versions', 'book.bible_id', '=', 'bible_versions.id')
+            ->orderByRaw("CASE WHEN bible_versions.abbreviation = 'VDC' THEN 0 ELSE 1 END")
+            ->orderBy('book.id')
+            ->select('book.*')
+            ->get();
 
         foreach ($rows as $row) {
             $rawAbbreviation = (string) ($row->abbreviation ?? '');

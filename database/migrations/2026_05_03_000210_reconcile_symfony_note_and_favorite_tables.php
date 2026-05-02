@@ -54,12 +54,23 @@ return new class extends Migration
             return;
         }
 
-        try {
-            Schema::table('favorites', function (Blueprint $table): void {
-                $table->unique(['user_id', 'category_id', 'reference'], 'favorites_user_category_ref_unique');
-            });
-        } catch (Throwable) {
-            // Index already exists — ignore.
+        if ($this->hasIndex('favorites', 'favorites_user_category_ref_unique')) {
+            return;
         }
+
+        Schema::table('favorites', function (Blueprint $table): void {
+            $table->unique(['user_id', 'category_id', 'reference'], 'favorites_user_category_ref_unique');
+        });
+    }
+
+    private function hasIndex(string $table, string $indexName): bool
+    {
+        foreach (Schema::getIndexes($table) as $index) {
+            if (($index['name'] ?? null) === $indexName) {
+                return true;
+            }
+        }
+
+        return false;
     }
 };

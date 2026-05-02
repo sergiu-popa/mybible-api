@@ -106,7 +106,7 @@ final class ResolveCrossChapterVersesTest extends TestCase
             ->withHeaders($this->apiKeyHeaders())
             ->getJson(route('verses.index', ['reference' => 'MAT.19:1-20:34.VDC']))
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['references']);
+            ->assertJsonValidationErrors(['reference']);
     }
 
     /**

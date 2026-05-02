@@ -41,12 +41,23 @@ return new class extends Migration
             return;
         }
 
-        try {
-            Schema::table('hymnal_songs', function (Blueprint $table): void {
-                $table->unique(['hymnal_book_id', 'number'], 'hymnal_songs_book_number_unique');
-            });
-        } catch (Throwable) {
-            // Index already exists — ignore.
+        if ($this->hasIndex('hymnal_songs', 'hymnal_songs_book_number_unique')) {
+            return;
         }
+
+        Schema::table('hymnal_songs', function (Blueprint $table): void {
+            $table->unique(['hymnal_book_id', 'number'], 'hymnal_songs_book_number_unique');
+        });
+    }
+
+    private function hasIndex(string $table, string $indexName): bool
+    {
+        foreach (Schema::getIndexes($table) as $index) {
+            if (($index['name'] ?? null) === $indexName) {
+                return true;
+            }
+        }
+
+        return false;
     }
 };

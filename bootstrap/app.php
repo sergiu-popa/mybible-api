@@ -23,6 +23,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -116,9 +117,17 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (VerseRangeTooLargeException $e, Request $request) {
+            Log::info('verse_range_too_large', [
+                'reference' => $e->range->canonical(),
+                'expanded' => $e->expandedSize,
+                'cap' => $e->cap,
+            ]);
+
+            $message = 'The requested passage is too large.';
+
             return response()->json([
-                'message' => $e->getMessage(),
-                'errors' => ['references' => [$e->getMessage()]],
+                'message' => $message,
+                'errors' => ['reference' => [$message]],
             ], 422);
         });
 

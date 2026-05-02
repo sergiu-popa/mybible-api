@@ -13,6 +13,7 @@ use App\Domain\Reference\Reference;
 use App\Domain\Reference\VerseRange;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use LogicException;
 
 /**
  * @extends Builder<BibleVerse>
@@ -111,7 +112,10 @@ final class BibleVerseQueryBuilder extends Builder
 
         foreach ($ranges as $range) {
             if ($range->version === null) {
-                continue;
+                throw new LogicException(
+                    'VerseRange entered lookupReferences without a resolved version; '
+                    . 'normalize the version in the request layer before dispatching.',
+                );
             }
 
             $version = $versionsByAbbreviation[$range->version] ?? null;

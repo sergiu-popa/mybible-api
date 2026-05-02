@@ -11,9 +11,13 @@ use App\Domain\Reference\VerseRange;
 use App\Domain\Verses\DataTransferObjects\ResolveVersesData;
 use App\Domain\Verses\DataTransferObjects\VerseLookupResult;
 use Illuminate\Database\Eloquent\Collection;
+use LogicException;
 
 final class ResolveVersesAction
 {
+    /** @var array<string, int> */
+    private array $chapterVerseCountCache = [];
+
     public function handle(ResolveVersesData $data): VerseLookupResult
     {
         /** @var Collection<int, BibleVerse> $verses */
@@ -76,6 +80,13 @@ final class ResolveVersesAction
         $tuples = [];
 
         foreach ($references as $reference) {
+            if ($reference instanceof VerseRange && $reference->version === null) {
+                throw new LogicException(
+                    'VerseRange entered ResolveVersesAction without a resolved version; '
+                    . 'normalize the version in the request layer before dispatching.',
+                );
+            }
+
             if ($reference->version === null) {
                 continue;
             }
@@ -126,7 +137,10 @@ final class ResolveVersesAction
     private function expandRange(VerseRange $range): array
     {
         if ($range->version === null) {
-            return [];
+            throw new LogicException(
+                'VerseRange entered ResolveVersesAction without a resolved version; '
+                . 'normalize the version in the request layer before dispatching.',
+            );
         }
 
         $tuples = [];
@@ -167,26 +181,24 @@ final class ResolveVersesAction
 
     private function chapterVerseCount(string $bookAbbreviation, int $chapter): int
     {
-        static $cache = [];
-
         $cacheKey = sprintf('%s|%d', $bookAbbreviation, $chapter);
 
-        if (array_key_exists($cacheKey, $cache)) {
-            return $cache[$cacheKey];
+        if (array_key_exists($cacheKey, $this->chapterVerseCountCache)) {
+            return $this->chapterVerseCountCache[$cacheKey];
         }
 
         $book = BibleBook::query()->where('abbreviation', $bookAbbreviation)->first();
 
         if ($book === null) {
-            return $cache[$cacheKey] = 0;
+            return $this->chapterVerseCountCache[$cacheKey] = 0;
         }
 
         $row = $book->chapters()->where('number', $chapter)->first();
 
         if ($row === null || $row->verse_count < 1) {
-            return $cache[$cacheKey] = 0;
+            return $this->chapterVerseCountCache[$cacheKey] = 0;
         }
 
-        return $cache[$cacheKey] = $row->verse_count;
+        return $this->chapterVerseCountCache[$cacheKey] = $row->verse_count;
     }
 }
