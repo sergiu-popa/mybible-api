@@ -52,7 +52,7 @@ final class SabbathSchoolHighlightTest extends TestCase
             ->assertOk()
             ->assertExactJson(['deleted' => true]);
 
-        $this->assertDatabaseMissing('sabbath_school_highlights', [
+        $this->assertSoftDeleted('sabbath_school_highlights', [
             'user_id' => $user->id,
             'sabbath_school_segment_id' => $segment->id,
             'passage' => 'GEN.1:1.VDC',

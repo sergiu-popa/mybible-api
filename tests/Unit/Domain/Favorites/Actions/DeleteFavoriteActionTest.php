@@ -22,6 +22,6 @@ final class DeleteFavoriteActionTest extends TestCase
         $action = $this->app->make(DeleteFavoriteAction::class);
         $action->execute($favorite);
 
-        $this->assertDatabaseMissing('favorites', ['id' => $favorite->id]);
+        $this->assertSoftDeleted('favorites', ['id' => $favorite->id]);
     }
 }

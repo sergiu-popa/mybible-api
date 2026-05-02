@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
@@ -22,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $note
  * @property Carbon $created_at
  * @property Carbon $updated_at
+ * @property Carbon|null $deleted_at
  * @property-read User $user
  * @property-read FavoriteCategory|null $category
  */
@@ -30,6 +32,8 @@ final class Favorite extends Model
 {
     /** @use HasFactory<FavoriteFactory> */
     use HasFactory;
+
+    use SoftDeletes;
 
     protected $guarded = [];
 

@@ -14,16 +14,25 @@ final class ToggleDevotionalFavoriteAction
     public function execute(ToggleDevotionalFavoriteData $data): ToggleDevotionalFavoriteResult
     {
         return DB::transaction(function () use ($data): ToggleDevotionalFavoriteResult {
-            $existing = DevotionalFavorite::query()
-                ->forUser($data->user)
+            /** @var DevotionalFavorite|null $existing */
+            $existing = DevotionalFavorite::withTrashed()
+                ->where('user_id', $data->user->id)
                 ->where('devotional_id', $data->devotionalId)
                 ->lockForUpdate()
                 ->first();
 
-            if ($existing !== null) {
+            if ($existing !== null && ! $existing->trashed()) {
                 $existing->delete();
 
                 return ToggleDevotionalFavoriteResult::deleted();
+            }
+
+            if ($existing !== null && $existing->trashed()) {
+                $existing->restore();
+                $existing->touch();
+                $existing->load('devotional');
+
+                return ToggleDevotionalFavoriteResult::created($existing);
             }
 
             $favorite = DevotionalFavorite::query()->create([

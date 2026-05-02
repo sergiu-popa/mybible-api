@@ -29,7 +29,7 @@ final class DeleteSabbathSchoolAnswerActionTest extends TestCase
             ->execute($user, $question);
 
         $this->assertTrue($deleted);
-        $this->assertDatabaseMissing('sabbath_school_answers', [
+        $this->assertSoftDeleted('sabbath_school_answers', [
             'user_id' => $user->id,
             'sabbath_school_question_id' => $question->id,
         ]);

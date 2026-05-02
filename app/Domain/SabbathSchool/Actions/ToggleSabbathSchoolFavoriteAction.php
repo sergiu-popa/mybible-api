@@ -22,16 +22,25 @@ final class ToggleSabbathSchoolFavoriteAction
     public function execute(ToggleSabbathSchoolFavoriteData $data): ToggleSabbathSchoolFavoriteResult
     {
         return DB::transaction(function () use ($data): ToggleSabbathSchoolFavoriteResult {
-            $existing = SabbathSchoolFavorite::query()
-                ->forUser($data->user)
-                ->forLessonAndSegment($data->lessonId, $data->segmentId)
+            /** @var SabbathSchoolFavorite|null $existing */
+            $existing = SabbathSchoolFavorite::withTrashed()
+                ->where('user_id', $data->user->id)
+                ->where('sabbath_school_lesson_id', $data->lessonId)
+                ->where('sabbath_school_segment_id', $data->segmentId)
                 ->lockForUpdate()
                 ->first();
 
-            if ($existing !== null) {
+            if ($existing !== null && ! $existing->trashed()) {
                 $existing->delete();
 
                 return ToggleSabbathSchoolFavoriteResult::deleted();
+            }
+
+            if ($existing !== null && $existing->trashed()) {
+                $existing->restore();
+                $existing->touch();
+
+                return ToggleSabbathSchoolFavoriteResult::created($existing);
             }
 
             $favorite = SabbathSchoolFavorite::query()->create([

@@ -1,0 +1,116 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\Api\V1\Mobile;
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\WithApiKeyClient;
+use Tests\TestCase;
+
+final class ShowAppBootstrapTest extends TestCase
+{
+    use RefreshDatabase;
+    use WithApiKeyClient;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->setUpApiKeyClient();
+
+        config()->set('mobile', [
+            'ios' => ['latest_version' => '3.4.1'],
+            'android' => ['latest_version' => '3.4.2'],
+            'bootstrap' => ['cache_ttl' => 300],
+        ]);
+    }
+
+    public function test_it_rejects_missing_credentials(): void
+    {
+        $this->getJson(route('app.bootstrap'))
+            ->assertUnauthorized();
+    }
+
+    public function test_it_returns_all_expected_top_level_keys(): void
+    {
+        $response = $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('app.bootstrap'));
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'data' => [
+                    'version' => ['ios', 'android'],
+                    'languages_available',
+                    'daily_verse',
+                    'news',
+                    'bible_versions',
+                    'devotionals_today' => ['adults', 'youth'],
+                    'sabbath_school_current_lesson',
+                    'qr_codes',
+                ],
+            ]);
+    }
+
+    public function test_it_returns_version_from_config(): void
+    {
+        $response = $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('app.bootstrap'));
+
+        $response->assertOk()
+            ->assertJsonPath('data.version.ios', '3.4.1')
+            ->assertJsonPath('data.version.android', '3.4.2');
+    }
+
+    public function test_it_returns_available_languages(): void
+    {
+        $response = $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('app.bootstrap'));
+
+        $languages = $response->json('data.languages_available');
+        $this->assertContains('en', $languages);
+        $this->assertContains('ro', $languages);
+        $this->assertContains('hu', $languages);
+    }
+
+    public function test_it_accepts_valid_language_parameter(): void
+    {
+        $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('app.bootstrap', ['language' => 'ro']))
+            ->assertOk();
+    }
+
+    public function test_it_rejects_invalid_language_parameter(): void
+    {
+        $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('app.bootstrap', ['language' => 'xx']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('language');
+    }
+
+    public function test_it_sets_public_cache_control_header(): void
+    {
+        $response = $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('app.bootstrap'));
+
+        $response->assertOk();
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+        $this->assertStringContainsString('public', $cacheControl);
+        $this->assertStringContainsString('max-age=300', $cacheControl);
+    }
+
+    public function test_null_values_are_returned_when_no_data_seeded(): void
+    {
+        $response = $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('app.bootstrap'));
+
+        $response->assertOk();
+        $this->assertNull($response->json('data.daily_verse'));
+        $this->assertNull($response->json('data.devotionals_today.adults'));
+        $this->assertNull($response->json('data.devotionals_today.youth'));
+        $this->assertNull($response->json('data.sabbath_school_current_lesson'));
+        $this->assertIsArray($response->json('data.news'));
+        $this->assertIsArray($response->json('data.bible_versions'));
+        $this->assertIsArray($response->json('data.qr_codes'));
+    }
+}

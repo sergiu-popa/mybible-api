@@ -61,17 +61,17 @@ final class ListOlympiadThemesControllerTest extends TestCase
             ->assertJsonPath('data.0.question_count', 3);
     }
 
-    public function test_it_paginates_with_a_default_of_50_per_page(): void
+    public function test_it_paginates_with_a_default_of_30_per_page(): void
     {
-        for ($i = 1; $i <= 60; $i++) {
+        for ($i = 1; $i <= 40; $i++) {
             OlympiadQuestion::factory()->forTheme('GEN', $i, $i)->create();
         }
 
         $this->withHeader('X-Api-Key', 'mobile-valid-key')
             ->getJson(route('olympiad.themes.index'))
             ->assertOk()
-            ->assertJsonCount(50, 'data')
-            ->assertJsonPath('meta.per_page', 50);
+            ->assertJsonCount(30, 'data')
+            ->assertJsonPath('meta.per_page', 30);
     }
 
     public function test_it_sets_cache_control_header(): void

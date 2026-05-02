@@ -165,7 +165,7 @@ final class FavoriteCategoryCrudTest extends TestCase
         $this->deleteJson(route('favorite-categories.destroy', $category))
             ->assertNoContent();
 
-        $this->assertDatabaseMissing('favorite_categories', ['id' => $category->id]);
+        $this->assertSoftDeleted('favorite_categories', ['id' => $category->id]);
         $this->assertDatabaseHas('favorites', [
             'id' => $favorite->id,
             'category_id' => null,

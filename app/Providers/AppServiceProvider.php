@@ -8,6 +8,14 @@ use App\Domain\Favorites\Models\Favorite;
 use App\Domain\Favorites\Models\FavoriteCategory;
 use App\Domain\Notes\Models\Note;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
+use App\Domain\Sync\Actions\ShowUserSyncAction;
+use App\Domain\Sync\Sync\Builders\DevotionalFavoriteSyncBuilder;
+use App\Domain\Sync\Sync\Builders\FavoriteSyncBuilder;
+use App\Domain\Sync\Sync\Builders\HymnalFavoriteSyncBuilder;
+use App\Domain\Sync\Sync\Builders\NoteSyncBuilder;
+use App\Domain\Sync\Sync\Builders\SabbathSchoolAnswerSyncBuilder;
+use App\Domain\Sync\Sync\Builders\SabbathSchoolFavoriteSyncBuilder;
+use App\Domain\Sync\Sync\Builders\SabbathSchoolHighlightSyncBuilder;
 use App\Policies\FavoriteCategoryPolicy;
 use App\Policies\FavoritePolicy;
 use App\Policies\NotePolicy;
@@ -16,15 +24,39 @@ use App\Support\Caching\CacheStoreGuard;
 use App\Support\Caching\ClearCacheTagCommand;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\RouteInfo;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Sentry\Breadcrumb;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $builderClasses = [
+            FavoriteSyncBuilder::class,
+            NoteSyncBuilder::class,
+            SabbathSchoolAnswerSyncBuilder::class,
+            SabbathSchoolHighlightSyncBuilder::class,
+            SabbathSchoolFavoriteSyncBuilder::class,
+            DevotionalFavoriteSyncBuilder::class,
+            HymnalFavoriteSyncBuilder::class,
+        ];
+
+        foreach ($builderClasses as $class) {
+            $this->app->tag($class, 'sync.builder');
+        }
+
+        $this->app->bind(ShowUserSyncAction::class, function ($app): ShowUserSyncAction {
+            return new ShowUserSyncAction($app->tagged('sync.builder'));
+        });
+
         if (class_exists(Scramble::class)) {
             Scramble::ignoreDefaultRoutes();
             Scramble::resolveTagsUsing(function (RouteInfo $routeInfo): array {
@@ -72,6 +104,37 @@ class AppServiceProvider extends ServiceProvider
         // drivers per-test (e.g. forcing 'database' to assert the guard).
         if (! $this->app->environment('testing')) {
             CacheStoreGuard::ensureTaggable();
+        }
+
+        RateLimiter::for('public-anon', static function (Request $request): Limit {
+            return Limit::perMinute(180)->by($request->ip());
+        });
+
+        RateLimiter::for('per-user', static function (Request $request): Limit {
+            $key = (string) ($request->user()?->getAuthIdentifier() ?? $request->ip());
+
+            return Limit::perMinute(300)->by($key);
+        });
+
+        if (! $this->app->environment('local', 'testing')) {
+            DB::listen(static function ($query): void {
+                if ($query->time > 500) {
+                    Log::channel('slow_query')->warning('slow_query', [
+                        'sql' => $query->sql,
+                        'time_ms' => $query->time,
+                        'bindings' => $query->bindings,
+                    ]);
+
+                    if (function_exists('Sentry\addBreadcrumb') && class_exists(Breadcrumb::class)) {
+                        \Sentry\addBreadcrumb(new Breadcrumb(
+                            Breadcrumb::LEVEL_WARNING,
+                            Breadcrumb::TYPE_DEFAULT,
+                            'db.query',
+                            sprintf('Slow query (%dms): %s', (int) $query->time, $query->sql),
+                        ));
+                    }
+                }
+            });
         }
     }
 }

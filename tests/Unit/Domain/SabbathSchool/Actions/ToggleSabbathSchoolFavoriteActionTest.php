@@ -59,7 +59,10 @@ final class ToggleSabbathSchoolFavoriteActionTest extends TestCase
         );
 
         $this->assertFalse($result->created);
-        $this->assertDatabaseCount('sabbath_school_favorites', 0);
+        $this->assertSoftDeleted('sabbath_school_favorites', [
+            'user_id' => $user->id,
+            'sabbath_school_lesson_id' => $lesson->id,
+        ]);
     }
 
     public function test_segment_level_insert_does_not_touch_the_sentinel_row(): void
@@ -89,5 +92,31 @@ final class ToggleSabbathSchoolFavoriteActionTest extends TestCase
             'sabbath_school_lesson_id' => $lesson->id,
             'sabbath_school_segment_id' => $segment->id,
         ]);
+    }
+
+    public function test_re_toggling_restores_the_same_primary_key(): void
+    {
+        $user = User::factory()->create();
+        $lesson = SabbathSchoolLesson::factory()->create();
+
+        $action = $this->app->make(ToggleSabbathSchoolFavoriteAction::class);
+        $dto = new ToggleSabbathSchoolFavoriteData(
+            $user,
+            $lesson->id,
+            SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
+        );
+
+        $created = $action->execute($dto);
+        $this->assertNotNull($created->favorite);
+        $originalId = $created->favorite->id;
+
+        $action->execute($dto); // soft-delete
+
+        $restored = $action->execute($dto); // restore
+
+        $this->assertTrue($restored->created);
+        $this->assertNotNull($restored->favorite);
+        $this->assertSame($originalId, $restored->favorite->id);
+        $this->assertDatabaseCount('sabbath_school_favorites', 1);
     }
 }

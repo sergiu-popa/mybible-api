@@ -59,7 +59,7 @@ final class ListBibleVersionsTest extends TestCase
             ->assertJsonPath('data.0.language', 'ro');
     }
 
-    public function test_it_defaults_per_page_to_fifty(): void
+    public function test_it_defaults_per_page_to_thirty(): void
     {
         BibleVersion::factory()->count(3)->create();
 
@@ -67,7 +67,7 @@ final class ListBibleVersionsTest extends TestCase
             ->withHeaders($this->apiKeyHeaders())
             ->getJson(route('bible-versions.index'))
             ->assertOk()
-            ->assertJsonPath('meta.per_page', 50);
+            ->assertJsonPath('meta.per_page', 30);
     }
 
     public function test_it_rejects_per_page_over_one_hundred(): void

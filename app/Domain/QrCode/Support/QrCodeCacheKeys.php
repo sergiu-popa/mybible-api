@@ -8,6 +8,11 @@ final class QrCodeCacheKeys
 {
     public const TAG_ROOT = 'qr';
 
+    public static function list(): string
+    {
+        return 'qr:list';
+    }
+
     public static function show(string $canonicalReference): string
     {
         return sprintf('qr:%s', $canonicalReference);

@@ -42,7 +42,7 @@ final class ToggleHymnalFavoriteTest extends TestCase
             ->assertOk()
             ->assertExactJson(['deleted' => true]);
 
-        $this->assertDatabaseMissing('hymnal_favorites', [
+        $this->assertSoftDeleted('hymnal_favorites', [
             'user_id' => $user->id,
             'hymnal_song_id' => $song->id,
         ]);

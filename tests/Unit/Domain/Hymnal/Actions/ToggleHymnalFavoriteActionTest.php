@@ -47,7 +47,7 @@ final class ToggleHymnalFavoriteActionTest extends TestCase
             ->execute(new ToggleHymnalFavoriteData($user, $song));
 
         $this->assertFalse($result->created);
-        $this->assertDatabaseMissing('hymnal_favorites', ['id' => $existing->id]);
+        $this->assertSoftDeleted('hymnal_favorites', ['id' => $existing->id]);
     }
 
     public function test_it_rolls_back_the_insert_when_the_transaction_body_throws(): void
@@ -124,5 +124,25 @@ final class ToggleHymnalFavoriteActionTest extends TestCase
             'user_id' => $bob->id,
             'hymnal_song_id' => $song->id,
         ]);
+    }
+
+    public function test_re_toggling_restores_the_same_primary_key(): void
+    {
+        $user = User::factory()->create();
+        $song = HymnalSong::factory()->create();
+
+        $action = $this->app->make(ToggleHymnalFavoriteAction::class);
+        $data = new ToggleHymnalFavoriteData($user, $song);
+
+        $created = $action->execute($data);
+        $originalId = $created->favorite->id;
+
+        $action->execute($data); // soft-delete
+
+        $restored = $action->execute($data); // restore
+
+        $this->assertTrue($restored->created);
+        $this->assertSame($originalId, $restored->favorite->id);
+        $this->assertDatabaseCount('hymnal_favorites', 1);
     }
 }

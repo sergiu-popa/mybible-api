@@ -50,7 +50,7 @@ final class ToggleDevotionalFavoriteTest extends TestCase
             ->assertOk()
             ->assertExactJson(['deleted' => true]);
 
-        $this->assertDatabaseMissing('devotional_favorites', [
+        $this->assertSoftDeleted('devotional_favorites', [
             'user_id' => $user->id,
             'devotional_id' => $devotional->id,
         ]);
@@ -91,5 +91,31 @@ final class ToggleDevotionalFavoriteTest extends TestCase
         $this
             ->postJson(route('devotional-favorites.toggle'), ['devotional_id' => 1])
             ->assertUnauthorized();
+    }
+
+    public function test_re_toggling_restores_the_same_primary_key(): void
+    {
+        $user = $this->givenAnAuthenticatedUser();
+        $devotional = Devotional::factory()->create();
+
+        $firstResponse = $this->postJson(
+            route('devotional-favorites.toggle'),
+            ['devotional_id' => $devotional->id],
+        )->assertCreated();
+
+        $originalId = $firstResponse->json('data.id');
+
+        $this->postJson(
+            route('devotional-favorites.toggle'),
+            ['devotional_id' => $devotional->id],
+        )->assertOk();
+
+        $secondResponse = $this->postJson(
+            route('devotional-favorites.toggle'),
+            ['devotional_id' => $devotional->id],
+        )->assertCreated();
+
+        $this->assertSame($originalId, $secondResponse->json('data.id'));
+        $this->assertDatabaseCount('devotional_favorites', 1);
     }
 }

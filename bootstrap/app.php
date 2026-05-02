@@ -7,9 +7,11 @@ use App\Domain\ReadingPlans\Exceptions\SubscriptionNotCompletableException;
 use App\Domain\Reference\Exceptions\InvalidReferenceException;
 use App\Domain\SabbathSchool\Exceptions\InvalidSabbathSchoolPassageException;
 use App\Domain\Verses\Exceptions\NoDailyVerseForDateException;
-use App\Http\Controllers\HealthCheckController;
+use App\Http\Controllers\Health\ShowLivenessController;
+use App\Http\Controllers\Health\ShowReadinessController;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureApiKeyOrSanctum;
+use App\Http\Middleware\EnsureInternalOps;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureValidApiKey;
 use App\Http\Middleware\ResolveRequestLanguage;
@@ -31,22 +33,35 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__ . '/../routes/console.php',
         apiPrefix: 'api',
         then: function (): void {
-            // Custom `/up` health probe — pings Redis + DB instead of the
-            // framework default (which only confirms PHP is up). Replaces
-            // the `health: '/up'` shorthand that would otherwise live here.
-            Route::get('up', HealthCheckController::class)->name('health');
+            // Liveness probe — pure PHP process check, no upstream pings.
+            // Load balancers poll this every 10 s; it must never reflect
+            // Redis or DB health so transient dep blips do not pull the
+            // instance from rotation.
+            Route::get('up', ShowLivenessController::class)->name('health');
+
+            // Readiness probe — pings Redis + DB. VPC-only via internal-ops
+            // middleware so public internet cannot probe internals.
+            Route::get('ready', ShowReadinessController::class)
+                ->middleware('internal-ops')
+                ->name('health.ready');
         },
     )
     ->withCommands([
         __DIR__ . '/../app/Application/Commands',
     ])
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(
+            at: env('TRUSTED_PROXIES', '*'),
+            headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO,
+        );
+
         $middleware->alias([
             'api-key' => EnsureValidApiKey::class,
             'api-key-or-sanctum' => EnsureApiKeyOrSanctum::class,
             'resolve-language' => ResolveRequestLanguage::class,
             'admin' => EnsureAdmin::class,
             'super-admin' => EnsureSuperAdmin::class,
+            'internal-ops' => EnsureInternalOps::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

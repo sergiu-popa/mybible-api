@@ -19,6 +19,6 @@ final class DeleteNoteActionTest extends TestCase
 
         $this->app->make(DeleteNoteAction::class)->execute($note);
 
-        $this->assertDatabaseMissing('notes', ['id' => $note->id]);
+        $this->assertSoftDeleted('notes', ['id' => $note->id]);
     }
 }

@@ -47,6 +47,7 @@ use App\Http\Controllers\Api\V1\Hymnal\ListHymnalBookSongsController;
 use App\Http\Controllers\Api\V1\Hymnal\ListHymnalFavoritesController;
 use App\Http\Controllers\Api\V1\Hymnal\ShowHymnalSongController;
 use App\Http\Controllers\Api\V1\Hymnal\ToggleHymnalFavoriteController;
+use App\Http\Controllers\Api\V1\Mobile\ShowAppBootstrapController;
 use App\Http\Controllers\Api\V1\Mobile\ShowMobileVersionController;
 use App\Http\Controllers\Api\V1\News\ListNewsController;
 use App\Http\Controllers\Api\V1\Notes\DeleteNoteController;
@@ -77,6 +78,7 @@ use App\Http\Controllers\Api\V1\SabbathSchool\ShowSabbathSchoolLessonController;
 use App\Http\Controllers\Api\V1\SabbathSchool\ToggleSabbathSchoolFavoriteController;
 use App\Http\Controllers\Api\V1\SabbathSchool\ToggleSabbathSchoolHighlightController;
 use App\Http\Controllers\Api\V1\SabbathSchool\UpsertSabbathSchoolAnswerController;
+use App\Http\Controllers\Api\V1\Sync\ShowUserSyncController;
 use App\Http\Controllers\Api\V1\Verses\GetDailyVerseController;
 use App\Http\Controllers\Api\V1\Verses\ResolveVersesController;
 use Illuminate\Support\Facades\Route;
@@ -88,7 +90,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('forgot-password', RequestPasswordResetController::class)->name('forgot-password');
         Route::post('reset-password', ResetPasswordController::class)->name('reset-password');
 
-        Route::middleware('auth:sanctum')->group(function (): void {
+        Route::middleware(['auth:sanctum', 'throttle:per-user'])->group(function (): void {
             Route::post('logout', LogoutController::class)->name('logout');
             Route::get('me', MeController::class)->name('me');
         });
@@ -96,20 +98,17 @@ Route::prefix('v1')->group(function (): void {
 
     Route::prefix('bible-versions')
         ->name('bible-versions.')
-        ->middleware('api-key-or-sanctum')
+        ->middleware(['api-key-or-sanctum', 'throttle:public-anon'])
         ->group(function (): void {
             Route::get('/', ListBibleVersionsController::class)
                 ->middleware(['resolve-language', 'cache.headers:public;max_age=3600;etag'])
                 ->name('index');
-            // ExportBibleVersionController sets its own long-window
-            // Cache-Control (86400 s) — leave it intact instead of layering
-            // a shorter middleware default on top.
             Route::get('{version:abbreviation}/export', ExportBibleVersionController::class)->name('export');
         });
 
     Route::prefix('books')
         ->name('books.')
-        ->middleware(['api-key-or-sanctum', 'cache.headers:public;max_age=3600;etag'])
+        ->middleware(['api-key-or-sanctum', 'throttle:public-anon', 'cache.headers:public;max_age=3600;etag'])
         ->group(function (): void {
             Route::get('/', ListBibleBooksController::class)
                 ->middleware('resolve-language')
@@ -117,10 +116,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('{book:abbreviation}/chapters', ListBibleBookChaptersController::class)->name('chapters');
         });
 
-    Route::middleware(['api-key-or-sanctum', 'resolve-language'])->group(function (): void {
-        // ResolveVerses gets a short cache window — the response is content-
-        // addressable by query string and the underlying tables only change
-        // on Bible imports. The daily-verse endpoint sets its own header.
+    Route::middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon'])->group(function (): void {
         Route::get('verses', ResolveVersesController::class)
             ->middleware('cache.headers:public;max_age=600;etag')
             ->name('verses.index');
@@ -129,7 +125,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::prefix('collections')
         ->name('collections.')
-        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon'])
         ->group(function (): void {
             Route::get('/', ListCollectionTopicsController::class)->name('index');
             Route::get('{topic}', ShowCollectionTopicController::class)->name('show');
@@ -137,18 +133,18 @@ Route::prefix('v1')->group(function (): void {
 
     Route::prefix('reading-plans')
         ->name('reading-plans.')
-        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon'])
         ->group(function (): void {
             Route::get('/', ListReadingPlansController::class)->name('index');
             Route::get('{plan:slug}', ShowReadingPlanController::class)->name('show');
             Route::post('{plan:slug}/subscriptions', StartReadingPlanSubscriptionController::class)
-                ->middleware('auth:sanctum')
+                ->middleware(['auth:sanctum', 'throttle:per-user'])
                 ->name('subscriptions.store');
         });
 
     Route::prefix('olympiad')
         ->name('olympiad.')
-        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon'])
         ->group(function (): void {
             Route::get('themes', ListOlympiadThemesController::class)->name('themes.index');
             Route::get('themes/{book}/{chapters}', ShowOlympiadThemeController::class)
@@ -156,7 +152,7 @@ Route::prefix('v1')->group(function (): void {
                 ->name('themes.show');
         });
 
-    Route::middleware(['api-key-or-sanctum', 'resolve-language', 'cache.headers:public;max_age=3600;etag'])
+    Route::middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon', 'cache.headers:public;max_age=3600;etag'])
         ->group(function (): void {
             Route::get('hymnal-books', ListHymnalBooksController::class)
                 ->name('hymnal-books.index');
@@ -166,7 +162,7 @@ Route::prefix('v1')->group(function (): void {
                 ->name('hymnal-songs.show');
         });
 
-    Route::middleware('auth:sanctum')
+    Route::middleware(['auth:sanctum', 'throttle:per-user'])
         ->prefix('hymnal-favorites')
         ->name('hymnal-favorites.')
         ->group(function (): void {
@@ -176,23 +172,21 @@ Route::prefix('v1')->group(function (): void {
 
     Route::prefix('devotionals')
         ->name('devotionals.')
-        ->middleware(['api-key-or-sanctum', 'resolve-language'])
+        ->middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon'])
         ->group(function (): void {
-            // Register `/archive` before the root show route so a future
-            // `{devotional}` segment cannot shadow it.
             Route::get('archive', ListDevotionalArchiveController::class)->name('archive');
             Route::get('/', ShowDevotionalController::class)->name('show');
         });
 
     Route::prefix('devotional-favorites')
         ->name('devotional-favorites.')
-        ->middleware('auth:sanctum')
+        ->middleware(['auth:sanctum', 'throttle:per-user'])
         ->group(function (): void {
             Route::get('/', ListDevotionalFavoritesController::class)->name('index');
             Route::post('toggle', ToggleDevotionalFavoriteController::class)->name('toggle');
         });
 
-    Route::middleware('auth:sanctum')
+    Route::middleware(['auth:sanctum', 'throttle:per-user'])
         ->prefix('notes')
         ->name('notes.')
         ->group(function (): void {
@@ -202,7 +196,7 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('{note}', DeleteNoteController::class)->name('destroy');
         });
 
-    Route::middleware(['auth:sanctum', 'resolve-language'])
+    Route::middleware(['auth:sanctum', 'resolve-language', 'throttle:per-user'])
         ->prefix('favorite-categories')
         ->name('favorite-categories.')
         ->group(function (): void {
@@ -212,7 +206,7 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('{category}', DeleteFavoriteCategoryController::class)->name('destroy');
         });
 
-    Route::middleware(['auth:sanctum', 'resolve-language'])
+    Route::middleware(['auth:sanctum', 'resolve-language', 'throttle:per-user'])
         ->prefix('favorites')
         ->name('favorites.')
         ->group(function (): void {
@@ -222,10 +216,8 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('{favorite}', DeleteFavoriteController::class)->name('destroy');
         });
 
-    Route::middleware(['api-key-or-sanctum', 'resolve-language'])
+    Route::middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon'])
         ->group(function (): void {
-            // ListResourceCategoriesController sets its own Cache-Control
-            // (1 hour) — keep it; do not stack a shorter middleware on top.
             Route::get('resource-categories', ListResourceCategoriesController::class)
                 ->name('resource-categories.index');
 
@@ -238,7 +230,7 @@ Route::prefix('v1')->group(function (): void {
                 ->name('resources.show');
         });
 
-    Route::middleware('auth:sanctum')
+    Route::middleware(['auth:sanctum', 'throttle:per-user'])
         ->prefix('profile')
         ->name('profile.')
         ->group(function (): void {
@@ -306,7 +298,7 @@ Route::prefix('v1')->group(function (): void {
                 });
         });
 
-    Route::middleware('auth:sanctum')
+    Route::middleware(['auth:sanctum', 'throttle:per-user'])
         ->prefix('reading-plan-subscriptions')
         ->name('reading-plan-subscriptions.')
         ->scopeBindings()
@@ -324,6 +316,7 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware([
         'api-key-or-sanctum',
         'resolve-language',
+        'throttle:public-anon',
         'cache.headers:public;max_age=300;etag',
     ])->group(function (): void {
         Route::get('news', ListNewsController::class)->name('news.index');
@@ -331,6 +324,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware([
         'api-key-or-sanctum',
+        'throttle:public-anon',
         'cache.headers:public;max_age=86400;etag',
     ])->group(function (): void {
         Route::get('qr-codes', ShowQrCodeController::class)->name('qr-codes.show');
@@ -338,22 +332,39 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware([
         'api-key-or-sanctum',
+        'throttle:public-anon',
         'cache.headers:public;max_age=300',
     ])->group(function (): void {
         Route::get('mobile/version', ShowMobileVersionController::class)->name('mobile.version');
     });
 
+    // Bootstrap endpoint — aggregates cold-start data in one round-trip.
+    // Public (api-key-or-sanctum), cached at edge via Cache-Control header.
+    Route::middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon'])
+        ->prefix('app')
+        ->name('app.')
+        ->group(function (): void {
+            Route::get('bootstrap', ShowAppBootstrapController::class)->name('bootstrap');
+        });
+
+    // Sync delta endpoint — returns per-user changed/deleted records since a
+    // given timestamp. Sanctum auth required; never reads user from request.
+    Route::middleware(['auth:sanctum', 'throttle:per-user'])
+        ->group(function (): void {
+            Route::get('sync', ShowUserSyncController::class)->name('sync.show');
+        });
+
     Route::prefix('sabbath-school')
         ->name('sabbath-school.')
         ->group(function (): void {
-            Route::middleware(['api-key-or-sanctum', 'resolve-language'])->group(function (): void {
+            Route::middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon'])->group(function (): void {
                 Route::get('lessons', ListSabbathSchoolLessonsController::class)
                     ->name('lessons.index');
                 Route::get('lessons/{lesson}', ShowSabbathSchoolLessonController::class)
                     ->name('lessons.show');
             });
 
-            Route::middleware('auth:sanctum')->group(function (): void {
+            Route::middleware(['auth:sanctum', 'throttle:per-user'])->group(function (): void {
                 Route::get('questions/{question}/answer', ShowSabbathSchoolAnswerController::class)
                     ->name('answers.show');
                 Route::post('questions/{question}/answer', UpsertSabbathSchoolAnswerController::class)

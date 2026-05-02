@@ -7,13 +7,12 @@ namespace App\Http\Requests\Olympiad;
 use App\Domain\Olympiad\DataTransferObjects\OlympiadThemeFilter;
 use App\Domain\Shared\Enums\Language;
 use App\Http\Middleware\ResolveRequestLanguage;
+use App\Http\Requests\Concerns\PaginatesRead;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class ListOlympiadThemesRequest extends FormRequest
 {
-    public const DEFAULT_PER_PAGE = 50;
-
-    public const MAX_PER_PAGE = 100;
+    use PaginatesRead;
 
     public function authorize(): bool
     {
@@ -25,10 +24,9 @@ final class ListOlympiadThemesRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        return array_merge($this->pageRules(), [
             'language' => ['nullable', 'string'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:' . self::MAX_PER_PAGE],
-        ];
+        ]);
     }
 
     public function toFilter(): OlympiadThemeFilter
@@ -43,16 +41,5 @@ final class ListOlympiadThemesRequest extends FormRequest
             language: $language,
             perPage: $this->perPage(),
         );
-    }
-
-    public function perPage(): int
-    {
-        $value = $this->query('per_page');
-
-        if (! is_numeric($value)) {
-            return self::DEFAULT_PER_PAGE;
-        }
-
-        return max(1, min(self::MAX_PER_PAGE, (int) $value));
     }
 }

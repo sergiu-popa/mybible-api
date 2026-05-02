@@ -59,6 +59,7 @@ final class CachedRead
     /**
      * Best-effort Sentry tag for hit-rate dashboards. Silently no-ops when
      * `sentry/sentry-laravel` is not installed (CI / local without Sentry).
+     * Also tags `route_name` so hit-rate can be filtered per route in Sentry.
      */
     private function tagSentryScope(string $status): void
     {
@@ -66,8 +67,13 @@ final class CachedRead
             return;
         }
 
-        \Sentry\configureScope(function ($scope) use ($status): void {
+        $routeName = request()->route()?->getName();
+
+        \Sentry\configureScope(function ($scope) use ($status, $routeName): void {
             $scope->setTag('cache_status', $status);
+            if ($routeName !== null) {
+                $scope->setTag('route_name', $routeName);
+            }
         });
     }
 }

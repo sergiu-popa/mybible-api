@@ -29,4 +29,8 @@ return [
         'force_update_below' => env('MOBILE_ANDROID_FORCE', '3.0.0'),
     ],
 
+    'bootstrap' => [
+        'cache_ttl' => (int) env('BOOTSTRAP_CACHE_TTL', 300),
+    ],
+
 ];

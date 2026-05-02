@@ -100,15 +100,15 @@ final class ListResourceCategoriesTest extends TestCase
             ->assertJsonPath('data.0.description', 'Only english');
     }
 
-    public function test_it_paginates_with_a_default_of_50_per_page(): void
+    public function test_it_paginates_with_a_default_of_30_per_page(): void
     {
-        ResourceCategory::factory()->count(60)->create();
+        ResourceCategory::factory()->count(40)->create();
 
         $this->withHeaders($this->apiKeyHeaders())
             ->getJson(route('resource-categories.index'))
             ->assertOk()
-            ->assertJsonCount(50, 'data')
-            ->assertJsonPath('meta.per_page', 50);
+            ->assertJsonCount(30, 'data')
+            ->assertJsonPath('meta.per_page', 30);
     }
 
     public function test_it_caps_per_page_validation_at_100(): void

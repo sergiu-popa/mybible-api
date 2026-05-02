@@ -6,14 +6,13 @@ namespace App\Http\Requests\News;
 
 use App\Domain\Shared\Enums\Language;
 use App\Http\Middleware\ResolveRequestLanguage;
+use App\Http\Requests\Concerns\PaginatesRead;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 final class ListNewsRequest extends FormRequest
 {
-    public const DEFAULT_PER_PAGE = 20;
-
-    public const MAX_PER_PAGE = 50;
+    use PaginatesRead;
 
     public function authorize(): bool
     {
@@ -25,25 +24,12 @@ final class ListNewsRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        return array_merge($this->pageRules(), [
             'language' => ['nullable', 'string', Rule::in(array_map(
                 static fn (Language $l): string => $l->value,
                 Language::cases(),
             ))],
-            'page' => ['nullable', 'integer', 'min:1'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:' . self::MAX_PER_PAGE],
-        ];
-    }
-
-    public function perPage(): int
-    {
-        $value = $this->query('per_page');
-
-        if (! is_numeric($value)) {
-            return self::DEFAULT_PER_PAGE;
-        }
-
-        return max(1, min(self::MAX_PER_PAGE, (int) $value));
+        ]);
     }
 
     /**

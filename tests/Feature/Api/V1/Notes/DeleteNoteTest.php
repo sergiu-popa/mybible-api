@@ -22,7 +22,7 @@ final class DeleteNoteTest extends TestCase
         $this->deleteJson(route('notes.destroy', ['note' => $note->id]))
             ->assertNoContent();
 
-        $this->assertDatabaseMissing('notes', ['id' => $note->id]);
+        $this->assertSoftDeleted('notes', ['id' => $note->id]);
     }
 
     public function test_cross_user_access_returns_403_and_keeps_note(): void

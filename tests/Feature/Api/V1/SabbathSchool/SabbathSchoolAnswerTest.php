@@ -164,7 +164,7 @@ final class SabbathSchoolAnswerTest extends TestCase
         $this->deleteJson(route('sabbath-school.answers.destroy', ['question' => $question->id]))
             ->assertNoContent();
 
-        $this->assertDatabaseMissing('sabbath_school_answers', [
+        $this->assertSoftDeleted('sabbath_school_answers', [
             'user_id' => $user->id,
             'sabbath_school_question_id' => $question->id,
         ]);

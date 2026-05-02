@@ -14,15 +14,24 @@ final class ToggleHymnalFavoriteAction
     public function execute(ToggleHymnalFavoriteData $data): ToggleHymnalFavoriteResult
     {
         return DB::transaction(function () use ($data): ToggleHymnalFavoriteResult {
-            $existing = HymnalFavorite::query()
-                ->forUser($data->user)
-                ->forSong($data->song)
+            /** @var HymnalFavorite|null $existing */
+            $existing = HymnalFavorite::withTrashed()
+                ->where('user_id', $data->user->id)
+                ->where('hymnal_song_id', $data->song->id)
+                ->lockForUpdate()
                 ->first();
 
-            if ($existing !== null) {
+            if ($existing !== null && ! $existing->trashed()) {
                 $existing->delete();
 
                 return new ToggleHymnalFavoriteResult($existing, false);
+            }
+
+            if ($existing !== null && $existing->trashed()) {
+                $existing->restore();
+                $existing->touch();
+
+                return new ToggleHymnalFavoriteResult($existing, true);
             }
 
             $favorite = HymnalFavorite::query()->create([

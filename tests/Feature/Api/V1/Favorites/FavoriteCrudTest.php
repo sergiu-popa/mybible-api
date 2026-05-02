@@ -235,7 +235,7 @@ final class FavoriteCrudTest extends TestCase
         $this->deleteJson(route('favorites.destroy', $favorite))
             ->assertNoContent();
 
-        $this->assertDatabaseMissing('favorites', ['id' => $favorite->id]);
+        $this->assertSoftDeleted('favorites', ['id' => $favorite->id]);
     }
 
     public function test_it_returns_403_when_deleting_another_users_favorite(): void

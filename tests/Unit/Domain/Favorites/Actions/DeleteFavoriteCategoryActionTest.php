@@ -25,7 +25,7 @@ final class DeleteFavoriteCategoryActionTest extends TestCase
 
         $action->execute($category);
 
-        $this->assertDatabaseMissing('favorite_categories', ['id' => $category->id]);
+        $this->assertSoftDeleted('favorite_categories', ['id' => $category->id]);
         $this->assertDatabaseHas('favorites', [
             'id' => $favorite->id,
             'category_id' => null,

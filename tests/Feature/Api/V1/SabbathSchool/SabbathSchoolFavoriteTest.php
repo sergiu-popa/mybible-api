@@ -53,7 +53,7 @@ final class SabbathSchoolFavoriteTest extends TestCase
             ->assertOk()
             ->assertExactJson(['deleted' => true]);
 
-        $this->assertDatabaseMissing('sabbath_school_favorites', [
+        $this->assertSoftDeleted('sabbath_school_favorites', [
             'user_id' => $user->id,
             'sabbath_school_lesson_id' => $lesson->id,
         ]);
