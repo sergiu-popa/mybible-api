@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Domain\ReadingPlans\Enums\FragmentType;
 use App\Domain\ReadingPlans\Enums\ReadingPlanStatus;
 use App\Domain\ReadingPlans\Models\ReadingPlan;
 use App\Domain\ReadingPlans\Models\ReadingPlanDay;
-use App\Domain\ReadingPlans\Models\ReadingPlanDayFragment;
+use Database\Seeders\Concerns\ParsesPlanReferences;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -22,6 +21,8 @@ use Illuminate\Support\Facades\DB;
  */
 final class BibleInAYearReadingPlanSeeder extends Seeder
 {
+    use ParsesPlanReferences;
+
     private const SLUG = 'bible-in-a-year-365-day';
 
     public function run(): void
@@ -59,70 +60,9 @@ final class BibleInAYearReadingPlanSeeder extends Seeder
                     'position' => $position,
                 ]);
 
-                $fragmentPosition = 1;
-                foreach (self::parseReferences($references) as $reference) {
-                    ReadingPlanDayFragment::query()->create([
-                        'reading_plan_day_id' => $day->id,
-                        'position' => $fragmentPosition++,
-                        'type' => FragmentType::References,
-                        'content' => [$reference],
-                    ]);
-                }
+                $this->seedReferenceFragments($day, $references);
             }
         });
-    }
-
-    /**
-     * Splits a day line into one entry per chapter/passage so each reference
-     * becomes its own fragment row (and tappable item in the UI). The
-     * top-level separator is comma; ranges that span multiple chapters of
-     * the same book (e.g. "GEN.1-3") are expanded into individual chapters.
-     *
-     * @return list<string>
-     */
-    private static function parseReferences(string $line): array
-    {
-        $references = [];
-
-        foreach (explode(',', $line) as $entry) {
-            $entry = trim($entry);
-            if ($entry === '') {
-                continue;
-            }
-
-            foreach (self::expandChapterRange($entry) as $reference) {
-                $references[] = $reference;
-            }
-        }
-
-        return $references;
-    }
-
-    /**
-     * Expands a chapter-range reference like "GEN.1-3" into ["GEN.1", "GEN.2",
-     * "GEN.3"]. Verse-scoped references (e.g. "MAT.2:1-12") and single-chapter
-     * references (e.g. "GEN.1") are returned untouched.
-     *
-     * @return list<string>
-     */
-    private static function expandChapterRange(string $reference): array
-    {
-        if (! preg_match('/^([A-Z0-9]+)\.(\d+)-(\d+)$/', $reference, $matches)) {
-            return [$reference];
-        }
-
-        [$book, $start, $end] = [$matches[1], (int) $matches[2], (int) $matches[3]];
-
-        if ($end < $start) {
-            return [$reference];
-        }
-
-        $expanded = [];
-        for ($chapter = $start; $chapter <= $end; $chapter++) {
-            $expanded[] = "{$book}.{$chapter}";
-        }
-
-        return $expanded;
     }
 
     /**

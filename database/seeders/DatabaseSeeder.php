@@ -24,6 +24,13 @@ class DatabaseSeeder extends Seeder
 
         $this->call(ReadingPlanSeeder::class);
         $this->call(BibleInAYearReadingPlanSeeder::class);
+        $this->call(OneHundredTwentyDayBibleReadingPlanSeeder::class);
+        $this->call(ThreeYearGodTourBibleReadingPlanSeeder::class);
+        $this->call(FiftyTwoWeekBibleReadingPlanSeeder::class);
+        $this->call(FiveByFiveByFiveNewTestamentReadingPlanSeeder::class);
+        $this->call(DiscipleshipJournalBibleReadingPlanSeeder::class);
+        $this->call(FiveDayBibleReadingPlanSeeder::class);
+        $this->call(HistoricalBibleReadingPlanSeeder::class);
         $this->call(BibleCanonSeeder::class);
     }
 }
