@@ -48,26 +48,30 @@ final class UserLanguagesTest extends TestCase
     public function test_legacy_language_column_remains_independent(): void
     {
         $user = User::factory()->create([
-            'language' => 'rom',
+            'language' => 'ro',
             'languages' => ['ro'],
         ]);
 
-        $this->assertSame('rom', $user->refresh()->language);
+        $this->assertSame('ro', $user->refresh()->language);
         $this->assertSame(['ro'], $user->refresh()->languages);
     }
 
     /**
      * @return iterable<string, array{string|null, list<string>}>
+     *
+     * Post MBA-023, `users.language` is `CHAR(2)`. Three-char Symfony
+     * codes are now backfilled to two-char by
+     * `2026_05_03_000400_backfill_legacy_language_codes.php` *before*
+     * the column is shrunk; the per-row mapping in
+     * `add_languages_to_users_table.php` therefore only encounters
+     * two-char input. The legacy 3-char data cases that previously
+     * lived here are unreachable and have been removed.
      */
     public static function legacyLanguageMappingProvider(): iterable
     {
-        yield 'three-char rom maps to ro' => ['rom', ['ro']];
-        yield 'three-char hun maps to hu' => ['hun', ['hu']];
-        yield 'three-char spa maps to es' => ['spa', ['es']];
-        yield 'three-char fra maps to fr' => ['fra', ['fr']];
-        yield 'three-char ger maps to de' => ['ger', ['de']];
-        yield 'three-char eng maps to en' => ['eng', ['en']];
         yield 'two-char ro stays ro' => ['ro', ['ro']];
+        yield 'two-char en stays en' => ['en', ['en']];
+        yield 'two-char hu stays hu' => ['hu', ['hu']];
         yield 'unknown code yields empty list' => ['xx', []];
         yield 'null language yields empty list' => [null, []];
     }

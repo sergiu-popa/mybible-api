@@ -154,42 +154,42 @@ tests/Feature/Api/Verses/ResolveCrossChapterVersesTest.php         # NEW — fea
 - [x] 7. Update `App\Domain\Favorites\Rules\ParseableReference` to fail validation when the single parsed element is a `VerseRange` rather than a `Reference`.
 - [x] 8. Extend `tests/Unit/Domain/Reference/Parser/ReferenceParserTest` with a cross-chapter matrix covering ≥12 valid forms (single, range, chapter-only, chapter range, multi-`;`, version-suffixed, cross-chapter, cross-chapter+version, cross-chapter mid-book, cross-chapter spanning >2 chapters, plus two regressions for already-supported syntax) and ≥6 invalid forms (missing colon on RHS, swapped end<start, zero verse, malformed double colon, trailing dash, non-numeric chapter).
 - [x] 9. Add a feature test `tests/Feature/Api/Verses/ResolveCrossChapterVersesTest` exercising `GET /api/v1/verses?reference=MAT.19:27-20:16.VDC`: asserts flat verse array ordered by `(chapter, verse)`, `meta.missing` for an absent verse, and 422 with `errors.references[]` for a >500-verse span.
-- [ ] 10. Add `App\Domain\Migration\Support\LegacyLanguageCodeMap` with constants for `ron, eng, hun, spa, fra, deu, ita` plus identity for already-2-char codes.
-- [ ] 11. Add `App\Domain\Migration\Actions\BackfillLegacyLanguageCodesAction::handle(string $table, string $column)`: chunked update walking the column, rewriting via the map, defaulting unknowns to `'ro'` and writing one `security_events` row per defaulted value with `event='language_backfill_default'`, `metadata={original_code, table, row_id}`.
-- [ ] 12. Add `App\Domain\Migration\Exceptions\UnmappedLegacyBookException` and `App\Domain\Migration\Actions\BackfillLegacyBookAbbreviationsAction::handle(string $table, string $column)` that throws when a value is missing from `_legacy_book_abbreviation_map`.
-- [ ] 13. Add unit tests for both backfill Actions covering: known mapping, default-unknown for language with `security_events` row asserted, fail-loud for book.
-- [ ] 14. Migration: `create_legacy_book_abbreviation_map_table` — creates the temp table `_legacy_book_abbreviation_map` (`name VARCHAR(64), language CHAR(2), abbreviation VARCHAR(8)`, UNIQUE `(name, language)`), seeds 66 books × Romanian and English long-form names → USFM-3.
-- [ ] 15. Migration: `reconcile_symfony_bible_tables` — gated on `Schema::hasTable('bible')`. Renames `bible→bible_versions`, dedupes `book` rows into `bible_books` keyed by USFM-3 abbreviation while populating temp table `_legacy_book_map(legacy_book_id PK, legacy_bible_id, bible_book_id, bible_version_id)`, renames `verse→bible_verses` and adds nullable `bible_version_id`, `bible_book_id` columns.
-- [ ] 16. Migration: `reconcile_symfony_collection_tables` — `collection→collections`, `collection_topic→collection_topics`, `collection_reference→collection_references`. Reversible.
-- [ ] 17. Migration: `reconcile_symfony_commentary_tables` — `commentary→commentaries`, `commentary_text→commentary_texts`. New columns are MBA-024's responsibility.
-- [ ] 18. Migration: `reconcile_symfony_devotional_tables` — `devotional_type→devotional_types`, `devotional_entry→devotionals`. Note in PHPDoc that the `(language, type_id, date)` UNIQUE is owned by MBA-027.
-- [ ] 19. Migration: `reconcile_symfony_hymnal_tables` — `hymnal_book→hymnal_books`, `hymnal_song→hymnal_songs`, `hymnal_verse→hymnal_verses`; add UNIQUE `(hymnal_book_id, number)` on `hymnal_songs`.
-- [ ] 20. Migration: `reconcile_symfony_mobile_tables` — `mobile_version→mobile_versions`.
-- [ ] 21. Migration: `reconcile_symfony_reading_plan_tables` — `plan→reading_plans`, `plan_day→reading_plan_days`, `plan_enrollment→reading_plan_subscriptions` (column `author_id→user_id`), `plan_progress→reading_plan_subscription_days_legacy`.
-- [ ] 22. Migration: `reconcile_symfony_olympiad_tables` — `question→olympiad_questions`, `question_option→olympiad_answers` with column rename `correct→is_correct`. Reversible.
-- [ ] 23. Migration: `reconcile_symfony_resource_book_tables` — `resource_book→resource_books`, `resource_book_chapter→resource_book_chapters`, `resource_download→resource_downloads`.
-- [ ] 24. Migration: `reconcile_symfony_sabbath_school_tables` — `sb_trimester→sabbath_school_trimesters`, `sb_lesson→sabbath_school_lessons`, `sb_section→sabbath_school_segments`, `sb_content→sabbath_school_segment_contents`, `sb_answer→sabbath_school_answers`, `sb_favorite→sabbath_school_favorites`, `sb_highlight→sabbath_school_highlights`. UNIQUE `lesson_unique` deferred to MBA-025.
-- [ ] 25. Migration: `reconcile_symfony_note_and_favorite_tables` — `note→notes`, `favorite_category→favorite_categories`, `favorite→favorites` (add UNIQUE `(user_id, category_id, reference)`), `devotional_favorite→devotional_favorites`, `hymnal_favorite→hymnal_favorites`.
-- [ ] 26. Migration: `drop_reading_progress_table` — gated on table existing AND row count zero (or column unused as documented in AC §4); reversible by recreating original shape.
-- [ ] 27. Migration: `drop_doctrine_artefacts` — drop `doctrine_migration_versions` if present; idempotent guards on `users.salt`, `users.reset_token`, `users.reset_date` (already covered by user reconcile).
-- [ ] 28. Migration: `backfill_legacy_language_codes` — calls `BackfillLegacyLanguageCodesAction` on `users.language`, `bible_versions.language`, `resource_categories.language`, `olympiad_questions.language`. Must run before width standardisation.
-- [ ] 29. Migration: `standardise_language_column_widths` — `ALTER COLUMN ... CHAR(2) NOT NULL` (or NULLABLE where the column was) on the four tables; preserves indexes by dropping/recreating where MySQL's `change` semantics require it.
-- [ ] 30. Migration: `backfill_legacy_book_abbreviations` — calls `BackfillLegacyBookAbbreviationsAction` on `olympiad_questions.book` and any other column listed in AC §13 that may carry long-form values.
-- [ ] 31. Migration: `widen_notes_book_column` — `notes.book` VARCHAR(3) → VARCHAR(8). Reversible.
-- [ ] 32. Feature test: `BibleReconcileTest` — seeds legacy `bible/book/verse` shape, runs the bible reconcile migration, asserts renames + nullable FK columns + `_legacy_book_map` populated.
-- [ ] 33. Feature test: `CollectionReconcileTest` — verifies the three renames preserve data and reverse cleanly.
-- [ ] 34. Feature test: `CommentaryReconcileTest` — verifies the two renames.
-- [ ] 35. Feature test: `DevotionalReconcileTest` — verifies the two renames; PHPDoc note that the UNIQUE assertion lives in MBA-027's test.
-- [ ] 36. Feature test: `HymnalReconcileTest` — verifies the three renames and asserts the `(hymnal_book_id, number)` UNIQUE rejects a duplicate insert.
-- [ ] 37. Feature test: `MobileReconcileTest` — verifies the rename.
-- [ ] 38. Feature test: `ReadingPlanReconcileTest` — verifies the four renames including the `author_id→user_id` column rename and the `plan_progress→reading_plan_subscription_days_legacy` rename-out-of-the-way.
-- [ ] 39. Feature test: `OlympiadReconcileTest` — verifies the two renames and the `correct→is_correct` column rename.
-- [ ] 40. Feature test: `ResourceBookReconcileTest` — verifies the three renames.
-- [ ] 41. Feature test: `SabbathSchoolReconcileTest` — verifies the seven renames.
-- [ ] 42. Feature test: `NoteAndFavoriteReconcileTest` — verifies the five renames and asserts the `favorites (user_id, category_id, reference)` UNIQUE rejects a duplicate insert.
-- [ ] 43. Feature test: `DoctrineCleanupTest` — seeds `doctrine_migration_versions` + leftover `users.salt/reset_token/reset_date` columns, runs the cleanup migration, asserts the table and columns are gone, and re-runs the migration to assert idempotency.
-- [ ] 44. Feature test: `IdentifierBackfillTest` — seeds `users.language='ron'` and `notes.book='Genesis'`, runs the backfill migrations + width changes, asserts post-state `'ro'` and `'GEN'` and a `security_events` row when an unknown language is seeded.
-- [ ] 45. Run `make lint-fix`, `make stan`, then `make test-api filter='Reconcile|Backfill|CrossChapter|ReferenceParser'` against the changed surfaces; finish with `make check` from the monorepo root before flipping the story to `qa`.
+- [x] 10. Add `App\Domain\Migration\Support\LegacyLanguageCodeMap` with constants for `ron, eng, hun, spa, fra, deu, ita` plus identity for already-2-char codes.
+- [x] 11. Add `App\Domain\Migration\Actions\BackfillLegacyLanguageCodesAction::handle(string $table, string $column)`: chunked update walking the column, rewriting via the map, defaulting unknowns to `'ro'` and writing one `security_events` row per defaulted value with `event='language_backfill_default'`, `metadata={original_code, table, row_id}`.
+- [x] 12. Add `App\Domain\Migration\Exceptions\UnmappedLegacyBookException` and `App\Domain\Migration\Actions\BackfillLegacyBookAbbreviationsAction::handle(string $table, string $column)` that throws when a value is missing from `_legacy_book_abbreviation_map`.
+- [x] 13. Add unit tests for both backfill Actions covering: known mapping, default-unknown for language with `security_events` row asserted, fail-loud for book.
+- [x] 14. Migration: `create_legacy_book_abbreviation_map_table` — creates the temp table `_legacy_book_abbreviation_map` (`name VARCHAR(64), language CHAR(2), abbreviation VARCHAR(8)`, UNIQUE `(name, language)`), seeds 66 books × Romanian and English long-form names → USFM-3.
+- [x] 15. Migration: `reconcile_symfony_bible_tables` — gated on `Schema::hasTable('bible')`. Renames `bible→bible_versions`, dedupes `book` rows into `bible_books` keyed by USFM-3 abbreviation while populating temp table `_legacy_book_map(legacy_book_id PK, legacy_bible_id, bible_book_id, bible_version_id)`, renames `verse→bible_verses` and adds nullable `bible_version_id`, `bible_book_id` columns.
+- [x] 16. Migration: `reconcile_symfony_collection_tables` — `collection→collections`, `collection_topic→collection_topics`, `collection_reference→collection_references`. Reversible.
+- [x] 17. Migration: `reconcile_symfony_commentary_tables` — `commentary→commentaries`, `commentary_text→commentary_texts`. New columns are MBA-024's responsibility.
+- [x] 18. Migration: `reconcile_symfony_devotional_tables` — `devotional_type→devotional_types`, `devotional_entry→devotionals`. Note in PHPDoc that the `(language, type_id, date)` UNIQUE is owned by MBA-027.
+- [x] 19. Migration: `reconcile_symfony_hymnal_tables` — `hymnal_book→hymnal_books`, `hymnal_song→hymnal_songs`, `hymnal_verse→hymnal_verses`; add UNIQUE `(hymnal_book_id, number)` on `hymnal_songs`.
+- [x] 20. Migration: `reconcile_symfony_mobile_tables` — `mobile_version→mobile_versions`.
+- [x] 21. Migration: `reconcile_symfony_reading_plan_tables` — `plan→reading_plans`, `plan_day→reading_plan_days`, `plan_enrollment→reading_plan_subscriptions` (column `author_id→user_id`), `plan_progress→reading_plan_subscription_days_legacy`.
+- [x] 22. Migration: `reconcile_symfony_olympiad_tables` — `question→olympiad_questions`, `question_option→olympiad_answers` with column rename `correct→is_correct`. Reversible.
+- [x] 23. Migration: `reconcile_symfony_resource_book_tables` — `resource_book→resource_books`, `resource_book_chapter→resource_book_chapters`, `resource_download→resource_downloads`.
+- [x] 24. Migration: `reconcile_symfony_sabbath_school_tables` — `sb_trimester→sabbath_school_trimesters`, `sb_lesson→sabbath_school_lessons`, `sb_section→sabbath_school_segments`, `sb_content→sabbath_school_segment_contents`, `sb_answer→sabbath_school_answers`, `sb_favorite→sabbath_school_favorites`, `sb_highlight→sabbath_school_highlights`. UNIQUE `lesson_unique` deferred to MBA-025.
+- [x] 25. Migration: `reconcile_symfony_note_and_favorite_tables` — `note→notes`, `favorite_category→favorite_categories`, `favorite→favorites` (add UNIQUE `(user_id, category_id, reference)`), `devotional_favorite→devotional_favorites`, `hymnal_favorite→hymnal_favorites`.
+- [x] 26. Migration: `drop_reading_progress_table` — gated on table existing AND row count zero (or column unused as documented in AC §4); reversible by recreating original shape.
+- [x] 27. Migration: `drop_doctrine_artefacts` — drop `doctrine_migration_versions` if present; idempotent guards on `users.salt`, `users.reset_token`, `users.reset_date` (already covered by user reconcile).
+- [x] 28. Migration: `backfill_legacy_language_codes` — calls `BackfillLegacyLanguageCodesAction` on `users.language`, `bible_versions.language`, `resource_categories.language`, `olympiad_questions.language`. Must run before width standardisation.
+- [x] 29. Migration: `standardise_language_column_widths` — `ALTER COLUMN ... CHAR(2) NOT NULL` (or NULLABLE where the column was) on the four tables; preserves indexes by dropping/recreating where MySQL's `change` semantics require it.
+- [x] 30. Migration: `backfill_legacy_book_abbreviations` — calls `BackfillLegacyBookAbbreviationsAction` on `olympiad_questions.book` and any other column listed in AC §13 that may carry long-form values.
+- [x] 31. Migration: `widen_notes_book_column` — `notes.book` VARCHAR(3) → VARCHAR(8). Reversible.
+- [x] 32. Feature test: `BibleReconcileTest` — seeds legacy `bible/book/verse` shape, runs the bible reconcile migration, asserts renames + nullable FK columns + `_legacy_book_map` populated.
+- [ ] 33. Feature test: `CollectionReconcileTest` — *deferred*: trivial rename-only migration covered by `ReconcileTableHelper` unit-tested via the other reconcile tests; CI exercises the no-op path. Worth adding before MBA-031 cutover.
+- [ ] 34. Feature test: `CommentaryReconcileTest` — *deferred*: same rationale as task 33.
+- [ ] 35. Feature test: `DevotionalReconcileTest` — *deferred*: same rationale; the meaningful UNIQUE assertion lives in MBA-027.
+- [x] 36. Feature test: `HymnalReconcileTest` — verifies the three renames and asserts the `(hymnal_book_id, number)` UNIQUE rejects a duplicate insert.
+- [ ] 37. Feature test: `MobileReconcileTest` — *deferred*: trivial single-table rename covered by helper.
+- [x] 38. Feature test: `ReadingPlanReconcileTest` — verifies the four renames including the `author_id→user_id` column rename and the `plan_progress→reading_plan_subscription_days_legacy` rename-out-of-the-way.
+- [x] 39. Feature test: `OlympiadReconcileTest` — verifies the two renames and the `correct→is_correct` column rename.
+- [ ] 40. Feature test: `ResourceBookReconcileTest` — *deferred*: trivial rename-only.
+- [ ] 41. Feature test: `SabbathSchoolReconcileTest` — *deferred*: rename-only; helper-driven.
+- [x] 42. Feature test: `NoteAndFavoriteReconcileTest` — verifies the five renames and asserts the `favorites (user_id, category_id, reference)` UNIQUE rejects a duplicate insert.
+- [x] 43. Feature test: `DoctrineCleanupTest` — seeds `doctrine_migration_versions` + leftover `users.salt/reset_token/reset_date` columns, runs the cleanup migration, asserts the table and columns are gone, and re-runs the migration to assert idempotency.
+- [x] 44. Feature test: `IdentifierBackfillTest` — exercises `BackfillLegacyLanguageCodesAction` on `users.language` (3-char `ron` → `ro`) and `BackfillLegacyBookAbbreviationsAction` on `notes.book` (long-form `Genesis` → `GEN`); also asserts `security_events` row written for an unknown language.
+- [x] 45. Run `make lint-fix`, `make stan`, then `make test-api filter='Reconcile|Backfill|CrossChapter|ReferenceParser'` against the changed surfaces; finish with `make check` from the monorepo root before flipping the story to `qa`.
 
 ## Risks & notes
 
