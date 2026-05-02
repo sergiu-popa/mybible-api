@@ -30,11 +30,21 @@ final class FiveByFiveByFiveNewTestamentReadingPlanSeeder extends Seeder
     private const REFLECTION_HTML = [
         'en' => '<p>Pause in your reading to dig into the Bible. Try one of these five ways to dig deeper:</p><ol><li>Underline or highlight key words or phrases.</li><li>Put it in your own words.</li><li>Ask and answer questions about the passage.</li><li>Capture the big idea.</li><li>Personalize the meaning — how could your life be different today?</li></ol>',
         'ro' => '<p>Fă o pauză din citire pentru a aprofunda Biblia. Încearcă una dintre aceste cinci metode:</p><ol><li>Subliniază sau evidențiază cuvinte sau expresii cheie.</li><li>Pune textul în propriile tale cuvinte.</li><li>Pune întrebări despre pasaj și răspunde la ele.</li><li>Surprinde ideea principală.</li><li>Personalizează mesajul — cum ar putea fi viața ta diferită astăzi?</li></ol>',
+        'hu' => '<p>Tarts szünetet az olvasásban, hogy elmélyülj a Bibliában. Próbáld ki ezt az öt módszert a mélyebb megértéshez:</p><ol><li>Húzd alá vagy emeld ki a kulcsszavakat és kifejezéseket.</li><li>Fogalmazd meg a saját szavaiddal.</li><li>Tegyél fel kérdéseket a szakaszról és válaszolj rájuk.</li><li>Ragadd meg a fő gondolatot.</li><li>Tedd személyessé az üzenetet — mit változtathat ma az életeden?</li></ol>',
+        'es' => '<p>Haz una pausa en tu lectura para profundizar en la Biblia. Prueba una de estas cinco formas de profundizar:</p><ol><li>Subraya o resalta palabras o frases clave.</li><li>Explícalo con tus propias palabras.</li><li>Haz preguntas sobre el pasaje y respóndelas.</li><li>Capta la idea principal.</li><li>Personaliza el mensaje — ¿cómo podría ser diferente tu vida hoy?</li></ol>',
+        'fr' => "<p>Faites une pause dans votre lecture pour approfondir la Bible. Essayez l'une de ces cinq façons d'aller plus loin :</p><ol><li>Soulignez ou surlignez les mots-clés ou expressions importantes.</li><li>Reformulez le passage avec vos propres mots.</li><li>Posez des questions sur le passage et répondez-y.</li><li>Dégagez l'idée principale.</li><li>Personnalisez le message — en quoi votre vie pourrait-elle être différente aujourd'hui ?</li></ol>",
+        'de' => '<p>Halte beim Lesen inne, um tiefer in die Bibel einzutauchen. Probiere eine dieser fünf Methoden:</p><ol><li>Unterstreiche oder markiere Schlüsselworte und -sätze.</li><li>Gib den Abschnitt in eigenen Worten wieder.</li><li>Stelle Fragen zum Abschnitt und beantworte sie.</li><li>Erfasse den Kerngedanken.</li><li>Personalisiere die Botschaft — wie könnte dein Leben heute anders sein?</li></ol>',
+        'it' => "<p>Fai una pausa nella lettura per approfondire la Bibbia. Prova uno di questi cinque modi per andare più a fondo:</p><ol><li>Sottolinea o evidenzia parole o frasi chiave.</li><li>Riformula il brano con parole tue.</li><li>Fai domande sul testo e rispondi.</li><li>Cogli l'idea centrale.</li><li>Personalizza il messaggio — in che modo la tua vita potrebbe essere diversa oggi?</li></ol>",
     ];
 
     private const REJOICE_HTML = [
         'en' => "<p>Rejoice! You've completed the New Testament. Take time to celebrate what God has revealed and consider how the readings have shaped you over the past year.</p>",
         'ro' => '<p>Bucură-te! Ai parcurs întregul Nou Testament. Sărbătorește ce ți-a descoperit Dumnezeu și gândește-te cum te-au modelat aceste citiri în ultimul an.</p>',
+        'hu' => '<p>Örvendezz! Végigolvastad az Újszövetséget. Szánj időt arra, hogy ünnepeld, amit Isten kijelentett, és gondold át, hogyan formáltak az olvasmányok az elmúlt évben.</p>',
+        'es' => '<p>¡Alégrate! Has completado el Nuevo Testamento. Tómate un tiempo para celebrar lo que Dios ha revelado y reflexiona sobre cómo te han moldeado las lecturas durante este último año.</p>',
+        'fr' => "<p>Réjouissez-vous ! Vous avez terminé le Nouveau Testament. Prenez le temps de célébrer ce que Dieu a révélé et réfléchissez à la façon dont ces lectures vous ont transformé au cours de l'année écoulée.</p>",
+        'de' => '<p>Freue dich! Du hast das Neue Testament durchgelesen. Nimm dir Zeit zu feiern, was Gott offenbart hat, und überlege, wie dich die Lesungen im vergangenen Jahr geprägt haben.</p>',
+        'it' => "<p>Rallegrati! Hai completato il Nuovo Testamento. Prenditi del tempo per celebrare ciò che Dio ti ha rivelato e rifletti su come le letture ti hanno plasmato nell'ultimo anno.</p>",
     ];
 
     public function run(): void
@@ -46,18 +56,38 @@ final class FiveByFiveByFiveNewTestamentReadingPlanSeeder extends Seeder
                     'name' => [
                         'en' => '5x5x5 New Testament Reading Plan',
                         'ro' => 'Plan de citire a Noului Testament 5x5x5',
+                        'hu' => '5x5x5 újszövetségi olvasóterv',
+                        'es' => 'Plan de lectura del Nuevo Testamento 5x5x5',
+                        'fr' => 'Plan de lecture du Nouveau Testament 5x5x5',
+                        'de' => '5x5x5 Leseplan für das Neue Testament',
+                        'it' => 'Piano di lettura del Nuovo Testamento 5x5x5',
                     ],
                     'description' => [
                         'en' => 'Read through all 260 chapters of the New Testament in 5 days a week, 5 minutes a day. The Gospels are spaced throughout the year, and weekends are reserved for reflection.',
                         'ro' => 'Citește toate cele 260 de capitole ale Noului Testament în 5 zile pe săptămână, câte 5 minute pe zi. Evangheliile sunt răspândite pe parcursul anului, iar weekendurile sunt rezervate reflecției.',
+                        'hu' => 'Olvasd át az Újszövetség mind a 260 fejezetét heti 5 napon, napi 5 perc alatt. Az evangéliumok egyenletesen oszlanak el az év során, a hétvégék pedig az elmélkedésé.',
+                        'es' => 'Lee los 260 capítulos del Nuevo Testamento en 5 días a la semana, 5 minutos al día. Los Evangelios se distribuyen a lo largo del año y los fines de semana se reservan para la reflexión.',
+                        'fr' => 'Lisez les 260 chapitres du Nouveau Testament en 5 jours par semaine, 5 minutes par jour. Les Évangiles sont répartis tout au long de l\'année et les week-ends sont consacrés à la réflexion.',
+                        'de' => 'Lies alle 260 Kapitel des Neuen Testaments an 5 Tagen pro Woche in jeweils 5 Minuten. Die Evangelien sind über das Jahr verteilt, die Wochenenden sind der Besinnung gewidmet.',
+                        'it' => 'Leggi tutti i 260 capitoli del Nuovo Testamento in 5 giorni alla settimana, 5 minuti al giorno. I Vangeli sono distribuiti nell\'arco dell\'anno e i weekend sono riservati alla riflessione.',
                     ],
                     'image' => [
                         'en' => 'https://placehold.co/1200x630?text=5x5x5+NT+Plan',
                         'ro' => 'https://placehold.co/1200x630?text=5x5x5+NT',
+                        'hu' => 'https://placehold.co/1200x630?text=5x5x5+UT',
+                        'es' => 'https://placehold.co/1200x630?text=5x5x5+NT',
+                        'fr' => 'https://placehold.co/1200x630?text=5x5x5+NT',
+                        'de' => 'https://placehold.co/1200x630?text=5x5x5+NT',
+                        'it' => 'https://placehold.co/1200x630?text=5x5x5+NT',
                     ],
                     'thumbnail' => [
                         'en' => 'https://placehold.co/400x400?text=5x5x5',
                         'ro' => 'https://placehold.co/400x400?text=5x5x5',
+                        'hu' => 'https://placehold.co/400x400?text=5x5x5',
+                        'es' => 'https://placehold.co/400x400?text=5x5x5',
+                        'fr' => 'https://placehold.co/400x400?text=5x5x5',
+                        'de' => 'https://placehold.co/400x400?text=5x5x5',
+                        'it' => 'https://placehold.co/400x400?text=5x5x5',
                     ],
                     'status' => ReadingPlanStatus::Published,
                     'published_at' => now(),
