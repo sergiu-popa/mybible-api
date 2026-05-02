@@ -4,7 +4,7 @@
 Mobile cold-start optimization + operational hardening
 
 ## Status
-`in-review`
+`qa-passed`
 
 ## Description
 
