@@ -153,6 +153,15 @@ final class ShowUserSyncTest extends TestCase
         $this->assertCount(2, $response->json('data.favorites.upserted'));
     }
 
+    public function test_invalid_since_returns_422(): void
+    {
+        $this->givenAnAuthenticatedUser();
+
+        $this->getJson(route('sync.show', ['since' => 'not-a-date']))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['since']);
+    }
+
     public function test_next_since_is_null_when_no_builder_hits_the_cap(): void
     {
         $user = $this->givenAnAuthenticatedUser();

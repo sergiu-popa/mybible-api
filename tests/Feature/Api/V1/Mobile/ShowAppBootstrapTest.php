@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1\Mobile;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Tests\Concerns\WithApiKeyClient;
 use Tests\TestCase;
 
@@ -97,6 +99,69 @@ final class ShowAppBootstrapTest extends TestCase
         $cacheControl = (string) $response->headers->get('Cache-Control');
         $this->assertStringContainsString('public', $cacheControl);
         $this->assertStringContainsString('max-age=300', $cacheControl);
+    }
+
+    public function test_cache_hit_on_second_request_issues_zero_db_queries(): void
+    {
+        // Warm the cache.
+        $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('app.bootstrap'))
+            ->assertOk();
+
+        DB::enableQueryLog();
+
+        $response = $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('app.bootstrap'))
+            ->assertOk();
+
+        $appQueries = array_values(array_filter(
+            DB::getQueryLog(),
+            // Sanctum/api-key auth and route-bind queries still count, but the
+            // bootstrap aggregator itself must hit zero application tables.
+            // Filter to the constituent tables we care about.
+            static fn (array $entry): bool => (bool) preg_match(
+                '/\b(news|daily_verses|bible_versions|devotionals|sabbath_school_lessons|qr_codes)\b/i',
+                (string) $entry['query'],
+            ),
+        ));
+        DB::disableQueryLog();
+
+        $this->assertCount(
+            0,
+            $appQueries,
+            'Cache hit must not query application tables; got: '
+                . implode("\n", array_column($appQueries, 'query')),
+        );
+    }
+
+    public function test_flushing_news_tag_busts_the_bootstrap_cache(): void
+    {
+        // Warm the cache.
+        $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('app.bootstrap'))
+            ->assertOk();
+
+        Cache::tags(['news'])->flush();
+
+        DB::enableQueryLog();
+
+        $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('app.bootstrap'))
+            ->assertOk();
+
+        $rebuildHitDb = false;
+        foreach (DB::getQueryLog() as $entry) {
+            if (preg_match('/\b(news|daily_verses|bible_versions|devotionals|sabbath_school_lessons|qr_codes)\b/i', (string) $entry['query']) === 1) {
+                $rebuildHitDb = true;
+                break;
+            }
+        }
+        DB::disableQueryLog();
+
+        $this->assertTrue(
+            $rebuildHitDb,
+            'Flushing the `news` tag must invalidate the bootstrap cache, forcing a rebuild that re-queries the constituents.',
+        );
     }
 
     public function test_null_values_are_returned_when_no_data_seeded(): void

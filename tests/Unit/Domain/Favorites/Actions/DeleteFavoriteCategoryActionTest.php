@@ -32,6 +32,22 @@ final class DeleteFavoriteCategoryActionTest extends TestCase
         ]);
     }
 
+    public function test_it_nulls_category_id_on_soft_deleted_favorites(): void
+    {
+        $user = User::factory()->create();
+        $category = FavoriteCategory::factory()->for($user)->create();
+        $favorite = Favorite::factory()->for($user)->create(['category_id' => $category->id]);
+        $favorite->delete();
+
+        $action = $this->app->make(DeleteFavoriteCategoryAction::class);
+        $action->execute($category);
+
+        /** @var Favorite $reloaded */
+        $reloaded = Favorite::withTrashed()->findOrFail($favorite->id);
+        $this->assertNull($reloaded->category_id);
+        $this->assertNotNull($reloaded->deleted_at);
+    }
+
     public function test_it_leaves_unrelated_favorites_alone(): void
     {
         $user = User::factory()->create();

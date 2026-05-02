@@ -10,6 +10,7 @@ use App\Domain\Devotional\Enums\DevotionalType;
 use App\Domain\Devotional\Support\DevotionalCacheKeys;
 use App\Domain\EducationalResources\Enums\ResourceType;
 use App\Domain\EducationalResources\Support\EducationalResourcesCacheKeys;
+use App\Domain\Mobile\Support\MobileCacheKeys;
 use App\Domain\News\Support\NewsCacheKeys;
 use App\Domain\Olympiad\Support\OlympiadCacheKeys;
 use App\Domain\QrCode\Support\QrCodeCacheKeys;
@@ -110,5 +111,23 @@ final class CacheKeysTest extends TestCase
     {
         $this->assertSame('qr:GEN.1:1.VDC', QrCodeCacheKeys::show('GEN.1:1.VDC'));
         $this->assertSame(['qr'], QrCodeCacheKeys::tagsForQr());
+    }
+
+    public function test_mobile_bootstrap_keys_per_language(): void
+    {
+        $this->assertSame('app:bootstrap:en', MobileCacheKeys::bootstrap(Language::En));
+        $this->assertSame('app:bootstrap:ro', MobileCacheKeys::bootstrap(Language::Ro));
+        $this->assertSame('app:bootstrap:hu', MobileCacheKeys::bootstrap(Language::Hu));
+    }
+
+    public function test_mobile_bootstrap_tag_union(): void
+    {
+        $tags = MobileCacheKeys::tagsForBootstrap();
+
+        $this->assertSame(
+            ['app:bootstrap', 'news', 'daily-verse', 'dev', 'ss', 'ss:lessons', 'bible', 'bible:versions', 'qr'],
+            $tags,
+            'Bootstrap tag union must include every constituent tag so any flush propagates.',
+        );
     }
 }

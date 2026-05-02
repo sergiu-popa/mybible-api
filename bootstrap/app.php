@@ -131,9 +131,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (Throwable $e, Request $request) {
             $status = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
+            $headers = $e instanceof HttpExceptionInterface ? $e->getHeaders() : [];
 
             return response()->json([
                 'message' => $e->getMessage() !== '' ? $e->getMessage() : 'Server Error.',
-            ], $status);
+            ], $status, $headers);
         });
     })->create();

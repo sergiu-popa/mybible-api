@@ -68,6 +68,7 @@ mutating the underlying entity.
 | `col:topic:{id}` | Collection topic update |
 | `oly:theme:{book}:{from}-{to}:{lang}` | Olympiad theme imports |
 | `qr` | QR code upserts |
+| `app:bootstrap` | Mobile bootstrap aggregator (MBA-022) |
 
 ### Manual flush (ops + deploy hook)
 
@@ -116,6 +117,80 @@ on read endpoints.
    per minute (one per page warm-up). Sustained high rate → either a
    tag was accidentally flushed, or an upstream import is invalidating
    too coarsely.
+
+## Bootstrap aggregator (MBA-022)
+
+The mobile cold-start aggregator at `GET /api/v1/app/bootstrap` returns
+the union of `version`, `daily_verse`, `news`, `bible_versions`,
+`devotionals_today`, `sabbath_school_current_lesson`, and `qr_codes` in
+one round-trip.
+
+| Property | Value |
+|---|---|
+| Cache key | `app:bootstrap:{language}` (one entry per `Language::cases()`) |
+| TTL | `BOOTSTRAP_CACHE_TTL` env (default `300s`) |
+| Tag union | `app:bootstrap`, `news`, `daily-verse`, `dev`, `ss`, `ss:lessons`, `bible`, `bible:versions`, `qr` |
+
+Any constituent flush (e.g. publishing news, upserting the daily verse,
+republishing an SS lesson) busts the bootstrap key automatically because
+the bootstrap entry is tagged with the union above. To clear the
+aggregator on its own without touching constituents:
+
+```bash
+docker exec mybible-api php artisan mybible:cache-clear-tag app:bootstrap
+```
+
+Cold-miss cost is ~9 query bursts in one HTTP request (one per
+constituent Action's build closure). Each constituent is itself cached,
+so most run as Redis hits even on a bootstrap miss. Stampede is bounded
+by `Cache::flexible`'s atomic lock per key.
+
+## Health checks: liveness vs readiness (MBA-022)
+
+`/up` and `/ready` are now distinct probes. **The deploy/LB readiness
+probe MUST point at `/ready`** — leaving it on `/up` after this story
+ships means the LB no longer detects DB or Redis outages.
+
+| Endpoint | Purpose | Auth | Pings |
+|---|---|---|---|
+| `GET /up` | Liveness — process alive | none | none (always 200) |
+| `GET /ready` | Readiness — deps responding | `internal-ops` middleware (VPC CIDR allow-list, `INTERNAL_OPS_CIDR` env, default `10.114.0.0/20`) | DB `SELECT 1` + Redis round-trip, total budget 1 s |
+
+`/ready` returns `200 {status:'ready'}` when both deps respond inside
+the budget; `503 {status:'unready', dependency:'<first-failing>'}`
+otherwise. Local dev needs `INTERNAL_OPS_CIDR=127.0.0.1/32,172.16.0.0/12`
+in `.env` to reach `/ready` from the host.
+
+## Per-IP and per-user rate limits (MBA-022)
+
+| Limiter | Key | Limit | Applied to |
+|---|---|---|---|
+| `public-anon` | `request->ip()` | 180/min | Public read groups in `routes/api.php` |
+| `per-user` | `auth()->id()` (falls back to IP) | 300/min | Authenticated route groups |
+
+Excluded: `/up`, `/ready`, admin routes. 429 responses include
+`Retry-After` and the standard `X-RateLimit-Limit` /
+`X-RateLimit-Remaining` headers. Behind the LB, set `TRUSTED_PROXIES`
+to the LB CIDR so `request->ip()` resolves to the real client via
+`X-Forwarded-For` (default `'*'` is fine for Docker dev only).
+
+## Slow-query log channel (MBA-022)
+
+Queries slower than **500 ms** are written to a dedicated daily-rolled
+log channel and emit a Sentry breadcrumb on the active transaction.
+
+| Property | Value |
+|---|---|
+| Log file | `storage/logs/slow_query.log` (rotated daily) |
+| Retention | 14 days |
+| Level | `warning` |
+| Disabled in | `local`, `testing` envs |
+
+Tail it during incident triage:
+
+```bash
+docker exec mybible-api tail -f storage/logs/slow_query.log
+```
 
 ## Stream → buffer change for Bible export
 

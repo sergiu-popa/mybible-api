@@ -22,18 +22,16 @@ use App\Policies\NotePolicy;
 use App\Policies\ReadingPlanSubscriptionPolicy;
 use App\Support\Caching\CacheStoreGuard;
 use App\Support\Caching\ClearCacheTagCommand;
+use App\Support\Observability\SlowQueryListener;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
-use Sentry\Breadcrumb;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -117,24 +115,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         if (! $this->app->environment('local', 'testing')) {
-            DB::listen(static function ($query): void {
-                if ($query->time > 500) {
-                    Log::channel('slow_query')->warning('slow_query', [
-                        'sql' => $query->sql,
-                        'time_ms' => $query->time,
-                        'bindings' => $query->bindings,
-                    ]);
-
-                    if (function_exists('Sentry\addBreadcrumb') && class_exists(Breadcrumb::class)) {
-                        \Sentry\addBreadcrumb(new Breadcrumb(
-                            Breadcrumb::LEVEL_WARNING,
-                            Breadcrumb::TYPE_DEFAULT,
-                            'db.query',
-                            sprintf('Slow query (%dms): %s', (int) $query->time, $query->sql),
-                        ));
-                    }
-                }
-            });
+            SlowQueryListener::register();
         }
     }
 }

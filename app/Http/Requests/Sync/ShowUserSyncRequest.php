@@ -20,22 +20,18 @@ final class ShowUserSyncRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'since' => ['nullable', 'string'],
+            'since' => ['nullable', 'date'],
         ];
     }
 
     public function since(): DateTimeImmutable
     {
-        $value = $this->query('since');
+        $value = $this->validated('since');
 
         if (! is_string($value) || $value === '') {
             return new DateTimeImmutable('@0');
         }
 
-        try {
-            return new DateTimeImmutable($value);
-        } catch (\Exception) {
-            return new DateTimeImmutable('@0');
-        }
+        return new DateTimeImmutable($value);
     }
 }

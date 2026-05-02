@@ -14,7 +14,10 @@ final class DeleteFavoriteCategoryAction
     {
         DB::transaction(function () use ($category): void {
             // ON DELETE SET NULL won't fire for soft deletes, so null out manually.
-            Favorite::where('category_id', $category->id)
+            // Include trashed favorites so soft-deleted rows still in the sync window
+            // don't carry a dangling category_id to clients on next sync.
+            Favorite::withTrashed()
+                ->where('category_id', $category->id)
                 ->update(['category_id' => null]);
 
             $category->delete();
