@@ -2,142 +2,85 @@
 
 ## Verdict
 
-**REQUEST CHANGES** — addressed; awaiting re-review.
+**APPROVE** — all four prior Warnings (W1–W4) and Suggestion S1 are resolved in commit `2726c69`. Remaining items are non-blocking suggestions (S2, S3) acknowledged below. Status moves to `qa-ready`.
 
-The implementation is architecturally sound and covers all six surfaces (bootstrap, sync, health, rate limiting, pagination, observability). The migration, models, toggle actions, controllers, middleware, and routes are correct. The story's feature tests (bootstrap, sync, health) cover the main happy paths.
+The implementation covers all six surfaces (bootstrap aggregator, sync delta, liveness/readiness split, per-IP and per-user rate limiting, harmonised pagination, observability hooks). Plan tasks 1–20 are complete. The full filtered run (`make test-api filter='Mobile|Sync|Health|RateLimit|Pagination|Bootstrap|Slow|InternalOps|MobileBootstrap|MobileCacheKeys|DeleteFavoriteCategory'`) reports **104 passed, 1032 assertions** in 2.60 s.
 
-However, **all plan-mandated unit tests are absent** (tasks 4–10, 13–14, 17), **two AC-required test cases are missing** (cache-hit 0 DB queries, tag-flush busts bootstrap), the **rate-limiter throttle tests are absent** (AC 17), the **`since` param accepts garbage without a 422** (deviation from plan), **`DeleteFavoriteCategoryAction` misses soft-deleted favorites** in the `category_id` null-out, and the **runbook was not updated** (task 19). Resolve Warnings 1–4 before re-reviewing.
+## Re-review of prior findings
 
----
+### W1 — Plan-mandated tests — RESOLVED
 
-## Warnings
+New unit and feature tests added in `2726c69`:
 
-### W1 — Extensive plan-mandated tests are missing — RESOLVED
-
-**Files:** multiple — no new unit test files were added
-
-The plan's task list specifies unit or feature tests for every new class. None of the following exist:
-
-| Plan task | Missing test |
+| Plan task | Test file |
 |---|---|
-| Task 4 | `MobileCacheKeys` — assert key string and tags array for sample `Language` values |
-| Task 5 | `ListQrCodesAction` — cache miss hits DB; cache hit returns cached result |
-| Task 6 | `ShowAppBootstrapAction` — composes from mocked sub-Actions; cache hit serves 0 DB queries; flushing tag `news` busts `app:bootstrap:*` |
-| Task 8 | `SyncTypeDelta` — readonly, cannot mutate after construction |
-| Task 9 (×7) | Each `SyncBuilder` — full sync includes all rows; delta sync excludes pre-`since`; trashed rows surface in `deleted`; cap+1 trips `maxSeenAt`; cross-user rows excluded |
-| Task 10 | `ShowUserSyncAction` — aggregates builders; `next_since = min(maxSeenAt)` when any builder truncates; `null` when no builder truncates |
-| Task 13 | `PaginatesRead` trait — `per_page=0` → 1; `per_page=200` → 100; no `per_page` → 30 |
-| Task 14 | `EnsureInternalOps` — VPC IP passes; public IP returns 403; comma-separated CIDRs supported |
-| Task 16 | Rate limiter — 200 hits to a public route → first 180 OK, next 20 × 429 + `Retry-After`; 350 hits to auth route → 300 OK + 50 × 429; `/up` not affected after 1000 hits |
-| Task 17 | Slow-query listener — 600 ms query writes to `slow_query` channel and adds Sentry breadcrumb; 100 ms query writes nothing |
+| Task 4 | `tests/Unit/Domain/Cache/CacheKeysTest.php:117-130` (`test_mobile_bootstrap_keys_per_language`, `test_mobile_bootstrap_tag_union`) |
+| Task 5 | `tests/Unit/Domain/QrCode/Actions/ListQrCodesActionTest.php` (miss/hit/tag-flush) |
+| Task 6 | `tests/Unit/Domain/Mobile/Actions/ShowAppBootstrapActionTest.php` (compose, cache wiring, tag bust) |
+| Task 8 | `tests/Unit/Domain/Sync/DataTransferObjects/SyncTypeDeltaTest.php` (readonly enforcement via reflection) |
+| Task 9 | `tests/Unit/Domain/Sync/Sync/Builders/SyncBuilderContractTestCase.php` + 7 concrete subclasses — full sync, delta exclusion, trashed→deleted, cap+1→`maxSeenAt`, cross-user isolation |
+| Task 10 | `tests/Unit/Domain/Sync/Actions/ShowUserSyncActionTest.php` (aggregation, `next_since` min-of-truncated, null when none truncate, user/since pass-through) |
+| Task 13 | `tests/Unit/Http/Requests/Concerns/PaginatesReadTest.php` (default, clamp low/high, non-numeric, page rules) |
+| Task 14 | `tests/Unit/Http/Middleware/EnsureInternalOpsTest.php` (VPC pass, public 403, comma-CIDRs) |
+| Task 16 | `tests/Feature/Http/RateLimitTest.php` (limiter callbacks at 180/300, 429 + `Retry-After`, `/up` exempt, `X-RateLimit-*` headers) |
+| Task 17 | `tests/Unit/Support/Observability/SlowQueryListenerTest.php` (600 ms logs, 100/499/500 ms silent, threshold const) |
 
-Also missing from the story's ACs:
-- AC 6: "Cache-hit feature test asserts second request issues 0 DB queries" — absent from `ShowAppBootstrapTest`.
-- AC 6: "Tag-flush test asserts a daily-verse upsert busts `app:bootstrap:*`" — absent.
+AC 6 feature coverage added in `tests/Feature/Api/V1/Mobile/ShowAppBootstrapTest.php:104-164`:
+- `test_cache_hit_on_second_request_issues_zero_db_queries` — filters the query log for the constituent tables, asserts `count == 0` on the second hit.
+- `test_flushing_news_tag_busts_the_bootstrap_cache` — flushes the `news` tag, asserts the rebuild re-queries constituents.
 
-**Fix:** Add the missing unit tests and feature test cases. The two AC 6 cases belong in `ShowAppBootstrapTest`. The unit tests can be grouped per domain class.
+### W2 — `DeleteFavoriteCategoryAction` skipped soft-deleted favorites — RESOLVED
 
----
+`app/Domain/Favorites/Actions/DeleteFavoriteCategoryAction.php:17` now uses `Favorite::withTrashed()->where('category_id', …)->update(…)`. New test `test_it_nulls_category_id_on_soft_deleted_favorites` in `tests/Unit/Domain/Favorites/Actions/DeleteFavoriteCategoryActionTest.php:35-50` confirms a soft-deleted favorite's `category_id` is nulled when its category is deleted.
 
-### W2 — `DeleteFavoriteCategoryAction` skips soft-deleted favorites when nulling `category_id` — RESOLVED
+### W3 — `ShowUserSyncRequest` accepted invalid `since` — RESOLVED
 
-**File:** `app/Domain/Favorites/Actions/DeleteFavoriteCategoryAction.php:17`
-
-```php
-Favorite::where('category_id', $category->id)
-    ->update(['category_id' => null]);
-```
-
-`SoftDeletes` adds `WHERE deleted_at IS NULL` to all queries by default. Favorites that are already soft-deleted retain `category_id` pointing to the now-soft-deleted category. Those rows surface in the sync endpoint's `deleted` array, so clients will receive a deleted-favorite record whose `category_id` references a non-existent (soft-deleted) category. The existing unit test only covers the non-deleted path.
-
-**Fix:**
-
-```php
-Favorite::withTrashed()
-    ->where('category_id', $category->id)
-    ->update(['category_id' => null]);
-```
-
-Add a test case in `DeleteFavoriteCategoryActionTest`: create a category, create and soft-delete a favorite in that category, delete the category, assert the soft-deleted favorite now has `category_id = null`.
-
----
-
-### W3 — `ShowUserSyncRequest` accepts invalid `since` without a 422 — RESOLVED
-
-**File:** `app/Http/Requests/Sync/ShowUserSyncRequest.php:22`
-
-```php
-'since' => ['nullable', 'string'],
-```
-
-Any non-empty string passes validation. An unparseable value (e.g., `since=garbage`) is silently caught in the `try/catch` and falls back to epoch — triggering a full sync with no feedback to the caller. The plan specifies a `date_format` rule: "Validates `since` as nullable ISO-8601 (`date_format` rule with multiple accepted formats)".
-
-**Fix:** Add a `date` rule (or explicit `date_format` list) so that invalid timestamps fail validation and return a 422:
-
-```php
-'since' => ['nullable', 'date'],
-```
-
-Then the `since()` method can remove the try/catch and use `new DateTimeImmutable($this->validated('since') ?? '@0')` safely.
-
----
+`app/Http/Requests/Sync/ShowUserSyncRequest.php:23` rule changed to `['nullable', 'date']`. `since()` now reads `$this->validated('since')` and constructs `DateTimeImmutable` directly (no try/catch needed). Regression test `test_invalid_since_returns_422` in `tests/Feature/Api/V1/Sync/ShowUserSyncTest.php:156-163` asserts garbage values fail validation.
 
 ### W4 — Runbook not updated — RESOLVED
 
-**File:** `docs/runbook/cache.md` — unchanged in this commit
+`docs/runbook/cache.md:121-194` adds:
+- Bootstrap aggregator section: cache key, TTL, full tag union, manual flush command, cold-miss cost note.
+- Health-check section: `/up` vs `/ready` table with the explicit "**The deploy/LB readiness probe MUST point at `/ready`**" warning.
+- Rate-limit section: limiter table, exclusions, `TRUSTED_PROXIES` guidance for production.
+- Slow-query log section: file path, retention, level, env exclusion, tail command.
 
-Plan task 19 explicitly requires updating the runbook with:
-- Bootstrap cache key + tag map and `mybible:cache-clear-tag app:bootstrap` example
-- `/up` vs `/ready` split — note that the deploy/LB readiness probe **must** move from `/up` → `/ready`
-- Rate-limit headers (`Retry-After`, `X-RateLimit-*`)
-- Slow-query log file location (`storage/logs/slow_query.log`, 14-day retention)
+`app:bootstrap` also added to the global invalidation table at `docs/runbook/cache.md:71`.
 
-The `/up` behaviour change note is ops-critical: without it, an operator following the old runbook will leave the LB pointing at the liveness probe, which now never touches Redis or DB.
+### S1 — `SlowQueryListener` extraction — ADDRESSED
 
-**Fix:** Update `docs/runbook/cache.md` per task 19.
+Extracted to `app/Support/Observability/SlowQueryListener.php` (final class, `THRESHOLD_MS = 500` typed const, `register()` and `handle(QueryExecuted)` separated so the unit test can call `handle` directly). `app/Providers/AppServiceProvider.php:117` now reads:
 
----
+```php
+if (! $this->app->environment('local', 'testing')) {
+    SlowQueryListener::register();
+}
+```
+
+Provider imports trimmed (`DB`, `Log`, `Breadcrumb` removed).
 
 ## Suggestions
 
-### S1 — `SlowQueryListener` is inlined in `AppServiceProvider` instead of a separate class — ADDRESSED (extracted to `App\Support\Observability\SlowQueryListener` to enable the unit test required by W1).
+### S2 — Sync builder cursor still ordered by `updated_at` only — NOT ADDRESSED
 
-**File:** `app/Providers/AppServiceProvider.php:107-132`
+**File:** `app/Domain/Sync/Sync/Builders/FavoriteSyncBuilder.php:32-33` (and the other six builders)
 
-Plan task 17 specifies `App\Support\Observability\SlowQueryListener::register()` as a named, extractable, testable unit. The inline closure cannot be easily unit-tested (finding W1's task-17 test), and `AppServiceProvider::boot()` is already growing. Extracting the listener into its own class also makes it easier to swap the 500 ms threshold via config without touching the provider.
+Same observation as the prior review: the query matches by `updated_at > since OR deleted_at > since` but orders only by `updated_at`. A row whose `deleted_at` is fresh but `updated_at` is stale lands at its old position; if it falls at position `$cap` in a truncated page, `next_since` regresses. Clients dedupe by id (per plan risk §2) so correctness holds, but cursor efficiency degrades on workloads with old rows being soft-deleted in bulk.
 
----
+**Suggestion:** Order and cursor by `GREATEST(updated_at, COALESCE(deleted_at, updated_at))` so the cursor monotonically advances. Defer if the workload (mobile clients polling daily) doesn't surface this in practice — flag in QA for follow-up if observed.
 
-### S2 — Sync builder cursor is based on `updated_at` only; may regress under mixed soft-delete pages
-
-**File:** `app/Domain/Sync/Sync/Builders/FavoriteSyncBuilder.php:50-54` (and the other 6 builders)
-
-```php
-$maxSeenAt = $truncated && $rows->isNotEmpty()
-    ? DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string) $rows->last()->updated_at) ?: null
-    : null;
-```
-
-The query matches rows by `updated_at > since OR deleted_at > since`, but orders only by `updated_at`. A row with `deleted_at > since` but `updated_at << since` sorts at the old `updated_at` position. If such a row lands at position `$cap` in a truncated page, `next_since` is set to the old `updated_at` — causing the next call to re-fetch an overlapping window. Clients dedup by id (plan risk §2), so correctness is not broken, but cursor efficiency degrades.
-
-**Suggestion:** Order and cursor by `GREATEST(updated_at, COALESCE(deleted_at, updated_at))` instead of plain `updated_at` to ensure the cursor monotonically advances.
-
----
-
-### S3 — `AppBootstrapResource` exists but is never used
+### S3 — `AppBootstrapResource` is still unused — NOT ADDRESSED
 
 **File:** `app/Http/Resources/Mobile/AppBootstrapResource.php`
 
-`ShowAppBootstrapController` builds the response directly:
-
-```php
-return response()->json(['data' => $action->execute(...)])->header(...);
-```
-
-`AppBootstrapResource` is instantiated nowhere. Either wire it through the controller (return `AppBootstrapResource::make($result)->response()->header(...)`) or remove the file. The current state adds a class that implies a contract but enforces nothing.
-
----
+The class exists but `ShowAppBootstrapController` returns the action's array directly. `grep` across `app/` and `tests/` confirms no reference. Either wire it through (`AppBootstrapResource::make($result)->response()->header(...)`) or delete the file to avoid implying a contract that nothing enforces. Non-blocking.
 
 ## Acknowledged
 
 *(none)*
+
+## Notes
+
+- Side change in `bootstrap/app.php:131-138`: the catch-all renderer now propagates `HttpExceptionInterface::getHeaders()` to the JSON response. Without this, the throttle middleware's `Retry-After` and `X-RateLimit-*` headers were being stripped on 429s, which would have failed AC 16. The change is correct and scoped — `HttpExceptionInterface` headers are an established Symfony contract — and it makes the rate-limit feature tests pass. Worth highlighting for QA so the broader header behaviour is exercised on representative error paths.
+- All seven `SyncBuilder` subclasses share `SyncBuilderContractTestCase` — clean shared setup, low duplication.
+- `EnsureInternalOps` reads from `config('ops.internal_ops_cidr')` (new `config/ops.php`), which is preferable to reading `env()` directly inside middleware (config is cacheable; env in non-config code breaks `config:cache`).
