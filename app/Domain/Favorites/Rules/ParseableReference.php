@@ -52,6 +52,12 @@ final class ParseableReference implements ValidationRule
 
         $reference = $references[0];
 
+        if (! $reference instanceof Reference) {
+            $fail('The :attribute must refer to a single passage.');
+
+            return;
+        }
+
         if ($reference->version === null) {
             $fail('The :attribute must include a Bible version.');
 

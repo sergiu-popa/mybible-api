@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Auth\Exceptions\InvalidPasswordResetTokenException;
+use App\Domain\Bible\Exceptions\VerseRangeTooLargeException;
 use App\Domain\Olympiad\Exceptions\OlympiadThemeNotFoundException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionAlreadyCompletedException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionNotCompletableException;
@@ -111,6 +112,13 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'message' => $e->getMessage(),
                 'errors' => ['reference' => [$e->reason()]],
+            ], 422);
+        });
+
+        $exceptions->render(function (VerseRangeTooLargeException $e, Request $request) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'errors' => ['references' => [$e->getMessage()]],
             ], 422);
         });
 

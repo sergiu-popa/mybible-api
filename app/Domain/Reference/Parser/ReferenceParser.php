@@ -7,6 +7,7 @@ namespace App\Domain\Reference\Parser;
 use App\Domain\Reference\Data\BibleBookCatalog;
 use App\Domain\Reference\Exceptions\InvalidReferenceException;
 use App\Domain\Reference\Reference;
+use App\Domain\Reference\VerseRange;
 
 final class ReferenceParser
 {
@@ -16,22 +17,23 @@ final class ReferenceParser
     ) {}
 
     /**
-     * Parse a canonical query into one or more {@see Reference} objects.
+     * Parse a canonical query into one or more {@see Reference} or
+     * {@see VerseRange} objects.
      *
-     * @return array<int, Reference>
+     * @return array<int, Reference|VerseRange>
      */
     public function parse(string $query): array
     {
         if ($this->isMultipleReferences($query)) {
             return array_map(
-                fn (string $sub): Reference => $this->parseOne($sub),
+                fn (string $sub): Reference|VerseRange => $this->parseOne($sub),
                 $this->multipleReferenceParser->expand($query),
             );
         }
 
         if ($this->isChapterRange($query)) {
             return array_map(
-                fn (string $sub): Reference => $this->parseOne($sub),
+                fn (string $sub): Reference|VerseRange => $this->parseOne($sub),
                 $this->chapterRangeParser->expand($query),
             );
         }
@@ -40,9 +42,10 @@ final class ReferenceParser
     }
 
     /**
-     * Parse a canonical single-reference query like `GEN.1:1-3,5.VDC`.
+     * Parse a canonical single-reference query like `GEN.1:1-3,5.VDC` or
+     * `MAT.19:27-20:16.VDC`.
      */
-    public function parseOne(string $query): Reference
+    public function parseOne(string $query): Reference|VerseRange
     {
         if (str_contains($query, ';')) {
             throw InvalidReferenceException::unparseable($query, 'multi-reference query passed to parseOne');
@@ -62,6 +65,10 @@ final class ReferenceParser
 
         if ($passage === '') {
             throw InvalidReferenceException::unparseable($query, 'missing chapter');
+        }
+
+        if ($this->isCrossChapterRange($passage)) {
+            return $this->parseCrossChapterRange($query, $book, $passage, $version === '' ? null : $version);
         }
 
         if (str_contains($passage, ':')) {
@@ -103,6 +110,81 @@ final class ReferenceParser
         $passage = $parts[1];
 
         return str_contains($passage, '-') && ! str_contains($passage, ':');
+    }
+
+    /**
+     * Cross-chapter intent is signalled by a colon on the right-hand side
+     * of `-`: `19:27-20:16` (cross-chapter) vs `1:27-30` (in-chapter range).
+     */
+    private function isCrossChapterRange(string $passage): bool
+    {
+        if (! str_contains($passage, '-')) {
+            return false;
+        }
+
+        $bounds = explode('-', $passage);
+
+        if (count($bounds) !== 2) {
+            return false;
+        }
+
+        return str_contains($bounds[1], ':');
+    }
+
+    private function parseCrossChapterRange(
+        string $query,
+        string $book,
+        string $passage,
+        ?string $version,
+    ): VerseRange {
+        $bounds = explode('-', $passage);
+
+        if (count($bounds) !== 2 || $bounds[0] === '' || $bounds[1] === '') {
+            throw InvalidReferenceException::unparseable($query, 'malformed cross-chapter range');
+        }
+
+        [$leftPart, $rightPart] = $bounds;
+
+        $left = explode(':', $leftPart);
+        $right = explode(':', $rightPart);
+
+        if (count($left) !== 2 || $left[0] === '' || $left[1] === '') {
+            throw InvalidReferenceException::unparseable($query, 'malformed cross-chapter range');
+        }
+
+        if (count($right) !== 2 || $right[0] === '' || $right[1] === '') {
+            throw InvalidReferenceException::unparseable($query, 'malformed cross-chapter range');
+        }
+
+        $startChapter = $this->parseChapter($query, $book, $left[0]);
+        $endChapter = $this->parseChapter($query, $book, $right[0]);
+
+        if (! ctype_digit($left[1]) || ! ctype_digit($right[1])) {
+            throw InvalidReferenceException::unparseable($query, 'verse must be a positive integer');
+        }
+
+        $startVerse = (int) $left[1];
+        $endVerse = (int) $right[1];
+
+        if ($startVerse < 1 || $endVerse < 1) {
+            throw InvalidReferenceException::unparseable($query, 'verse must be a positive integer');
+        }
+
+        if ($endChapter < $startChapter || ($endChapter === $startChapter && $endVerse <= $startVerse)) {
+            throw InvalidReferenceException::unparseable(
+                $query,
+                'cross-chapter range must end after it starts',
+            );
+        }
+
+        return new VerseRange(
+            book: $book,
+            startChapter: $startChapter,
+            startVerse: $startVerse,
+            endChapter: $endChapter,
+            endVerse: $endVerse,
+            version: $version,
+        );
     }
 
     private function parseChapter(string $query, string $book, string $chapterPart): int

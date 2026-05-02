@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Bible\QueryBuilders;
 
+use App\Domain\Bible\Exceptions\VerseRangeTooLargeException;
 use App\Domain\Bible\Models\BibleBook;
+use App\Domain\Bible\Models\BibleChapter;
 use App\Domain\Bible\Models\BibleVerse;
 use App\Domain\Bible\Models\BibleVersion;
 use App\Domain\Reference\Reference;
+use App\Domain\Reference\VerseRange;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -16,19 +19,23 @@ use Illuminate\Database\Eloquent\Collection;
  */
 final class BibleVerseQueryBuilder extends Builder
 {
+    public const VERSE_RANGE_CAP = 500;
+
     /**
      * Resolve a flat list of references against the `bible_verses` table.
      *
-     * References are grouped by (version, book, chapter) and issued as a
-     * single `WHERE verse IN (...)` query per group (or an unconstrained
-     * chapter query when any contributing reference is a whole-chapter
-     * lookup).
+     * Plain {@see Reference} entries are grouped by (version, book, chapter)
+     * and issued as one `WHERE verse IN (...)` query per group (or an
+     * unconstrained chapter query when any contributing reference is a
+     * whole-chapter lookup). {@see VerseRange} entries are issued as one
+     * tuple-comparison query each, ordered by `(chapter, verse)`.
      *
      * The input is expected to already be version-resolved: every
-     * {@see Reference} must carry a non-null version abbreviation. The
-     * caller is responsible for the default-version cascade.
+     * {@see Reference}/{@see VerseRange} must carry a non-null version
+     * abbreviation. The caller is responsible for the default-version
+     * cascade.
      *
-     * @param  array<int, Reference>  $references
+     * @param  array<int, Reference|VerseRange>  $references
      * @return Collection<int, BibleVerse>
      */
     public function lookupReferences(array $references): Collection
@@ -40,7 +47,9 @@ final class BibleVerseQueryBuilder extends Builder
             return $results;
         }
 
-        $groups = $this->groupByVersionBookChapter($references);
+        [$plainReferences, $ranges] = $this->partition($references);
+
+        $groups = $this->groupByVersionBookChapter($plainReferences);
 
         $versionAbbreviations = [];
         $bookAbbreviations = [];
@@ -48,6 +57,18 @@ final class BibleVerseQueryBuilder extends Builder
         foreach ($groups as $group) {
             $versionAbbreviations[$group['version']] = true;
             $bookAbbreviations[$group['book']] = true;
+        }
+
+        foreach ($ranges as $range) {
+            if ($range->version !== null) {
+                $versionAbbreviations[$range->version] = true;
+            }
+
+            $bookAbbreviations[$range->book] = true;
+        }
+
+        if ($versionAbbreviations === [] && $bookAbbreviations === []) {
+            return $results;
         }
 
         /** @var array<string, BibleVersion> $versionsByAbbreviation */
@@ -88,7 +109,152 @@ final class BibleVerseQueryBuilder extends Builder
             }
         }
 
+        foreach ($ranges as $range) {
+            if ($range->version === null) {
+                continue;
+            }
+
+            $version = $versionsByAbbreviation[$range->version] ?? null;
+            $book = $booksByAbbreviation[$range->book] ?? null;
+
+            if ($version === null || $book === null) {
+                continue;
+            }
+
+            foreach ($this->lookupVerseRange($range, $version, $book) as $verse) {
+                $results->push($verse);
+            }
+        }
+
         return $results;
+    }
+
+    /**
+     * Resolve a single cross-chapter range using a tuple comparison.
+     *
+     * Throws {@see VerseRangeTooLargeException} when the expansion would
+     * exceed {@see self::VERSE_RANGE_CAP}; this is the product floor that
+     * prevents accidental whole-book pulls. The expansion is computed from
+     * the seeded `bible_chapters.verse_count`; an unseeded book falls back
+     * to "unbounded" (cap is not enforced) — see plan §9.
+     *
+     * @return Collection<int, BibleVerse>
+     */
+    public function lookupVerseRange(VerseRange $range, BibleVersion $version, BibleBook $book): Collection
+    {
+        $expanded = $this->expandedSize($range, $book);
+
+        if ($expanded !== null && $expanded > self::VERSE_RANGE_CAP) {
+            throw new VerseRangeTooLargeException($range, $expanded, self::VERSE_RANGE_CAP);
+        }
+
+        $verses = BibleVerse::query()
+            ->where('bible_version_id', $version->id)
+            ->where('bible_book_id', $book->id)
+            ->where(function (Builder $query) use ($range): void {
+                $query
+                    ->where(function (Builder $inner) use ($range): void {
+                        $inner
+                            ->where('chapter', $range->startChapter)
+                            ->where('verse', '>=', $range->startVerse);
+                    })
+                    ->orWhere(function (Builder $inner) use ($range): void {
+                        $inner
+                            ->where('chapter', '>', $range->startChapter)
+                            ->where('chapter', '<', $range->endChapter);
+                    })
+                    ->orWhere(function (Builder $inner) use ($range): void {
+                        $inner
+                            ->where('chapter', $range->endChapter)
+                            ->where('verse', '<=', $range->endVerse);
+                    });
+            })
+            ->orderBy('chapter')
+            ->orderBy('verse')
+            ->get();
+
+        /** @var Collection<int, BibleVerse> $verses */
+        foreach ($verses as $verse) {
+            $verse->setRelation('version', $version);
+            $verse->setRelation('book', $book);
+        }
+
+        return $verses;
+    }
+
+    /**
+     * @param  array<int, Reference|VerseRange>  $references
+     * @return array{0: array<int, Reference>, 1: array<int, VerseRange>}
+     */
+    private function partition(array $references): array
+    {
+        $plain = [];
+        $ranges = [];
+
+        foreach ($references as $reference) {
+            if ($reference instanceof VerseRange) {
+                $ranges[] = $reference;
+
+                continue;
+            }
+
+            $plain[] = $reference;
+        }
+
+        return [$plain, $ranges];
+    }
+
+    /**
+     * Sum verse counts across the chapters the range covers, so the caller
+     * can short-circuit before issuing a SELECT that scans tens of
+     * thousands of rows.
+     */
+    private function expandedSize(VerseRange $range, BibleBook $book): ?int
+    {
+        $chapters = BibleChapter::query()
+            ->where('bible_book_id', $book->id)
+            ->whereBetween('number', [$range->startChapter, $range->endChapter])
+            ->get()
+            ->keyBy('number');
+
+        $expectedChapters = $range->endChapter - $range->startChapter + 1;
+
+        if ($chapters->count() < $expectedChapters) {
+            return null;
+        }
+
+        $total = 0;
+
+        for ($chapter = $range->startChapter; $chapter <= $range->endChapter; $chapter++) {
+            /** @var BibleChapter|null $row */
+            $row = $chapters->get($chapter);
+
+            if ($row === null || $row->verse_count < 1) {
+                return null;
+            }
+
+            if ($chapter === $range->startChapter && $chapter === $range->endChapter) {
+                $total += max(0, $range->endVerse - $range->startVerse + 1);
+
+                continue;
+            }
+
+            if ($chapter === $range->startChapter) {
+                $total += max(0, $row->verse_count - $range->startVerse + 1);
+
+                continue;
+            }
+
+            if ($chapter === $range->endChapter) {
+                $total += min($row->verse_count, $range->endVerse);
+
+                continue;
+            }
+
+            $total += $row->verse_count;
+        }
+
+        return $total;
     }
 
     /**

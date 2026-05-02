@@ -7,6 +7,7 @@ namespace App\Http\Requests\Verses;
 use App\Domain\Bible\Models\BibleVersion;
 use App\Domain\Reference\Parser\ReferenceParser;
 use App\Domain\Reference\Reference;
+use App\Domain\Reference\VerseRange;
 use App\Domain\Shared\Enums\Language;
 use App\Domain\Verses\DataTransferObjects\ResolveVersesData;
 use App\Http\Middleware\ResolveRequestLanguage;
@@ -73,12 +74,25 @@ final class ResolveVersesRequest extends FormRequest
         $version = $this->resolveVersion();
         $query = $this->canonicalReferenceString($version);
 
-        /** @var array<int, Reference> $references */
+        /** @var array<int, Reference|VerseRange> $references */
         $references = $parser->parse($query);
 
         $normalized = [];
 
         foreach ($references as $reference) {
+            if ($reference instanceof VerseRange) {
+                $normalized[] = new VerseRange(
+                    book: $reference->book,
+                    startChapter: $reference->startChapter,
+                    startVerse: $reference->startVerse,
+                    endChapter: $reference->endChapter,
+                    endVerse: $reference->endVerse,
+                    version: $reference->version ?? $version,
+                );
+
+                continue;
+            }
+
             $normalized[] = new Reference(
                 book: $reference->book,
                 chapter: $reference->chapter,

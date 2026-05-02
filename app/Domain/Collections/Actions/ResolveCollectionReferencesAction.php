@@ -10,6 +10,7 @@ use App\Domain\Reference\Exceptions\InvalidReferenceException;
 use App\Domain\Reference\Formatter\ReferenceFormatter;
 use App\Domain\Reference\Parser\ReferenceParser;
 use App\Domain\Reference\Reference;
+use App\Domain\Reference\VerseRange;
 use App\Domain\Shared\Enums\Language;
 use Illuminate\Support\Facades\Log;
 
@@ -57,10 +58,15 @@ final class ResolveCollectionReferencesAction
             );
         }
 
+        $references = array_values(array_filter(
+            $parsed,
+            static fn (Reference|VerseRange $entry): bool => $entry instanceof Reference,
+        ));
+
         return new ResolvedCollectionReference(
             raw: $raw,
-            parsed: array_map(fn (Reference $ref): array => $this->serializeReference($ref), $parsed),
-            displayText: $this->buildDisplayText($parsed, $language),
+            parsed: array_map(fn (Reference $ref): array => $this->serializeReference($ref), $references),
+            displayText: $this->buildDisplayText($references, $language),
             parseError: null,
         );
     }

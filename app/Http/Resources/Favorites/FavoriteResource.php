@@ -68,7 +68,9 @@ final class FavoriteResource extends JsonResource
             return null;
         }
 
-        return $references[0] ?? null;
+        $first = $references[0] ?? null;
+
+        return $first instanceof Reference ? $first : null;
     }
 
     private function resolveLanguage(Request $request): Language

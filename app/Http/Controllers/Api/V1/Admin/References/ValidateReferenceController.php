@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin\References;
 
 use App\Domain\Reference\Parser\ReferenceParser;
+use App\Domain\Reference\Reference;
+use App\Domain\Reference\VerseRange;
 use App\Http\Requests\Admin\References\ValidateReferenceRequest;
 use Illuminate\Http\JsonResponse;
 
@@ -25,12 +27,25 @@ final class ValidateReferenceController
     ): JsonResponse {
         $references = $parser->parse($request->reference());
 
-        $payload = array_map(static fn ($reference): array => [
-            'book' => $reference->book,
-            'chapter' => $reference->chapter,
-            'verses' => $reference->verses,
-            'version' => $reference->version,
-        ], $references);
+        $payload = array_map(static function (Reference|VerseRange $reference): array {
+            if ($reference instanceof VerseRange) {
+                return [
+                    'book' => $reference->book,
+                    'start_chapter' => $reference->startChapter,
+                    'start_verse' => $reference->startVerse,
+                    'end_chapter' => $reference->endChapter,
+                    'end_verse' => $reference->endVerse,
+                    'version' => $reference->version,
+                ];
+            }
+
+            return [
+                'book' => $reference->book,
+                'chapter' => $reference->chapter,
+                'verses' => $reference->verses,
+                'version' => $reference->version,
+            ];
+        }, $references);
 
         return response()->json([
             'valid' => true,

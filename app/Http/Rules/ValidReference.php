@@ -57,6 +57,12 @@ final class ValidReference implements ValidationRule
             return;
         }
 
+        if (! $references[0] instanceof Reference) {
+            $fail('The :attribute must reference a single passage.');
+
+            return;
+        }
+
         // Store the parsed Reference so the Form Request can recover it
         // without re-parsing.
         $this->request->attributes->set(self::PARSED_ATTRIBUTE_KEY, $references[0]);
