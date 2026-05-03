@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests\Admin\EducationalResources;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+final class ReorderResourceBookChaptersRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @return array<string, array<int, mixed>>
+     */
+    public function rules(): array
+    {
+        return [
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'distinct', 'min:1'],
+        ];
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function ids(): array
+    {
+        /** @var list<int> $ids */
+        $ids = $this->validated('ids');
+
+        return $ids;
+    }
+}

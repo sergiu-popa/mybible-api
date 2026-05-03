@@ -12,8 +12,21 @@ use App\Http\Controllers\Api\V1\Admin\Commentary\ReorderCommentaryTextsControlle
 use App\Http\Controllers\Api\V1\Admin\Commentary\UnpublishCommentaryController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\UpdateCommentaryController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\UpdateCommentaryTextController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\CreateResourceBookChapterController as AdminCreateResourceBookChapterController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\CreateResourceBookController as AdminCreateResourceBookController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\DeleteResourceBookChapterController as AdminDeleteResourceBookChapterController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\DeleteResourceBookController as AdminDeleteResourceBookController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\ListResourceBookChaptersController as AdminListResourceBookChaptersController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\ListResourceBooksController as AdminListResourceBooksController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\PublishResourceBookController as AdminPublishResourceBookController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderEducationalResourcesController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceBookChaptersController as AdminReorderResourceBookChaptersController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceBooksController as AdminReorderResourceBooksController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceCategoriesController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\ShowResourceDownloadsSummaryController as AdminShowResourceDownloadsSummaryController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\UnpublishResourceBookController as AdminUnpublishResourceBookController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\UpdateResourceBookChapterController as AdminUpdateResourceBookChapterController;
+use App\Http\Controllers\Api\V1\Admin\EducationalResources\UpdateResourceBookController as AdminUpdateResourceBookController;
 use App\Http\Controllers\Api\V1\Admin\Imports\ShowImportJobController;
 use App\Http\Controllers\Api\V1\Admin\Olympiad\ReorderOlympiadQuestionsController;
 use App\Http\Controllers\Api\V1\Admin\References\ValidateReferenceController;
@@ -56,9 +69,15 @@ use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalArchiveController;
 use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalFavoritesController;
 use App\Http\Controllers\Api\V1\Devotionals\ShowDevotionalController;
 use App\Http\Controllers\Api\V1\Devotionals\ToggleDevotionalFavoriteController;
+use App\Http\Controllers\Api\V1\EducationalResources\ListResourceBooksController;
 use App\Http\Controllers\Api\V1\EducationalResources\ListResourceCategoriesController;
 use App\Http\Controllers\Api\V1\EducationalResources\ListResourcesByCategoryController;
+use App\Http\Controllers\Api\V1\EducationalResources\RecordEducationalResourceDownloadController;
+use App\Http\Controllers\Api\V1\EducationalResources\RecordResourceBookChapterDownloadController;
+use App\Http\Controllers\Api\V1\EducationalResources\RecordResourceBookDownloadController;
 use App\Http\Controllers\Api\V1\EducationalResources\ShowEducationalResourceController;
+use App\Http\Controllers\Api\V1\EducationalResources\ShowResourceBookChapterController;
+use App\Http\Controllers\Api\V1\EducationalResources\ShowResourceBookController;
 use App\Http\Controllers\Api\V1\Favorites\CreateFavoriteCategoryController;
 use App\Http\Controllers\Api\V1\Favorites\CreateFavoriteController;
 use App\Http\Controllers\Api\V1\Favorites\DeleteFavoriteCategoryController;
@@ -278,6 +297,38 @@ Route::prefix('v1')->group(function (): void {
             Route::get('resources/{resource:uuid}', ShowEducationalResourceController::class)
                 ->middleware('cache.headers:public;max_age=3600;etag')
                 ->name('resources.show');
+
+            Route::prefix('resource-books')
+                ->name('resource-books.')
+                ->group(function (): void {
+                    Route::get('/', ListResourceBooksController::class)
+                        ->middleware('cache.headers:public;max_age=3600;etag')
+                        ->name('index');
+                    Route::get('{book:slug}', ShowResourceBookController::class)
+                        ->middleware('cache.headers:public;max_age=3600;etag')
+                        ->name('show');
+                    Route::scopeBindings()->group(function (): void {
+                        Route::get('{book:slug}/chapters/{chapter}', ShowResourceBookChapterController::class)
+                            ->middleware('cache.headers:public;max_age=600;etag')
+                            ->name('chapters.show');
+                    });
+                });
+        });
+
+    Route::middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:downloads'])
+        ->group(function (): void {
+            Route::post('resources/{resource:uuid}/downloads', RecordEducationalResourceDownloadController::class)
+                ->name('resources.downloads.store');
+
+            Route::post('resource-books/{book:slug}/downloads', RecordResourceBookDownloadController::class)
+                ->name('resource-books.downloads.store');
+
+            Route::scopeBindings()->group(function (): void {
+                Route::post(
+                    'resource-books/{book:slug}/chapters/{chapter}/downloads',
+                    RecordResourceBookChapterDownloadController::class,
+                )->name('resource-books.chapters.downloads.store');
+            });
         });
 
     Route::middleware(['auth:sanctum', 'throttle:per-user'])
@@ -380,6 +431,41 @@ Route::prefix('v1')->group(function (): void {
                         ->where('book', '[A-Za-z0-9]+')
                         ->where('language', '[a-z]{2}')
                         ->name('olympiad.themes.questions.reorder');
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('resource-books')
+                ->name('resource-books.')
+                ->group(function (): void {
+                    Route::get('/', AdminListResourceBooksController::class)->name('index');
+                    Route::post('/', AdminCreateResourceBookController::class)->name('store');
+                    Route::post('reorder', AdminReorderResourceBooksController::class)->name('reorder');
+                    Route::patch('{book}', AdminUpdateResourceBookController::class)->name('update');
+                    Route::delete('{book}', AdminDeleteResourceBookController::class)->name('destroy');
+                    Route::post('{book}/publish', AdminPublishResourceBookController::class)->name('publish');
+                    Route::post('{book}/unpublish', AdminUnpublishResourceBookController::class)->name('unpublish');
+                    Route::get('{book}/chapters', AdminListResourceBookChaptersController::class)
+                        ->name('chapters.index');
+                    Route::post('{book}/chapters', AdminCreateResourceBookChapterController::class)
+                        ->name('chapters.store');
+                    Route::post('{book}/chapters/reorder', AdminReorderResourceBookChaptersController::class)
+                        ->name('chapters.reorder');
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('resource-book-chapters')
+                ->name('resource-book-chapters.')
+                ->group(function (): void {
+                    Route::patch('{chapter}', AdminUpdateResourceBookChapterController::class)->name('update');
+                    Route::delete('{chapter}', AdminDeleteResourceBookChapterController::class)->name('destroy');
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('resource-downloads')
+                ->name('resource-downloads.')
+                ->group(function (): void {
+                    Route::get('summary', AdminShowResourceDownloadsSummaryController::class)
+                        ->name('summary');
                 });
 
             Route::middleware(['auth:sanctum', 'super-admin'])

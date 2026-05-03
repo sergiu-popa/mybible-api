@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Analytics\Models\ResourceDownload;
+use App\Domain\EducationalResources\Models\EducationalResource;
+use App\Domain\EducationalResources\Models\ResourceBook;
+use App\Domain\EducationalResources\Models\ResourceBookChapter;
 use App\Domain\Favorites\Models\Favorite;
 use App\Domain\Favorites\Models\FavoriteCategory;
 use App\Domain\Notes\Models\Note;
@@ -26,6 +30,7 @@ use App\Support\Observability\SlowQueryListener;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\RouteInfo;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -113,6 +118,30 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(300)->by($key);
         });
+
+        // Per (ip, device_id) bucket so corporate NAT does not throttle
+        // hundreds of legitimate users sharing one egress IP. Falls back
+        // to ip-only when no device_id was sent.
+        RateLimiter::for('downloads', static function (Request $request): Limit {
+            $deviceHeader = $request->header('X-Device-Id');
+            $deviceBody = $request->input('device_id');
+            $deviceId = is_string($deviceHeader) && $deviceHeader !== ''
+                ? $deviceHeader
+                : (is_string($deviceBody) && $deviceBody !== '' ? $deviceBody : 'no-device');
+
+            return Limit::perMinute(60)->by(sprintf('%s|%s', (string) $request->ip(), $deviceId));
+        });
+
+        // Aliases for the three downloadable morph targets so legacy
+        // rows survive namespace moves. Other polymorphic relations
+        // (Sanctum tokenables) keep falling back to FQCN, so we use
+        // morphMap (not enforceMorphMap) to avoid forcing every model
+        // in the app to register an alias.
+        Relation::morphMap([
+            ResourceDownload::TYPE_EDUCATIONAL_RESOURCE => EducationalResource::class,
+            ResourceDownload::TYPE_RESOURCE_BOOK => ResourceBook::class,
+            ResourceDownload::TYPE_RESOURCE_BOOK_CHAPTER => ResourceBookChapter::class,
+        ]);
 
         if (! $this->app->environment('local', 'testing')) {
             SlowQueryListener::register();
