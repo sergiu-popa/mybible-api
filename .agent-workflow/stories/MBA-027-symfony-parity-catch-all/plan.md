@@ -609,7 +609,7 @@ the new field; Actions persist it.
 
 ### Cleanup + gate
 
-- [ ] 75. Run `make lint-fix` + `make stan` + `make test-api filter=Devotional`, `filter=Mobile`, `filter=Collection`, `filter=QrCode`, `filter=Olympiad`, `filter=Note`, `filter=Favorite`, `filter=News`; finally full `make test-api` before handing off.
+- [x] 75. Run `make lint-fix` + `make stan` + `make test-api filter=Devotional`, `filter=Mobile`, `filter=Collection`, `filter=QrCode`, `filter=Olympiad`, `filter=Note`, `filter=Favorite`, `filter=News`; finally full `make test-api` before handing off.
 
 ## Risks & open questions
 
