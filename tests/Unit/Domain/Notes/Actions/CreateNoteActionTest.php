@@ -25,6 +25,7 @@ final class CreateNoteActionTest extends TestCase
             reference: $reference,
             canonicalReference: 'GEN.1:1.VDC',
             content: 'In the beginning.',
+            color: null,
         );
 
         $note = $this->app->make(CreateNoteAction::class)->execute($data);

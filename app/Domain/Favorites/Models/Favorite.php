@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $category_id
  * @property string $reference
  * @property string|null $note
+ * @property string|null $color
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property Carbon|null $deleted_at

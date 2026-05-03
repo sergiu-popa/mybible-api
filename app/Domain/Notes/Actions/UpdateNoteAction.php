@@ -13,6 +13,11 @@ final class UpdateNoteAction
     {
         $note = $data->note;
         $note->content = $data->content;
+
+        if ($data->colorProvided) {
+            $note->color = $data->color;
+        }
+
         $note->save();
 
         return $note->refresh();

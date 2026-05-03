@@ -8,6 +8,7 @@ use App\Domain\Notes\DataTransferObjects\CreateNoteData;
 use App\Domain\Reference\Formatter\ReferenceFormatter;
 use App\Domain\Reference\Parser\ReferenceParser;
 use App\Domain\Reference\Reference;
+use App\Http\Rules\HexColor;
 use App\Http\Rules\StripHtml;
 use App\Http\Rules\ValidReference;
 use App\Models\User;
@@ -40,6 +41,7 @@ final class StoreNoteRequest extends FormRequest
                 new StripHtml,
                 'max:' . self::CONTENT_MAX_LENGTH,
             ],
+            'color' => ['nullable', 'string', new HexColor],
         ];
     }
 
@@ -58,11 +60,14 @@ final class StoreNoteRequest extends FormRequest
         /** @var string $content */
         $content = $this->validated('content');
 
+        $color = $this->validated('color');
+
         return new CreateNoteData(
             user: $user,
             reference: $reference,
             canonicalReference: $formatter->toCanonical($reference),
             content: $content,
+            color: is_string($color) && $color !== '' ? $color : null,
         );
     }
 }

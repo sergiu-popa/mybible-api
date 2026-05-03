@@ -21,6 +21,10 @@ final class UpdateFavoriteAction
             $favorite->note = $data->note;
         }
 
+        if ($data->colorProvided) {
+            $favorite->color = $data->color;
+        }
+
         $favorite->save();
 
         return $favorite;

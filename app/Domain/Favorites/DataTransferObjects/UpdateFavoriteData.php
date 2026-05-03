@@ -14,5 +14,7 @@ final readonly class UpdateFavoriteData
         public bool $categoryProvided,
         public ?string $note,
         public bool $noteProvided,
+        public ?string $color,
+        public bool $colorProvided,
     ) {}
 }

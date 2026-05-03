@@ -16,6 +16,7 @@ final class CreateNoteAction
         $note->reference = $data->canonicalReference;
         $note->book = $data->reference->book;
         $note->content = $data->content;
+        $note->color = $data->color;
         $note->save();
 
         return $note->refresh();

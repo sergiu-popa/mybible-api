@@ -7,6 +7,7 @@ namespace App\Http\Requests\Favorites;
 use App\Domain\Favorites\DataTransferObjects\CreateFavoriteData;
 use App\Domain\Favorites\Models\FavoriteCategory;
 use App\Domain\Favorites\Rules\ParseableReference;
+use App\Http\Rules\HexColor;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -36,6 +37,7 @@ final class CreateFavoriteRequest extends FormRequest
                     ->where(fn ($query) => $query->where('user_id', $userId)),
             ],
             'note' => ['nullable', 'string', 'max:2000'],
+            'color' => ['nullable', 'string', new HexColor],
         ];
     }
 
@@ -58,12 +60,14 @@ final class CreateFavoriteRequest extends FormRequest
             : null;
 
         $note = $this->validated('note');
+        $color = $this->validated('color');
 
         return new CreateFavoriteData(
             user: $user,
             reference: $reference,
             category: $category instanceof FavoriteCategory ? $category : null,
             note: is_string($note) && $note !== '' ? $note : null,
+            color: is_string($color) && $color !== '' ? $color : null,
         );
     }
 

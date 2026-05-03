@@ -21,6 +21,7 @@ final class CreateFavoriteAction
             'category_id' => $data->category?->id,
             'reference' => $this->formatter->toCanonical($data->reference),
             'note' => $data->note,
+            'color' => $data->color,
         ]);
     }
 }

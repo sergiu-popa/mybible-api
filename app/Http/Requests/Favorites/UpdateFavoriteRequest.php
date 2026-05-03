@@ -6,6 +6,7 @@ namespace App\Http\Requests\Favorites;
 
 use App\Domain\Favorites\DataTransferObjects\UpdateFavoriteData;
 use App\Domain\Favorites\Models\Favorite;
+use App\Http\Rules\HexColor;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\Rule;
 
@@ -27,6 +28,7 @@ final class UpdateFavoriteRequest extends AuthorizedFavoriteRequest
                     ->where(fn ($query) => $query->where('user_id', $userId)),
             ],
             'note' => ['sometimes', 'nullable', 'string', 'max:2000'],
+            'color' => ['sometimes', 'nullable', 'string', new HexColor],
         ];
     }
 
@@ -63,12 +65,18 @@ final class UpdateFavoriteRequest extends AuthorizedFavoriteRequest
             $note = $noteRaw;
         }
 
+        $colorProvided = $this->has('color');
+        $colorRaw = $this->input('color');
+        $color = $colorProvided && is_string($colorRaw) && $colorRaw !== '' ? $colorRaw : null;
+
         return new UpdateFavoriteData(
             favorite: $favorite,
             categoryId: $categoryId,
             categoryProvided: $categoryProvided,
             note: $note,
             noteProvided: $noteProvided,
+            color: $color,
+            colorProvided: $colorProvided,
         );
     }
 }

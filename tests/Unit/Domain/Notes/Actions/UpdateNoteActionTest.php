@@ -23,7 +23,7 @@ final class UpdateNoteActionTest extends TestCase
         ]);
 
         $result = $this->app->make(UpdateNoteAction::class)->execute(
-            new UpdateNoteData(note: $note, content: 'Updated.'),
+            new UpdateNoteData(note: $note, content: 'Updated.', color: null, colorProvided: false),
         );
 
         $this->assertSame('Updated.', $result->content);

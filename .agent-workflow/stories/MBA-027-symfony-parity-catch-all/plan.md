@@ -592,11 +592,11 @@ the new field; Actions persist it.
 
 ### Notes & Favorites colour
 
-- [ ] 64. Write `2026_05_03_002007_add_color_to_notes_and_favorites.php` — `notes.color VARCHAR(9) NULL`, `favorites.color VARCHAR(9) NULL`. Down drops both.
-- [ ] 65. Add `App\Http\Rules\HexColor` — invokable rule matching `/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/`.
-- [ ] 66. Modify Note + Favorite models, DTOs (`Create*Data` + `Update*Data` add `?string $color` and `bool $colorProvided` for partial-update semantics on Update), Actions (persist on create; partial on update).
-- [ ] 67. Modify Form Requests: `StoreNoteRequest`, `UpdateNoteRequest`, `CreateFavoriteRequest`, `UpdateFavoriteRequest` — accept `color` `nullable` + `HexColor`. Resources expose `color`.
-- [ ] 68. Feature tests: extend existing `*NotesEndpointTest` and `*FavoritesEndpointTest` with cases for accepted `#RRGGBB`, accepted `#RRGGBBAA`, rejected malformed, accepted `null` clearing on update.
+- [x] 64. Write `2026_05_03_002007_add_color_to_notes_and_favorites.php` — `notes.color VARCHAR(9) NULL`, `favorites.color VARCHAR(9) NULL`. Down drops both.
+- [x] 65. Add `App\Http\Rules\HexColor` — invokable rule matching `/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/`.
+- [x] 66. Modify Note + Favorite models, DTOs (`Create*Data` + `Update*Data` add `?string $color` and `bool $colorProvided` for partial-update semantics on Update), Actions (persist on create; partial on update).
+- [x] 67. Modify Form Requests: `StoreNoteRequest`, `UpdateNoteRequest`, `CreateFavoriteRequest`, `UpdateFavoriteRequest` — accept `color` `nullable` + `HexColor`. Resources expose `color`.
+- [x] 68. Feature tests: extend existing `*NotesEndpointTest` and `*FavoritesEndpointTest` with cases for accepted `#RRGGBB`, accepted `#RRGGBBAA`, rejected malformed, accepted `null` clearing on update.
 
 ### News detail + language defaults
 

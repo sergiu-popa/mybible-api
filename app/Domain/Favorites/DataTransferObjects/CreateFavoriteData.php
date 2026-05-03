@@ -15,5 +15,6 @@ final readonly class CreateFavoriteData
         public Reference $reference,
         public ?FavoriteCategory $category,
         public ?string $note,
+        public ?string $color,
     ) {}
 }

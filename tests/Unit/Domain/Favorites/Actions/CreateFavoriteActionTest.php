@@ -27,6 +27,7 @@ final class CreateFavoriteActionTest extends TestCase
             reference: new Reference('GEN', 1, [1, 2, 3], 'VDC'),
             category: null,
             note: 'note',
+            color: null,
         ));
 
         $this->assertSame('GEN.1:1-3.VDC', $favorite->reference);
@@ -47,6 +48,7 @@ final class CreateFavoriteActionTest extends TestCase
             reference: new Reference('JHN', 3, [16], 'VDC'),
             category: $category,
             note: null,
+            color: null,
         ));
 
         $this->assertSame($category->id, $favorite->category_id);
@@ -64,6 +66,7 @@ final class CreateFavoriteActionTest extends TestCase
             reference: new Reference('PSA', 23, [], 'VDC'),
             category: null,
             note: null,
+            color: null,
         ));
 
         $this->assertSame('PSA.23.VDC', $favorite->reference);

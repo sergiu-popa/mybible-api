@@ -14,5 +14,6 @@ final readonly class CreateNoteData
         public Reference $reference,
         public string $canonicalReference,
         public string $content,
+        public ?string $color,
     ) {}
 }

@@ -31,6 +31,8 @@ final class UpdateFavoriteActionTest extends TestCase
             categoryProvided: true,
             note: null,
             noteProvided: false,
+            color: null,
+            colorProvided: false,
         ));
 
         $fresh = $favorite->fresh();
@@ -52,6 +54,8 @@ final class UpdateFavoriteActionTest extends TestCase
             categoryProvided: true,
             note: null,
             noteProvided: false,
+            color: null,
+            colorProvided: false,
         ));
 
         $this->assertNull($favorite->fresh()?->category_id);
@@ -74,6 +78,8 @@ final class UpdateFavoriteActionTest extends TestCase
             categoryProvided: false,
             note: null,
             noteProvided: false,
+            color: null,
+            colorProvided: false,
         ));
 
         $fresh = $favorite->fresh();

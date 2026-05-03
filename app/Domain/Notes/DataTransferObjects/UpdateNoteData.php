@@ -11,5 +11,7 @@ final readonly class UpdateNoteData
     public function __construct(
         public Note $note,
         public string $content,
+        public ?string $color,
+        public bool $colorProvided,
     ) {}
 }
