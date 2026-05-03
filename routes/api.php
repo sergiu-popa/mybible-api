@@ -33,6 +33,10 @@ use App\Http\Controllers\Api\V1\Admin\EducationalResources\UnpublishResourceBook
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\UpdateResourceBookChapterController as AdminUpdateResourceBookChapterController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\UpdateResourceBookController as AdminUpdateResourceBookController;
 use App\Http\Controllers\Api\V1\Admin\Imports\ShowImportJobController;
+use App\Http\Controllers\Api\V1\Admin\Mobile\CreateMobileVersionController;
+use App\Http\Controllers\Api\V1\Admin\Mobile\DeleteMobileVersionController;
+use App\Http\Controllers\Api\V1\Admin\Mobile\ListMobileVersionsController;
+use App\Http\Controllers\Api\V1\Admin\Mobile\UpdateMobileVersionController;
 use App\Http\Controllers\Api\V1\Admin\Olympiad\ReorderOlympiadQuestionsController;
 use App\Http\Controllers\Api\V1\Admin\References\ValidateReferenceController;
 use App\Http\Controllers\Api\V1\Admin\SabbathSchool\CreateLessonController as AdminCreateSabbathSchoolLessonController;
@@ -447,6 +451,16 @@ Route::prefix('v1')->group(function (): void {
                     Route::post('reorder', ReorderDevotionalTypesController::class)->name('reorder');
                     Route::patch('{type}', UpdateDevotionalTypeController::class)->name('update');
                     Route::delete('{type}', DeleteDevotionalTypeController::class)->name('destroy');
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('mobile-versions')
+                ->name('mobile-versions.')
+                ->group(function (): void {
+                    Route::get('/', ListMobileVersionsController::class)->name('index');
+                    Route::post('/', CreateMobileVersionController::class)->name('store');
+                    Route::patch('{version}', UpdateMobileVersionController::class)->name('update');
+                    Route::delete('{version}', DeleteMobileVersionController::class)->name('destroy');
                 });
 
             Route::middleware(['auth:sanctum', 'super-admin'])

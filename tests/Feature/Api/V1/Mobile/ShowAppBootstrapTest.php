@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1\Mobile;
 
+use App\Domain\Mobile\Models\MobileVersion;
+use App\Domain\Mobile\Support\MobileVersionsRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +28,14 @@ final class ShowAppBootstrapTest extends TestCase
             'android' => ['latest_version' => '3.4.2'],
             'bootstrap' => ['cache_ttl' => 300],
         ]);
+
+        // Bootstrap reads via the MobileVersionsRepository which queries
+        // mobile_versions; align DB rows with this test's expected versions.
+        MobileVersion::query()->delete();
+        MobileVersion::factory()->ios()->latest()->create(['version' => '3.4.1']);
+        MobileVersion::factory()->android()->latest()->create(['version' => '3.4.2']);
+        Cache::flush();
+        app(MobileVersionsRepository::class)->flush();
     }
 
     public function test_it_rejects_missing_credentials(): void

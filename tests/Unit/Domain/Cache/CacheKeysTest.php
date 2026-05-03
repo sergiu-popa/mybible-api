@@ -129,7 +129,7 @@ final class CacheKeysTest extends TestCase
         $tags = MobileCacheKeys::tagsForBootstrap();
 
         $this->assertSame(
-            ['app:bootstrap', 'news', 'daily-verse', 'dev', 'ss', 'ss:lessons', 'bible', 'bible:versions', 'qr'],
+            ['app:bootstrap', 'news', 'daily-verse', 'dev', 'ss', 'ss:lessons', 'bible', 'bible:versions', 'qr', 'mobile-versions'],
             $tags,
             'Bootstrap tag union must include every constituent tag so any flush propagates.',
         );

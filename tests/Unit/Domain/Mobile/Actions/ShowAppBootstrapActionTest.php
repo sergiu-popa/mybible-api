@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Domain\Mobile\Actions;
 
 use App\Domain\Mobile\Actions\ShowAppBootstrapAction;
+use App\Domain\Mobile\Models\MobileVersion;
 use App\Domain\Mobile\Support\MobileCacheKeys;
+use App\Domain\Mobile\Support\MobileVersionsRepository;
 use App\Domain\Shared\Enums\Language;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -29,6 +31,12 @@ final class ShowAppBootstrapActionTest extends TestCase
             'android' => ['latest_version' => '8.8.8'],
             'bootstrap' => ['cache_ttl' => 300],
         ]);
+
+        MobileVersion::query()->delete();
+        MobileVersion::factory()->ios()->latest()->create(['version' => '9.9.9']);
+        MobileVersion::factory()->android()->latest()->create(['version' => '8.8.8']);
+        Cache::flush();
+        app(MobileVersionsRepository::class)->flush();
     }
 
     public function test_it_composes_payload_with_all_top_level_keys(): void

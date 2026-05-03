@@ -9,6 +9,7 @@ use App\Domain\Devotional\Actions\FetchDevotionalAction;
 use App\Domain\Devotional\Actions\ResolveDevotionalTypeAction;
 use App\Domain\Devotional\DataTransferObjects\FetchDevotionalData;
 use App\Domain\Mobile\Support\MobileCacheKeys;
+use App\Domain\Mobile\Support\MobileVersionsRepository;
 use App\Domain\News\Actions\ListNewsAction;
 use App\Domain\QrCode\Actions\ListQrCodesAction;
 use App\Domain\SabbathSchool\Models\SabbathSchoolLesson;
@@ -29,6 +30,7 @@ final class ShowAppBootstrapAction
         private readonly ResolveDevotionalTypeAction $resolveDevotionalType,
         private readonly ListBibleVersionsAction $listBibleVersions,
         private readonly ListQrCodesAction $listQrCodes,
+        private readonly MobileVersionsRepository $mobileVersions,
     ) {}
 
     /**
@@ -97,8 +99,8 @@ final class ShowAppBootstrapAction
 
         return [
             'version' => [
-                'ios' => config('mobile.ios.latest_version'),
-                'android' => config('mobile.android.latest_version'),
+                'ios' => $this->mobileVersions->latestVersionFor('ios'),
+                'android' => $this->mobileVersions->latestVersionFor('android'),
             ],
             'languages_available' => array_map(
                 static fn (Language $l): string => $l->value,

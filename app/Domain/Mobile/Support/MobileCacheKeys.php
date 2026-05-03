@@ -22,6 +22,6 @@ final class MobileCacheKeys
      */
     public static function tagsForBootstrap(): array
     {
-        return ['app:bootstrap', 'news', 'daily-verse', 'dev', 'ss', 'ss:lessons', 'bible', 'bible:versions', 'qr'];
+        return ['app:bootstrap', 'news', 'daily-verse', 'dev', 'ss', 'ss:lessons', 'bible', 'bible:versions', 'qr', 'mobile-versions'];
     }
 }
