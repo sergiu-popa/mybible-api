@@ -20,6 +20,10 @@ final class AdminCommentaryResource extends CommentaryResource
         return [
             'id' => $this->id,
             ...parent::toArray($request),
+            // Admins edit translations directly, so expose the raw
+            // multilingual map alongside the resolved string from the
+            // parent shape.
+            'name' => $this->name,
             'language' => $this->language,
             'is_published' => $this->is_published,
             'source_commentary_id' => $this->source_commentary_id,

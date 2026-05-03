@@ -7,7 +7,7 @@ public read endpoints and admin write endpoints.
 
 ## Status
 
-`in-review`
+`done`
 
 ## Description
 

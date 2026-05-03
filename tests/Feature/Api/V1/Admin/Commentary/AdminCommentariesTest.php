@@ -146,6 +146,32 @@ final class AdminCommentariesTest extends TestCase
             ->assertJsonValidationErrors(['slug']);
     }
 
+    public function test_update_rejects_self_referential_source_commentary(): void
+    {
+        $this->actingAsSuper();
+
+        $commentary = Commentary::factory()->create();
+
+        $this->patchJson(route('admin.commentaries.update', ['commentary' => $commentary->id]), [
+            'source_commentary_id' => $commentary->id,
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['source_commentary_id']);
+    }
+
+    public function test_list_exposes_raw_multilingual_name_for_admins(): void
+    {
+        $this->actingAsSuper();
+
+        Commentary::factory()->create([
+            'name' => ['en' => 'SDA Commentary', 'ro' => 'Comentariu SDA'],
+        ]);
+
+        $this->getJson(route('admin.commentaries.index'))
+            ->assertOk()
+            ->assertJsonPath('data.0.name.en', 'SDA Commentary')
+            ->assertJsonPath('data.0.name.ro', 'Comentariu SDA');
+    }
+
     public function test_publish_and_unpublish_round_trip(): void
     {
         $this->actingAsSuper();

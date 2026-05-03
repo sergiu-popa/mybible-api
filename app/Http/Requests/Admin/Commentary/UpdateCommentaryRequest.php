@@ -44,6 +44,8 @@ final class UpdateCommentaryRequest extends FormRequest
                 'nullable',
                 'integer',
                 'exists:commentaries,id',
+                // A commentary cannot be a translation of itself.
+                Rule::notIn($commentaryId !== null ? [$commentaryId] : []),
             ],
         ];
     }
