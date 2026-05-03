@@ -10,21 +10,25 @@ use App\Http\Middleware\ResolveRequestLanguage;
 use Database\Factories\CollectionTopicFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property ?int $collection_id
  * @property string $language
  * @property string $name
  * @property ?string $description
+ * @property ?string $image_cdn_url
  * @property int $position
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read Collection<int, CollectionReference> $references
+ * @property-read ?Collection $collection
+ * @property-read EloquentCollection<int, CollectionReference> $references
  * @property-read int|null $reference_count
  */
 #[UseFactory(CollectionTopicFactory::class)]
@@ -41,6 +45,14 @@ final class CollectionTopic extends Model
     public function references(): HasMany
     {
         return $this->hasMany(CollectionReference::class)->orderBy('position');
+    }
+
+    /**
+     * @return BelongsTo<Collection, $this>
+     */
+    public function collection(): BelongsTo
+    {
+        return $this->belongsTo(Collection::class);
     }
 
     /**

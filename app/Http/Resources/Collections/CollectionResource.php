@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Collections;
 
-use App\Domain\Collections\Models\CollectionTopic;
+use App\Domain\Collections\Models\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin CollectionTopic
+ * @mixin Collection
  */
-final class CollectionTopicResource extends JsonResource
+final class CollectionResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -20,13 +20,11 @@ final class CollectionTopicResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'collection_id' => $this->collection_id,
+            'slug' => $this->slug,
             'name' => $this->name,
-            'description' => $this->description,
-            'image_url' => $this->image_cdn_url,
             'language' => $this->language,
             'position' => $this->position,
-            'reference_count' => (int) ($this->reference_count ?? 0),
+            'topics_count' => (int) ($this->topics_count ?? 0),
         ];
     }
 }

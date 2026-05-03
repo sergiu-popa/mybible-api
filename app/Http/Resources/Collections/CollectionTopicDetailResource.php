@@ -33,7 +33,9 @@ final class CollectionTopicDetailResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
+            'image_url' => $this->image_cdn_url,
             'language' => $this->language,
+            'collection_id' => $this->collection_id,
             'references' => ResolvedCollectionReferenceResource::collection($this->resolvedReferences),
         ];
     }

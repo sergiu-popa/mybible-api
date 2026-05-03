@@ -530,19 +530,19 @@ the new field; Actions persist it.
 
 ### Collections parent + topic image
 
-- [ ] 25. Write `2026_05_03_002003_create_collections_and_extend_collection_topics.php` — `Schema::create('collections', ...)` with INDEX `(language, position)`; `ALTER TABLE collection_topics` adds `collection_id` (nullable FK SET NULL) and `image_cdn_url`. No data backfill (MBA-031 ETL).
-- [ ] 26. Add `App\Domain\Collections\Models\Collection` (route key `slug`; HasMany `topics()` ordered by `position`) + `CollectionQueryBuilder` (`forLanguage`, `ordered`, `withTopicsCount`).
-- [ ] 27. Modify `CollectionTopic` — fillable adds `collection_id`, `image_cdn_url`; `collection()` BelongsTo Collection. `CollectionTopicQueryBuilder::withinCollection(int)`.
-- [ ] 28. Public Actions: `ListCollectionsAction(language, page, perPage)`, `ShowCollectionAction(Collection)` — both cached 1h with `CollectionsCacheKeys` extensions.
-- [ ] 29. Public Resources + Requests + Controllers + routes:
+- [x] 25. Write `2026_05_03_002003_create_collections_and_extend_collection_topics.php` — `Schema::create('collections', ...)` with INDEX `(language, position)`; `ALTER TABLE collection_topics` adds `collection_id` (nullable FK SET NULL) and `image_cdn_url`. No data backfill (MBA-031 ETL).
+- [x] 26. Add `App\Domain\Collections\Models\Collection` (route key `slug`; HasMany `topics()` ordered by `position`) + `CollectionQueryBuilder` (`forLanguage`, `ordered`, `withTopicsCount`).
+- [x] 27. Modify `CollectionTopic` — fillable adds `collection_id`, `image_cdn_url`; `collection()` BelongsTo Collection. `CollectionTopicQueryBuilder::withinCollection(int)`.
+- [x] 28. Public Actions: `ListCollectionsAction(language, page, perPage)`, `ShowCollectionAction(Collection)` — both cached 1h with `CollectionsCacheKeys` extensions.
+- [x] 29. Public Resources + Requests + Controllers + routes:
    - `CollectionResource` (id, slug, name, language, position, topics_count via `withCount`).
    - `CollectionDetailResource` (adds nested topics: id, name, image_url=image_cdn_url, position).
    - `ListCollectionsRequest`, `ShowCollectionRequest`.
    - `ListCollectionsController`, `ShowCollectionController` mounted at `GET /api/v1/collections` and `GET /api/v1/collections/{collection:slug}`. Public read middleware group.
-- [ ] 30. Re-route the existing topic-show endpoint to `GET /api/v1/collections/{collection:slug}/topics/{topic}` under `Route::scopeBindings()`; modify `ShowCollectionTopicController` to accept the `Collection` parameter and assert membership via the binding scope. Drop the legacy `GET /api/v1/collections` (topics list) public route — replaced by the parent collections list. Update `CollectionTopicResource` / `CollectionTopicDetailResource` to add `image_url`.
-- [ ] 31. Admin Actions + Form Requests + Controllers for both collections (List, Create (201), Update, Delete (204)) and collection topics (nested under `{collection}`, with `scopeBindings`). `CreateCollectionTopicRequest` accepts `name`, `description`, optional `image_cdn_url` URL, optional `position` int. Routes `admin.collections.*` + `admin.collections.topics.*`.
-- [ ] 32. `CollectionFactory` with `language()` state.
-- [ ] 33. Feature tests: `ListCollectionsEndpointTest`, `ShowCollectionEndpointTest` (404 unknown slug, language-scoped), `ShowCollectionTopicEndpointTest` (cross-collection topic 404 via scopeBindings), `AdminCollectionsEndpointTest`, `AdminCollectionTopicsEndpointTest` (image_cdn_url accepted, FK SET NULL on collection delete leaves topics browsable).
+- [x] 30. Re-route the existing topic-show endpoint to `GET /api/v1/collections/{collection:slug}/topics/{topic}` under `Route::scopeBindings()`; modify `ShowCollectionTopicController` to accept the `Collection` parameter and assert membership via the binding scope. Drop the legacy `GET /api/v1/collections` (topics list) public route — replaced by the parent collections list. Update `CollectionTopicResource` / `CollectionTopicDetailResource` to add `image_url`.
+- [x] 31. Admin Actions + Form Requests + Controllers for both collections (List, Create (201), Update, Delete (204)) and collection topics (nested under `{collection}`, with `scopeBindings`). `CreateCollectionTopicRequest` accepts `name`, `description`, optional `image_cdn_url` URL, optional `position` int. Routes `admin.collections.*` + `admin.collections.topics.*`.
+- [x] 32. `CollectionFactory` with `language()` state.
+- [x] 33. Feature tests: `ListCollectionsEndpointTest`, `ShowCollectionEndpointTest` (404 unknown slug, language-scoped), `ShowCollectionTopicEndpointTest` (cross-collection topic 404 via scopeBindings), `AdminCollectionsEndpointTest`, `AdminCollectionTopicsEndpointTest` (image_cdn_url accepted, FK SET NULL on collection delete leaves topics browsable).
 
 ### QR codes full Symfony model
 

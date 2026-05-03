@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Collections;
 
 use App\Domain\Collections\Actions\ShowCollectionTopicAction;
+use App\Domain\Collections\Models\Collection;
 use App\Domain\Collections\Models\CollectionTopic;
 use App\Domain\Shared\Enums\Language;
 use App\Http\Middleware\ResolveRequestLanguage;
@@ -20,6 +21,7 @@ final class ShowCollectionTopicController
 
     public function __invoke(
         ShowCollectionTopicRequest $request,
+        Collection $collection,
         CollectionTopic $topic,
         ShowCollectionTopicAction $action,
     ): JsonResponse {

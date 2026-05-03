@@ -2,6 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\Collections\CreateCollectionController;
+use App\Http\Controllers\Api\V1\Admin\Collections\CreateCollectionTopicController;
+use App\Http\Controllers\Api\V1\Admin\Collections\DeleteCollectionController;
+use App\Http\Controllers\Api\V1\Admin\Collections\DeleteCollectionTopicController;
+use App\Http\Controllers\Api\V1\Admin\Collections\ListAdminCollectionsController;
+use App\Http\Controllers\Api\V1\Admin\Collections\ListAdminCollectionTopicsController;
+use App\Http\Controllers\Api\V1\Admin\Collections\UpdateCollectionController;
+use App\Http\Controllers\Api\V1\Admin\Collections\UpdateCollectionTopicController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\CreateCommentaryController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\CreateCommentaryTextController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\DeleteCommentaryTextController;
@@ -69,7 +77,8 @@ use App\Http\Controllers\Api\V1\Bible\ExportBibleVersionController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBookChaptersController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleBooksController;
 use App\Http\Controllers\Api\V1\Bible\ListBibleVersionsController;
-use App\Http\Controllers\Api\V1\Collections\ListCollectionTopicsController;
+use App\Http\Controllers\Api\V1\Collections\ListCollectionsController;
+use App\Http\Controllers\Api\V1\Collections\ShowCollectionController;
 use App\Http\Controllers\Api\V1\Collections\ShowCollectionTopicController;
 use App\Http\Controllers\Api\V1\Commentary\ListCommentaryChapterTextsController;
 use App\Http\Controllers\Api\V1\Commentary\ListCommentaryVerseTextsController;
@@ -183,8 +192,12 @@ Route::prefix('v1')->group(function (): void {
         ->name('collections.')
         ->middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon'])
         ->group(function (): void {
-            Route::get('/', ListCollectionTopicsController::class)->name('index');
-            Route::get('{topic}', ShowCollectionTopicController::class)->name('show');
+            Route::get('/', ListCollectionsController::class)->name('index');
+            Route::get('{collection:slug}', ShowCollectionController::class)->name('show');
+            Route::scopeBindings()->group(function (): void {
+                Route::get('{collection:slug}/topics/{topic}', ShowCollectionTopicController::class)
+                    ->name('topics.show');
+            });
         });
 
     Route::prefix('reading-plans')
@@ -461,6 +474,27 @@ Route::prefix('v1')->group(function (): void {
                     Route::post('/', CreateMobileVersionController::class)->name('store');
                     Route::patch('{version}', UpdateMobileVersionController::class)->name('update');
                     Route::delete('{version}', DeleteMobileVersionController::class)->name('destroy');
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('collections')
+                ->name('collections.')
+                ->group(function (): void {
+                    Route::get('/', ListAdminCollectionsController::class)->name('index');
+                    Route::post('/', CreateCollectionController::class)->name('store');
+                    Route::patch('{collection}', UpdateCollectionController::class)->name('update');
+                    Route::delete('{collection}', DeleteCollectionController::class)->name('destroy');
+
+                    Route::scopeBindings()->group(function (): void {
+                        Route::get('{collection}/topics', ListAdminCollectionTopicsController::class)
+                            ->name('topics.index');
+                        Route::post('{collection}/topics', CreateCollectionTopicController::class)
+                            ->name('topics.store');
+                        Route::patch('{collection}/topics/{topic}', UpdateCollectionTopicController::class)
+                            ->name('topics.update');
+                        Route::delete('{collection}/topics/{topic}', DeleteCollectionTopicController::class)
+                            ->name('topics.destroy');
+                    });
                 });
 
             Route::middleware(['auth:sanctum', 'super-admin'])
