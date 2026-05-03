@@ -77,7 +77,9 @@ final class AdminQrCodesTest extends TestCase
             'destination' => 'https://web.mybible.local/2',
             'name' => 'Dup',
             'content' => 'x',
-        ])->assertStatus(500); // No app-level uniqueness check; falls back to constraint violation
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['source']);
     }
 
     public function test_update_changes_fields(): void

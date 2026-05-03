@@ -6,6 +6,7 @@ namespace App\Http\Requests\Admin\QrCode;
 
 use App\Domain\QrCode\DataTransferObjects\CreateQrCodeData;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class CreateQrCodeRequest extends FormRequest
 {
@@ -19,10 +20,19 @@ final class CreateQrCodeRequest extends FormRequest
      */
     public function rules(): array
     {
+        $place = $this->input('place');
+
+        $sourceRule = Rule::unique('qr_codes', 'source')
+            ->where(function ($query) use ($place): void {
+                if (is_string($place) && $place !== '') {
+                    $query->where('place', $place);
+                }
+            });
+
         return [
             'place' => ['required', 'string', 'max:255'],
             'base_url' => ['nullable', 'url', 'max:255'],
-            'source' => ['required', 'string', 'max:255'],
+            'source' => ['required', 'string', 'max:255', $sourceRule],
             'destination' => ['required', 'url', 'max:255'],
             'name' => ['required', 'string', 'max:50'],
             'content' => ['required', 'string'],

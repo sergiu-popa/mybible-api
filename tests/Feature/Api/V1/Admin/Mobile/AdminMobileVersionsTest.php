@@ -80,7 +80,7 @@ final class AdminMobileVersionsTest extends TestCase
         ]);
     }
 
-    public function test_create_rejects_duplicate_platform_kind(): void
+    public function test_create_rejects_duplicate_platform_kind_with_422(): void
     {
         $this->actingAsSuper();
 
@@ -95,7 +95,9 @@ final class AdminMobileVersionsTest extends TestCase
             'platform' => 'ios',
             'kind' => 'latest',
             'version' => '3.5.0',
-        ])->assertStatus(500);
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['kind']);
     }
 
     public function test_create_rejects_invalid_version_format(): void

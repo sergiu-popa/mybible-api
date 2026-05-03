@@ -39,13 +39,33 @@ final class ShowOlympiadThemeControllerTest extends TestCase
 
         $response->assertJsonStructure([
             'data' => [
-                ['id', 'question', 'explanation', 'answers' => [['id', 'text', 'is_correct']]],
+                [
+                    'id',
+                    'uuid',
+                    'verse',
+                    'chapter',
+                    'is_reviewed',
+                    'question',
+                    'explanation',
+                    'answers' => [['id', 'uuid', 'text', 'is_correct']],
+                ],
             ],
             'meta' => ['seed'],
         ]);
 
         $this->assertCount(5, $response->json('data'));
         $this->assertIsInt($response->json('meta.seed'));
+
+        // Question + answer UUIDs must be exposed so clients can drive the
+        // attempt-submission flow (POST /olympiad/attempts/{attempt}/answers).
+        foreach ($response->json('data') as $question) {
+            $this->assertIsString($question['uuid']);
+            $this->assertNotEmpty($question['uuid']);
+            foreach ($question['answers'] as $answer) {
+                $this->assertIsString($answer['uuid']);
+                $this->assertNotEmpty($answer['uuid']);
+            }
+        }
     }
 
     public function test_same_seed_replays_identical_ordering(): void

@@ -37,6 +37,10 @@ final class FetchOlympiadThemeQuestionsAction
         foreach ($orderedRaw as $row) {
             $question = (new OlympiadQuestion)->forceFill([
                 'id' => $row['id'],
+                'uuid' => $row['uuid'],
+                'verse' => $row['verse'],
+                'chapter' => $row['chapter'],
+                'is_reviewed' => $row['is_reviewed'],
                 'question' => $row['question'],
                 'explanation' => $row['explanation'],
             ]);
@@ -48,6 +52,7 @@ final class FetchOlympiadThemeQuestionsAction
             foreach ($shuffledAnswers as $answerRow) {
                 $answer = (new OlympiadAnswer)->forceFill([
                     'id' => $answerRow['id'],
+                    'uuid' => $answerRow['uuid'],
                     'text' => $answerRow['text'],
                     'is_correct' => $answerRow['is_correct'],
                 ]);
@@ -72,9 +77,13 @@ final class FetchOlympiadThemeQuestionsAction
      *
      * @return array<int, array{
      *     id: int,
+     *     uuid: string,
+     *     verse: ?int,
+     *     chapter: ?int,
+     *     is_reviewed: bool,
      *     question: string,
      *     explanation: ?string,
-     *     answers: array<int, array{id: int, text: string, is_correct: bool}>
+     *     answers: array<int, array{id: int, uuid: string, text: string, is_correct: bool}>
      * }>
      */
     private function loadThemeQuestions(OlympiadThemeRequest $request): array
@@ -99,6 +108,7 @@ final class FetchOlympiadThemeQuestionsAction
                     foreach ($question->answers as $answer) {
                         $answers[] = [
                             'id' => (int) $answer->id,
+                            'uuid' => (string) $answer->uuid,
                             'text' => (string) $answer->text,
                             'is_correct' => (bool) $answer->is_correct,
                         ];
@@ -106,6 +116,10 @@ final class FetchOlympiadThemeQuestionsAction
 
                     $rows[] = [
                         'id' => (int) $question->id,
+                        'uuid' => (string) $question->uuid,
+                        'verse' => $question->verse !== null ? (int) $question->verse : null,
+                        'chapter' => $question->chapter !== null ? (int) $question->chapter : null,
+                        'is_reviewed' => (bool) $question->is_reviewed,
                         'question' => (string) $question->question,
                         'explanation' => $question->explanation,
                         'answers' => $answers,

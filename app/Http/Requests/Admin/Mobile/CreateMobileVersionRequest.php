@@ -8,6 +8,7 @@ use App\Domain\Mobile\DataTransferObjects\CreateMobileVersionData;
 use App\Domain\Mobile\Models\MobileVersion;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class CreateMobileVersionRequest extends FormRequest
 {
@@ -21,9 +22,23 @@ final class CreateMobileVersionRequest extends FormRequest
      */
     public function rules(): array
     {
+        $platform = $this->input('platform');
+
+        $kindRule = Rule::unique('mobile_versions', 'kind')
+            ->where(function ($query) use ($platform): void {
+                if (is_string($platform) && $platform !== '') {
+                    $query->where('platform', $platform);
+                }
+            });
+
         return [
             'platform' => ['required', 'string', 'in:ios,android'],
-            'kind' => ['required', 'string', 'in:' . MobileVersion::KIND_MIN_REQUIRED . ',' . MobileVersion::KIND_LATEST],
+            'kind' => [
+                'required',
+                'string',
+                'in:' . MobileVersion::KIND_MIN_REQUIRED . ',' . MobileVersion::KIND_LATEST,
+                $kindRule,
+            ],
             'version' => ['required', 'string', 'max:25', 'regex:/^\d+\.\d+\.\d+(?:[-+][\w.]+)?$/'],
             'released_at' => ['nullable', 'date'],
             'release_notes' => ['nullable', 'array'],

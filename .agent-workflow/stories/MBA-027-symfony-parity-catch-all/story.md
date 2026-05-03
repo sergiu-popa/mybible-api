@@ -10,7 +10,7 @@ Favorites colour, News detail endpoint + language defaults.
 
 ## Status
 
-`qa-passed`
+`done`
 
 ## Description
 
