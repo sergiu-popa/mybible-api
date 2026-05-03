@@ -12,6 +12,8 @@ use App\Support\Caching\CachedRead;
 
 final class ListResourceBooksAction
 {
+    public const DEFAULT_PER_PAGE = 15;
+
     public function __construct(private readonly CachedRead $cache) {}
 
     /**

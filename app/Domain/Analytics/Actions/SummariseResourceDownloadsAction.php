@@ -15,7 +15,16 @@ final class SummariseResourceDownloadsAction
      */
     public function execute(SummaryQueryData $query): array
     {
-        $rangeDays = $query->from->diffInDays($query->to) + 1;
+        if ($query->groupBy !== 'day') {
+            throw new BadRequestHttpException(
+                'long-range download summary requires MBA-030 rollups',
+            );
+        }
+
+        // Compare on calendar days so an inclusive 7-day window
+        // (e.g. Mon 00:00 → Sun 23:59) doesn't trip the boundary on
+        // sub-day fractions.
+        $rangeDays = (int) $query->from->startOfDay()->diffInDays($query->to->startOfDay()) + 1;
 
         if ($rangeDays > 7) {
             throw new BadRequestHttpException(
@@ -43,6 +52,9 @@ final class SummariseResourceDownloadsAction
             ->selectRaw('COUNT(DISTINCT device_id) as unique_devices')
             ->groupBy(['date', 'downloadable_type', 'downloadable_id', 'language'])
             ->orderBy('date')
+            ->orderBy('downloadable_type')
+            ->orderBy('downloadable_id')
+            ->orderBy('language')
             ->get();
 
         return $rows

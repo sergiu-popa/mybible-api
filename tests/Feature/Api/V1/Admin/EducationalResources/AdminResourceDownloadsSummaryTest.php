@@ -57,6 +57,39 @@ final class AdminResourceDownloadsSummaryTest extends TestCase
         ]))->assertStatus(400);
     }
 
+    public function test_inclusive_seven_day_window_is_accepted(): void
+    {
+        $this->actingAsSuper();
+
+        $this->getJson(route('admin.resource-downloads.summary', [
+            'from' => now()->subDays(6)->toDateString(),
+            'to' => now()->toDateString(),
+            'group_by' => 'day',
+        ]))->assertOk();
+    }
+
+    public function test_week_grouping_returns_400_until_mba_030(): void
+    {
+        $this->actingAsSuper();
+
+        $this->getJson(route('admin.resource-downloads.summary', [
+            'from' => now()->subDays(2)->toDateString(),
+            'to' => now()->toDateString(),
+            'group_by' => 'week',
+        ]))->assertStatus(400);
+    }
+
+    public function test_month_grouping_returns_400_until_mba_030(): void
+    {
+        $this->actingAsSuper();
+
+        $this->getJson(route('admin.resource-downloads.summary', [
+            'from' => now()->subDays(2)->toDateString(),
+            'to' => now()->toDateString(),
+            'group_by' => 'month',
+        ]))->assertStatus(400);
+    }
+
     public function test_requires_super_admin(): void
     {
         $this->getJson(route('admin.resource-downloads.summary', [

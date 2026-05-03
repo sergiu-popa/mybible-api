@@ -103,6 +103,26 @@ final class AdminResourceBookChaptersTest extends TestCase
         $this->assertSame(2, (int) $a->fresh()?->position);
     }
 
+    public function test_reorder_handles_partial_list_without_collision(): void
+    {
+        $this->actingAsSuper();
+
+        $book = ResourceBook::factory()->create();
+        $c1 = ResourceBookChapter::factory()->forBook($book)->create(['position' => 1]);
+        $c2 = ResourceBookChapter::factory()->forBook($book)->create(['position' => 2]);
+        $c3 = ResourceBookChapter::factory()->forBook($book)->create(['position' => 3]);
+        $c4 = ResourceBookChapter::factory()->forBook($book)->create(['position' => 4]);
+
+        $this->postJson(route('admin.resource-books.chapters.reorder', ['book' => $book->id]), [
+            'ids' => [$c2->id, $c1->id, $c3->id],
+        ])->assertOk();
+
+        $this->assertSame(1, (int) $c2->fresh()?->position);
+        $this->assertSame(2, (int) $c1->fresh()?->position);
+        $this->assertSame(3, (int) $c3->fresh()?->position);
+        $this->assertSame(4, (int) $c4->fresh()?->position);
+    }
+
     public function test_reorder_rejects_cross_book_ids(): void
     {
         $this->actingAsSuper();

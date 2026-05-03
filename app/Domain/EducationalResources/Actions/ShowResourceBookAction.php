@@ -23,9 +23,7 @@ final class ShowResourceBookAction
             ResourceBooksCacheKeys::tagsForBook($book->id),
             3600,
             static function () use ($book): array {
-                $book->load(['chapters' => static function ($query): void {
-                    $query->orderBy('position');
-                }]);
+                $book->load('chapters');
 
                 return ResourceBookDetailResource::make($book)
                     ->response(request())

@@ -137,6 +137,25 @@ final class AdminResourceBooksTest extends TestCase
             ->assertJsonValidationErrors(['slug']);
     }
 
+    public function test_update_ignores_published_at_field(): void
+    {
+        $this->actingAsSuper();
+
+        $book = ResourceBook::factory()->published()->create();
+        $original = $book->published_at;
+
+        $this->patchJson(route('admin.resource-books.update', ['book' => $book->id]), [
+            'published_at' => null,
+            'author' => 'Renamed',
+        ])->assertOk();
+
+        $fresh = $book->fresh();
+        $this->assertNotNull($fresh);
+        $this->assertNotNull($fresh->published_at);
+        $this->assertEquals($original?->toIso8601String(), $fresh->published_at->toIso8601String());
+        $this->assertSame('Renamed', $fresh->author);
+    }
+
     public function test_publish_and_unpublish_round_trip(): void
     {
         $this->actingAsSuper();

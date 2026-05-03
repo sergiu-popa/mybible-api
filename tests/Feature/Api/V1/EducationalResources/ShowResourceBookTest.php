@@ -62,4 +62,18 @@ final class ShowResourceBookTest extends TestCase
             ->getJson(route('resource-books.show', ['book' => 'no-such-book']))
             ->assertNotFound();
     }
+
+    public function test_it_sets_public_cache_headers(): void
+    {
+        $book = ResourceBook::factory()->published()->create();
+        ResourceBookChapter::factory()->forBook($book)->create(['position' => 1]);
+
+        $response = $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('resource-books.show', ['book' => $book->slug]));
+
+        $response->assertOk();
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+        $this->assertStringContainsString('public', $cacheControl);
+        $this->assertStringContainsString('max-age=3600', $cacheControl);
+    }
 }

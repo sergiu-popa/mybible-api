@@ -17,7 +17,7 @@ final class ListResourceBooksController
         $payload = $action->execute(
             $request->languageFilter(),
             $request->pageNumber(),
-            15,
+            ListResourceBooksAction::DEFAULT_PER_PAGE,
         );
 
         return response()->json($payload);

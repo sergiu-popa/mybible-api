@@ -40,7 +40,6 @@ final class UpdateResourceBookRequest extends FormRequest
             'description' => ['sometimes', 'nullable', 'string'],
             'cover_image_url' => ['sometimes', 'nullable', 'string', 'max:255'],
             'author' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'published_at' => ['sometimes', 'nullable', 'date'],
         ];
     }
 

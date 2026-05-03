@@ -26,7 +26,18 @@ class ResourceBookListResource extends JsonResource
             'cover_image_url' => $this->cover_image_url,
             'author' => $this->author,
             'published_at' => $this->published_at?->toIso8601String(),
-            'chapter_count' => (int) ($this->chapters_count ?? $this->chapters()->count()),
+            'chapter_count' => $this->resolveChapterCount(),
         ];
+    }
+
+    private function resolveChapterCount(): int
+    {
+        // Detail callers eager-load `chapters` (not `withCount`); read off
+        // the hydrated collection rather than firing a fresh COUNT(*).
+        if ($this->resource->relationLoaded('chapters')) {
+            return $this->chapters->count();
+        }
+
+        return (int) ($this->chapters_count ?? $this->chapters()->count());
     }
 }

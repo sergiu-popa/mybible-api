@@ -34,9 +34,14 @@ final class ReorderResourceBookChaptersAction
         }
 
         DB::transaction(function () use ($book, $ids): void {
-            $offset = count($ids) + 1;
+            // Pass-1 target range must clear every existing position in the
+            // book, including chapters omitted from $ids — otherwise the
+            // unique (resource_book_id, position) index can collide on a
+            // partial reorder.
+            $offset = (int) ResourceBookChapter::query()
+                ->where('resource_book_id', $book->id)
+                ->max('position') + 1;
 
-            // Two-pass to avoid colliding on the unique (book_id, position) index.
             foreach ($ids as $i => $id) {
                 ResourceBookChapter::query()
                     ->whereKey($id)
