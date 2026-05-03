@@ -25,13 +25,22 @@ final class SabbathSchoolLessonQueryBuilder extends Builder
         return $this->where('language', $language->value);
     }
 
+    public function forTrimester(int $trimesterId): self
+    {
+        return $this->where('trimester_id', $trimesterId);
+    }
+
+    public function forAgeGroup(string $ageGroup): self
+    {
+        return $this->where('age_group', $ageGroup);
+    }
+
     /**
-     * Eager-loads segments and their questions in a single query each, to
-     * avoid N+1 on lesson detail responses. Verified by
-     * ShowSabbathSchoolLessonTest::test_it_avoids_n_plus_one_on_a_large_fixture.
+     * Eager-loads segments and their typed content blocks in a single
+     * query each, to avoid N+1 on lesson detail responses.
      */
     public function withLessonDetail(): self
     {
-        return $this->with(['segments.questions']);
+        return $this->with(['segments.segmentContents']);
     }
 }

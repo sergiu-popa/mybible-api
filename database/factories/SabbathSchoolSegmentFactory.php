@@ -6,6 +6,7 @@ namespace Database\Factories;
 
 use App\Domain\SabbathSchool\Models\SabbathSchoolLesson;
 use App\Domain\SabbathSchool\Models\SabbathSchoolSegment;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -23,6 +24,7 @@ final class SabbathSchoolSegmentFactory extends Factory
         return [
             'sabbath_school_lesson_id' => SabbathSchoolLesson::factory(),
             'day' => fake()->numberBetween(0, 6),
+            'for_date' => null,
             'title' => fake()->sentence(3),
             'content' => '<p>' . fake()->paragraph() . '</p>',
             'passages' => ['GEN.1:1.VDC'],
@@ -42,6 +44,14 @@ final class SabbathSchoolSegmentFactory extends Factory
         return $this->state(fn (): array => [
             'position' => $position,
             'day' => $position % 7,
+        ]);
+    }
+
+    public function forDate(CarbonImmutable $date): self
+    {
+        return $this->state(fn (): array => [
+            'for_date' => $date->toDateString(),
+            'day' => null,
         ]);
     }
 }

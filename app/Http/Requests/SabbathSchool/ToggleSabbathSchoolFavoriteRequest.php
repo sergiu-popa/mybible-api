@@ -6,7 +6,6 @@ namespace App\Http\Requests\SabbathSchool;
 
 use App\Domain\SabbathSchool\DataTransferObjects\ToggleSabbathSchoolFavoriteData;
 use App\Domain\SabbathSchool\Models\SabbathSchoolSegment;
-use App\Domain\SabbathSchool\Support\SabbathSchoolFavoriteSentinel;
 use App\Models\User;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -71,9 +70,7 @@ final class ToggleSabbathSchoolFavoriteRequest extends FormRequest
         return new ToggleSabbathSchoolFavoriteData(
             user: $user,
             lessonId: (int) $data['lesson_id'],
-            segmentId: $segmentId === null
-                ? SabbathSchoolFavoriteSentinel::WHOLE_LESSON
-                : (int) $segmentId,
+            segmentId: $segmentId === null ? null : (int) $segmentId,
         );
     }
 }

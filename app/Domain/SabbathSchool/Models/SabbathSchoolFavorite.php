@@ -19,7 +19,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property int $sabbath_school_lesson_id
- * @property int $sabbath_school_segment_id
+ * @property int|null $sabbath_school_segment_id
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property Carbon|null $deleted_at
@@ -35,6 +35,16 @@ final class SabbathSchoolFavorite extends Model
     use SoftDeletes;
 
     protected $guarded = [];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'sabbath_school_segment_id' => 'integer',
+        ];
+    }
 
     /**
      * @return BelongsTo<User, $this>

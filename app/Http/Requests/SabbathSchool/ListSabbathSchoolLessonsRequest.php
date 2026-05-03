@@ -29,6 +29,8 @@ final class ListSabbathSchoolLessonsRequest extends FormRequest
                 static fn (Language $l): string => $l->value,
                 Language::cases(),
             ))],
+            'trimester' => ['nullable', 'integer', 'exists:sabbath_school_trimesters,id'],
+            'age_group' => ['nullable', 'string', 'max:50'],
         ]);
     }
 
@@ -37,5 +39,19 @@ final class ListSabbathSchoolLessonsRequest extends FormRequest
         $value = $this->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY, Language::En);
 
         return $value instanceof Language ? $value : Language::En;
+    }
+
+    public function trimesterId(): ?int
+    {
+        $value = $this->validated('trimester');
+
+        return is_numeric($value) ? (int) $value : null;
+    }
+
+    public function ageGroup(): ?string
+    {
+        $value = $this->validated('age_group');
+
+        return is_string($value) && $value !== '' ? $value : null;
     }
 }

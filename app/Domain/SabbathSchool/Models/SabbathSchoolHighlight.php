@@ -19,12 +19,17 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property int $sabbath_school_segment_id
- * @property string $passage
+ * @property int|null $segment_content_id
+ * @property int|null $start_position
+ * @property int|null $end_position
+ * @property string|null $color
+ * @property string|null $passage
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property Carbon|null $deleted_at
  * @property-read User $user
  * @property-read SabbathSchoolSegment $segment
+ * @property-read SabbathSchoolSegmentContent|null $segmentContent
  */
 #[UseFactory(SabbathSchoolHighlightFactory::class)]
 final class SabbathSchoolHighlight extends Model
@@ -35,6 +40,18 @@ final class SabbathSchoolHighlight extends Model
     use SoftDeletes;
 
     protected $guarded = [];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'segment_content_id' => 'integer',
+            'start_position' => 'integer',
+            'end_position' => 'integer',
+        ];
+    }
 
     /**
      * @return BelongsTo<User, $this>
@@ -50,6 +67,35 @@ final class SabbathSchoolHighlight extends Model
     public function segment(): BelongsTo
     {
         return $this->belongsTo(SabbathSchoolSegment::class, 'sabbath_school_segment_id');
+    }
+
+    /**
+     * @return BelongsTo<SabbathSchoolSegmentContent, $this>
+     */
+    public function segmentContent(): BelongsTo
+    {
+        return $this->belongsTo(SabbathSchoolSegmentContent::class, 'segment_content_id');
+    }
+
+    /**
+     * Scope route-model binding to the caller so cross-user PATCH
+     * attempts 404 (the row is invisible to anyone else). Fail closed
+     * if no user is authenticated so the gate is never silently lifted.
+     */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        $userId = request()->user()?->id;
+
+        if ($userId === null) {
+            return null;
+        }
+
+        $field ??= $this->getRouteKeyName();
+
+        return self::query()
+            ->where($field, $value)
+            ->where('user_id', $userId)
+            ->first();
     }
 
     /**

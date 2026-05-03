@@ -9,7 +9,6 @@ use App\Domain\SabbathSchool\DataTransferObjects\ToggleSabbathSchoolFavoriteData
 use App\Domain\SabbathSchool\Models\SabbathSchoolFavorite;
 use App\Domain\SabbathSchool\Models\SabbathSchoolLesson;
 use App\Domain\SabbathSchool\Models\SabbathSchoolSegment;
-use App\Domain\SabbathSchool\Support\SabbathSchoolFavoriteSentinel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -18,17 +17,13 @@ final class ToggleSabbathSchoolFavoriteActionTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_inserts_whole_lesson_sentinel_favorite(): void
+    public function test_it_inserts_whole_lesson_favorite_with_null_segment_id(): void
     {
         $user = User::factory()->create();
         $lesson = SabbathSchoolLesson::factory()->create();
 
         $result = $this->app->make(ToggleSabbathSchoolFavoriteAction::class)->execute(
-            new ToggleSabbathSchoolFavoriteData(
-                $user,
-                $lesson->id,
-                SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
-            ),
+            new ToggleSabbathSchoolFavoriteData($user, $lesson->id, null),
         );
 
         $this->assertTrue($result->created);
@@ -36,11 +31,11 @@ final class ToggleSabbathSchoolFavoriteActionTest extends TestCase
         $this->assertDatabaseHas('sabbath_school_favorites', [
             'user_id' => $user->id,
             'sabbath_school_lesson_id' => $lesson->id,
-            'sabbath_school_segment_id' => SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
+            'sabbath_school_segment_id' => null,
         ]);
     }
 
-    public function test_it_deletes_the_sentinel_row_on_second_call(): void
+    public function test_it_deletes_the_whole_lesson_row_on_second_call(): void
     {
         $user = User::factory()->create();
         $lesson = SabbathSchoolLesson::factory()->create();
@@ -48,14 +43,11 @@ final class ToggleSabbathSchoolFavoriteActionTest extends TestCase
         SabbathSchoolFavorite::factory()
             ->forUser($user)
             ->forLesson($lesson)
+            ->wholeLesson()
             ->create();
 
         $result = $this->app->make(ToggleSabbathSchoolFavoriteAction::class)->execute(
-            new ToggleSabbathSchoolFavoriteData(
-                $user,
-                $lesson->id,
-                SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
-            ),
+            new ToggleSabbathSchoolFavoriteData($user, $lesson->id, null),
         );
 
         $this->assertFalse($result->created);
@@ -65,7 +57,7 @@ final class ToggleSabbathSchoolFavoriteActionTest extends TestCase
         ]);
     }
 
-    public function test_segment_level_insert_does_not_touch_the_sentinel_row(): void
+    public function test_segment_level_insert_does_not_touch_the_whole_lesson_row(): void
     {
         $user = User::factory()->create();
         $lesson = SabbathSchoolLesson::factory()->create();
@@ -74,6 +66,7 @@ final class ToggleSabbathSchoolFavoriteActionTest extends TestCase
         SabbathSchoolFavorite::factory()
             ->forUser($user)
             ->forLesson($lesson)
+            ->wholeLesson()
             ->create();
 
         $result = $this->app->make(ToggleSabbathSchoolFavoriteAction::class)->execute(
@@ -85,7 +78,7 @@ final class ToggleSabbathSchoolFavoriteActionTest extends TestCase
         $this->assertDatabaseHas('sabbath_school_favorites', [
             'user_id' => $user->id,
             'sabbath_school_lesson_id' => $lesson->id,
-            'sabbath_school_segment_id' => SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
+            'sabbath_school_segment_id' => null,
         ]);
         $this->assertDatabaseHas('sabbath_school_favorites', [
             'user_id' => $user->id,
@@ -100,11 +93,7 @@ final class ToggleSabbathSchoolFavoriteActionTest extends TestCase
         $lesson = SabbathSchoolLesson::factory()->create();
 
         $action = $this->app->make(ToggleSabbathSchoolFavoriteAction::class);
-        $dto = new ToggleSabbathSchoolFavoriteData(
-            $user,
-            $lesson->id,
-            SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
-        );
+        $dto = new ToggleSabbathSchoolFavoriteData($user, $lesson->id, null);
 
         $created = $action->execute($dto);
         $this->assertNotNull($created->favorite);

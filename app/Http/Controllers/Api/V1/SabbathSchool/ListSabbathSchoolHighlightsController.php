@@ -16,10 +16,10 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 final class ListSabbathSchoolHighlightsController
 {
     /**
-     * List the caller's highlights for a given segment.
-     *
-     * Returns all rows belonging to the authenticated user on the requested
-     * segment. Ordered newest-first.
+     * List the caller's highlights for a given segment, joining
+     * `segment_contents` so highlights anchored to any block in the
+     * segment surface. Un-migrated rows (no `segment_content_id`) are
+     * filtered out via `migrated()`.
      */
     public function __invoke(ListSabbathSchoolHighlightsRequest $request): AnonymousResourceCollection
     {
@@ -27,10 +27,11 @@ final class ListSabbathSchoolHighlightsController
         $user = $request->user();
 
         $highlights = SabbathSchoolHighlight::query()
+            ->migrated()
             ->forUser($user)
             ->forSegment($request->segmentId())
-            ->orderByDesc('created_at')
-            ->orderByDesc('id')
+            ->orderByDesc('sabbath_school_highlights.created_at')
+            ->orderByDesc('sabbath_school_highlights.id')
             ->get();
 
         return SabbathSchoolHighlightResource::collection($highlights);

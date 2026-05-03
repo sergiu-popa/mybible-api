@@ -11,19 +11,26 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property int|null $trimester_id
  * @property string $language
+ * @property string $age_group
+ * @property int $number
  * @property string $title
- * @property Carbon $week_start
- * @property Carbon $week_end
+ * @property string|null $memory_verse
+ * @property string|null $image_cdn_url
+ * @property Carbon $date_from
+ * @property Carbon $date_to
  * @property Carbon|null $published_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Collection<int, SabbathSchoolSegment> $segments
+ * @property-read SabbathSchoolTrimester|null $trimester
  */
 #[UseFactory(SabbathSchoolLessonFactory::class)]
 final class SabbathSchoolLesson extends Model
@@ -39,10 +46,19 @@ final class SabbathSchoolLesson extends Model
     protected function casts(): array
     {
         return [
-            'week_start' => 'date',
-            'week_end' => 'date',
+            'date_from' => 'date',
+            'date_to' => 'date',
             'published_at' => 'datetime',
+            'number' => 'integer',
         ];
+    }
+
+    /**
+     * @return BelongsTo<SabbathSchoolTrimester, $this>
+     */
+    public function trimester(): BelongsTo
+    {
+        return $this->belongsTo(SabbathSchoolTrimester::class, 'trimester_id');
     }
 
     /**
@@ -54,21 +70,21 @@ final class SabbathSchoolLesson extends Model
     }
 
     /**
-     * Restrict route-model binding to published lessons so draft ids 404
-     * before controllers ever see them. Eager-loads the lesson detail
-     * graph in the same query so controllers do not duplicate the
-     * relation list — see {@see SabbathSchoolLessonQueryBuilder::withLessonDetail()}.
-     * Mirrors the ReadingPlan precedent.
+     * Public routes hide drafts via `published()`. Admin routes serve
+     * drafts so super-admins can edit them; the route-name guard
+     * mirrors the Commentary precedent.
      */
     public function resolveRouteBinding($value, $field = null): ?Model
     {
         $field ??= $this->getRouteKeyName();
 
-        return SabbathSchoolLesson::query()
-            ->published()
-            ->withLessonDetail()
-            ->where($field, $value)
-            ->first();
+        $query = self::query()->where($field, $value);
+
+        if (! request()->routeIs('admin.*')) {
+            $query->published()->withLessonDetail();
+        }
+
+        return $query->first();
     }
 
     /**

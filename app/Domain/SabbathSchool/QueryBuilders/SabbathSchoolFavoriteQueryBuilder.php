@@ -18,10 +18,19 @@ final class SabbathSchoolFavoriteQueryBuilder extends Builder
         return $this->where('user_id', $user->id);
     }
 
-    public function forLessonAndSegment(int $lessonId, int $segmentId): self
+    public function forLessonAndSegment(int $lessonId, ?int $segmentId): self
+    {
+        $query = $this->where('sabbath_school_lesson_id', $lessonId);
+
+        return $segmentId === null
+            ? $query->whereNull('sabbath_school_segment_id')
+            : $query->where('sabbath_school_segment_id', $segmentId);
+    }
+
+    public function forWholeLesson(int $lessonId): self
     {
         return $this
             ->where('sabbath_school_lesson_id', $lessonId)
-            ->where('sabbath_school_segment_id', $segmentId);
+            ->whereNull('sabbath_school_segment_id');
     }
 }

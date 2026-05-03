@@ -17,8 +17,20 @@ use App\Http\Controllers\Api\V1\Admin\EducationalResources\ReorderResourceCatego
 use App\Http\Controllers\Api\V1\Admin\Imports\ShowImportJobController;
 use App\Http\Controllers\Api\V1\Admin\Olympiad\ReorderOlympiadQuestionsController;
 use App\Http\Controllers\Api\V1\Admin\References\ValidateReferenceController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\CreateLessonController as AdminCreateSabbathSchoolLessonController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\CreateSegmentContentController as AdminCreateSabbathSchoolSegmentContentController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\CreateTrimesterController as AdminCreateSabbathSchoolTrimesterController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\DeleteLessonController as AdminDeleteSabbathSchoolLessonController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\DeleteSegmentContentController as AdminDeleteSabbathSchoolSegmentContentController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\DeleteTrimesterController as AdminDeleteSabbathSchoolTrimesterController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ListAdminLessonsController as AdminListSabbathSchoolLessonsController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ListAdminTrimestersController as AdminListSabbathSchoolTrimestersController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ListSegmentContentsController as AdminListSabbathSchoolSegmentContentsController;
 use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ReorderLessonSegmentsController;
-use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ReorderSegmentQuestionsController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\ReorderSegmentContentsController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\UpdateLessonController as AdminUpdateSabbathSchoolLessonController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\UpdateSegmentContentController as AdminUpdateSabbathSchoolSegmentContentController;
+use App\Http\Controllers\Api\V1\Admin\SabbathSchool\UpdateTrimesterController as AdminUpdateSabbathSchoolTrimesterController;
 use App\Http\Controllers\Api\V1\Admin\Uploads\IssuePresignedUploadController;
 use App\Http\Controllers\Api\V1\Admin\Users\CreateAdminUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\DisableAdminUserController;
@@ -86,8 +98,11 @@ use App\Http\Controllers\Api\V1\SabbathSchool\DeleteSabbathSchoolAnswerControlle
 use App\Http\Controllers\Api\V1\SabbathSchool\ListSabbathSchoolFavoritesController;
 use App\Http\Controllers\Api\V1\SabbathSchool\ListSabbathSchoolHighlightsController;
 use App\Http\Controllers\Api\V1\SabbathSchool\ListSabbathSchoolLessonsController;
+use App\Http\Controllers\Api\V1\SabbathSchool\ListSabbathSchoolTrimestersController;
+use App\Http\Controllers\Api\V1\SabbathSchool\PatchSabbathSchoolHighlightController;
 use App\Http\Controllers\Api\V1\SabbathSchool\ShowSabbathSchoolAnswerController;
 use App\Http\Controllers\Api\V1\SabbathSchool\ShowSabbathSchoolLessonController;
+use App\Http\Controllers\Api\V1\SabbathSchool\ShowSabbathSchoolTrimesterController;
 use App\Http\Controllers\Api\V1\SabbathSchool\ToggleSabbathSchoolFavoriteController;
 use App\Http\Controllers\Api\V1\SabbathSchool\ToggleSabbathSchoolHighlightController;
 use App\Http\Controllers\Api\V1\SabbathSchool\UpsertSabbathSchoolAnswerController;
@@ -312,15 +327,50 @@ Route::prefix('v1')->group(function (): void {
                     Route::prefix('sabbath-school')
                         ->name('sabbath-school.')
                         ->group(function (): void {
+                            Route::get('trimesters', AdminListSabbathSchoolTrimestersController::class)
+                                ->name('trimesters.index');
+                            Route::post('trimesters', AdminCreateSabbathSchoolTrimesterController::class)
+                                ->name('trimesters.store');
+                            Route::patch('trimesters/{trimester}', AdminUpdateSabbathSchoolTrimesterController::class)
+                                ->name('trimesters.update');
+                            Route::delete('trimesters/{trimester}', AdminDeleteSabbathSchoolTrimesterController::class)
+                                ->name('trimesters.destroy');
+
+                            Route::get('lessons', AdminListSabbathSchoolLessonsController::class)
+                                ->name('lessons.index');
+                            Route::post('lessons', AdminCreateSabbathSchoolLessonController::class)
+                                ->name('lessons.store');
+                            Route::patch('lessons/{lesson}', AdminUpdateSabbathSchoolLessonController::class)
+                                ->name('lessons.update');
+                            Route::delete('lessons/{lesson}', AdminDeleteSabbathSchoolLessonController::class)
+                                ->name('lessons.destroy');
+
                             Route::post(
                                 'lessons/{lesson}/segments/reorder',
                                 ReorderLessonSegmentsController::class,
                             )->name('lessons.segments.reorder');
 
+                            Route::get(
+                                'segments/{segment}/contents',
+                                AdminListSabbathSchoolSegmentContentsController::class,
+                            )->name('segments.contents.index');
                             Route::post(
-                                'segments/{segment}/questions/reorder',
-                                ReorderSegmentQuestionsController::class,
-                            )->name('segments.questions.reorder');
+                                'segments/{segment}/contents',
+                                AdminCreateSabbathSchoolSegmentContentController::class,
+                            )->name('segments.contents.store');
+                            Route::post(
+                                'segments/{segment}/contents/reorder',
+                                ReorderSegmentContentsController::class,
+                            )->name('segments.contents.reorder');
+
+                            Route::patch(
+                                'segment-contents/{content}',
+                                AdminUpdateSabbathSchoolSegmentContentController::class,
+                            )->name('segment-contents.update');
+                            Route::delete(
+                                'segment-contents/{content}',
+                                AdminDeleteSabbathSchoolSegmentContentController::class,
+                            )->name('segment-contents.destroy');
                         });
 
                     Route::post(
@@ -420,6 +470,10 @@ Route::prefix('v1')->group(function (): void {
         ->name('sabbath-school.')
         ->group(function (): void {
             Route::middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon'])->group(function (): void {
+                Route::get('trimesters', ListSabbathSchoolTrimestersController::class)
+                    ->name('trimesters.index');
+                Route::get('trimesters/{trimester}', ShowSabbathSchoolTrimesterController::class)
+                    ->name('trimesters.show');
                 Route::get('lessons', ListSabbathSchoolLessonsController::class)
                     ->name('lessons.index');
                 Route::get('lessons/{lesson}', ShowSabbathSchoolLessonController::class)
@@ -427,17 +481,19 @@ Route::prefix('v1')->group(function (): void {
             });
 
             Route::middleware(['auth:sanctum', 'throttle:per-user'])->group(function (): void {
-                Route::get('questions/{question}/answer', ShowSabbathSchoolAnswerController::class)
+                Route::get('segment-contents/{content}/answer', ShowSabbathSchoolAnswerController::class)
                     ->name('answers.show');
-                Route::post('questions/{question}/answer', UpsertSabbathSchoolAnswerController::class)
+                Route::post('segment-contents/{content}/answer', UpsertSabbathSchoolAnswerController::class)
                     ->name('answers.upsert');
-                Route::delete('questions/{question}/answer', DeleteSabbathSchoolAnswerController::class)
+                Route::delete('segment-contents/{content}/answer', DeleteSabbathSchoolAnswerController::class)
                     ->name('answers.destroy');
 
                 Route::get('highlights', ListSabbathSchoolHighlightsController::class)
                     ->name('highlights.index');
                 Route::post('highlights/toggle', ToggleSabbathSchoolHighlightController::class)
                     ->name('highlights.toggle');
+                Route::patch('highlights/{highlight}', PatchSabbathSchoolHighlightController::class)
+                    ->name('highlights.update');
 
                 Route::get('favorites', ListSabbathSchoolFavoritesController::class)
                     ->name('favorites.index');

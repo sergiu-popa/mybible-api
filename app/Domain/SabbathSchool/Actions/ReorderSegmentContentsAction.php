@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Domain\SabbathSchool\Actions;
 
-use App\Domain\SabbathSchool\Models\SabbathSchoolQuestion;
 use App\Domain\SabbathSchool\Models\SabbathSchoolSegment;
+use App\Domain\SabbathSchool\Models\SabbathSchoolSegmentContent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-final class ReorderSegmentQuestionsAction
+final class ReorderSegmentContentsAction
 {
     /**
-     * Persist a full ordering of question ids inside a single segment.
-     * Every id in `$ids` must belong to `$segment`; a mismatch raises
-     * `ValidationException` so admin clients with stale ids see a 422
-     * instead of a silent partial reorder.
+     * Persist a full ordering of segment-content ids inside a single
+     * segment. Every id in `$ids` must belong to `$segment`; a mismatch
+     * raises `ValidationException` so admin clients with stale ids see
+     * a 422 instead of a silent partial reorder.
      *
      * @param  list<int>  $ids
      */
@@ -25,8 +25,8 @@ final class ReorderSegmentQuestionsAction
             return;
         }
 
-        $matching = SabbathSchoolQuestion::query()
-            ->where('sabbath_school_segment_id', $segment->id)
+        $matching = SabbathSchoolSegmentContent::query()
+            ->where('segment_id', $segment->id)
             ->whereIn('id', $ids)
             ->count();
 
@@ -38,9 +38,9 @@ final class ReorderSegmentQuestionsAction
 
         DB::transaction(function () use ($segment, $ids): void {
             foreach ($ids as $position => $id) {
-                SabbathSchoolQuestion::query()
+                SabbathSchoolSegmentContent::query()
                     ->whereKey($id)
-                    ->where('sabbath_school_segment_id', $segment->id)
+                    ->where('segment_id', $segment->id)
                     ->update(['position' => $position + 1]);
             }
         });

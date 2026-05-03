@@ -25,10 +25,15 @@ final class CacheKeysTest extends TestCase
 {
     public function test_sabbath_school_keys(): void
     {
-        $this->assertSame('ss:lessons:list:en:p1:30', SabbathSchoolCacheKeys::lessonsList(Language::En, 1, 30));
+        $this->assertSame('ss:lessons:list:en:tall:aall:p1:30', SabbathSchoolCacheKeys::lessonsList(Language::En, 1, 30));
+        $this->assertSame('ss:lessons:list:en:t7:ayouth:p1:30', SabbathSchoolCacheKeys::lessonsList(Language::En, 1, 30, 7, 'youth'));
         $this->assertSame('ss:lesson:42:ro', SabbathSchoolCacheKeys::lesson(42, Language::Ro));
-        $this->assertSame(['ss', 'ss:lessons'], SabbathSchoolCacheKeys::tagsForLessonsList());
+        $this->assertSame('ss:trimesters:list:ro', SabbathSchoolCacheKeys::trimestersList(Language::Ro));
+        $this->assertSame('ss:trimester:7:ro', SabbathSchoolCacheKeys::trimester(7, Language::Ro));
+        $this->assertSame(['ss', 'ss:lessons', 'ss:trimesters'], SabbathSchoolCacheKeys::tagsForLessonsList());
         $this->assertSame(['ss', 'ss:lesson:42'], SabbathSchoolCacheKeys::tagsForLesson(42));
+        $this->assertSame(['ss', 'ss:trimesters'], SabbathSchoolCacheKeys::tagsForTrimestersList());
+        $this->assertSame(['ss', 'ss:trimester:7'], SabbathSchoolCacheKeys::tagsForTrimester(7));
     }
 
     public function test_devotional_keys(): void

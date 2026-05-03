@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Requests\SabbathSchool;
 
 use App\Domain\SabbathSchool\DataTransferObjects\UpsertSabbathSchoolAnswerData;
-use App\Domain\SabbathSchool\Models\SabbathSchoolQuestion;
+use App\Domain\SabbathSchool\Models\SabbathSchoolSegmentContent;
+use App\Domain\SabbathSchool\Support\SegmentContentType;
 use App\Models\User;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class UpsertSabbathSchoolAnswerRequest extends FormRequest
@@ -14,21 +16,22 @@ final class UpsertSabbathSchoolAnswerRequest extends FormRequest
     public const CONTENT_MAX_LENGTH = 10_000;
 
     /**
-     * Guards the published-lesson invariant: a question can only accept
-     * answers if its lesson is published. Draft content is invisible to the
-     * catalog endpoints so attaching answers to it is rejected up-front.
+     * Authorize the call: the caller must be authenticated and the
+     * lesson behind the bound content block must be published. The
+     * content-type check happens in `withValidator()` so a non-question
+     * payload returns 422 (structurally invalid) rather than 403.
      */
     public function authorize(): bool
     {
-        $question = $this->route('question');
+        $content = $this->route('content');
 
-        if (! $question instanceof SabbathSchoolQuestion || ! $this->user() instanceof User) {
+        if (! $content instanceof SabbathSchoolSegmentContent || ! $this->user() instanceof User) {
             return false;
         }
 
-        $question->loadMissing(['segment.lesson']);
+        $content->loadMissing(['segment.lesson']);
 
-        $lesson = $question->segment->lesson;
+        $lesson = $content->segment->lesson;
 
         return $lesson->published_at !== null
             && $lesson->published_at->lessThanOrEqualTo(now());
@@ -44,21 +47,39 @@ final class UpsertSabbathSchoolAnswerRequest extends FormRequest
         ];
     }
 
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $content = $this->route('content');
+
+            if (! $content instanceof SabbathSchoolSegmentContent) {
+                return;
+            }
+
+            if ($content->type !== SegmentContentType::Question->value) {
+                $validator->errors()->add(
+                    'content',
+                    'Answers can only be attached to question content blocks.',
+                );
+            }
+        });
+    }
+
     public function toData(): UpsertSabbathSchoolAnswerData
     {
-        /** @var SabbathSchoolQuestion $question */
-        $question = $this->route('question');
+        /** @var SabbathSchoolSegmentContent $content */
+        $content = $this->route('content');
 
         /** @var User $user */
         $user = $this->user();
 
-        /** @var string $content */
-        $content = $this->validated('content');
+        /** @var string $body */
+        $body = $this->validated('content');
 
         return new UpsertSabbathSchoolAnswerData(
             user: $user,
-            question: $question,
-            content: $content,
+            segmentContent: $content,
+            content: $body,
         );
     }
 }

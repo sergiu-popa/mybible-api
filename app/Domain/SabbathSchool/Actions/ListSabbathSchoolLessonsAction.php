@@ -17,19 +17,33 @@ final class ListSabbathSchoolLessonsAction
     /**
      * @return array<string, mixed>
      */
-    public function execute(Language $language, int $page, int $perPage): array
-    {
+    public function execute(
+        Language $language,
+        int $page,
+        int $perPage,
+        ?int $trimesterId = null,
+        ?string $ageGroup = null,
+    ): array {
         return $this->cache->read(
-            SabbathSchoolCacheKeys::lessonsList($language, $page, $perPage),
+            SabbathSchoolCacheKeys::lessonsList($language, $page, $perPage, $trimesterId, $ageGroup),
             SabbathSchoolCacheKeys::tagsForLessonsList(),
             3600,
-            static function () use ($language, $perPage, $page): array {
-                $paginator = SabbathSchoolLesson::query()
+            static function () use ($language, $perPage, $page, $trimesterId, $ageGroup): array {
+                $query = SabbathSchoolLesson::query()
                     ->published()
                     ->forLanguage($language)
                     ->orderByDesc('published_at')
-                    ->orderByDesc('id')
-                    ->paginate($perPage, page: $page);
+                    ->orderByDesc('id');
+
+                if ($trimesterId !== null) {
+                    $query->forTrimester($trimesterId);
+                }
+
+                if ($ageGroup !== null) {
+                    $query->forAgeGroup($ageGroup);
+                }
+
+                $paginator = $query->paginate($perPage, page: $page);
 
                 return SabbathSchoolLessonSummaryResource::collection($paginator)
                     ->response(request())

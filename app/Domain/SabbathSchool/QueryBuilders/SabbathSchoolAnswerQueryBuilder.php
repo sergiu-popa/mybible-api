@@ -18,8 +18,8 @@ final class SabbathSchoolAnswerQueryBuilder extends Builder
         return $this->where('user_id', $user->id);
     }
 
-    public function forQuestion(int $questionId): self
+    public function forSegmentContent(int $segmentContentId): self
     {
-        return $this->where('sabbath_school_question_id', $questionId);
+        return $this->where('segment_content_id', $segmentContentId);
     }
 }

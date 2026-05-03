@@ -18,9 +18,9 @@ final class ToggleSabbathSchoolHighlightController
     /**
      * Toggle a Sabbath School highlight.
      *
-     * Returns `201 Created` with the new highlight on insert, or `200 OK`
-     * with `{ deleted: true }` when the existing (segment, passage) pair is
-     * removed.
+     * Returns `201 Created` with the new highlight on insert, or `200
+     * OK` with `{ deleted: true }` when the existing
+     * (segment_content, range) is removed for the caller.
      */
     public function __invoke(
         ToggleSabbathSchoolHighlightRequest $request,

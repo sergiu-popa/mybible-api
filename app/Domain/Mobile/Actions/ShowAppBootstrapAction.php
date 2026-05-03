@@ -99,8 +99,8 @@ final class ShowAppBootstrapAction
         $currentLesson = SabbathSchoolLesson::query()
             ->published()
             ->forLanguage($language)
-            ->where('week_start', '<=', $today->toDateString())
-            ->where('week_end', '>=', $today->toDateString())
+            ->where('date_from', '<=', $today->toDateString())
+            ->where('date_to', '>=', $today->toDateString())
             ->latest('published_at')
             ->first();
 
@@ -136,8 +136,8 @@ final class ShowAppBootstrapAction
                     'id' => $currentLesson->id,
                     'title' => $currentLesson->title,
                     'language' => $currentLesson->language,
-                    'week_start' => $currentLesson->week_start->toDateString(),
-                    'week_end' => $currentLesson->week_end->toDateString(),
+                    'week_start' => $currentLesson->date_from->toDateString(),
+                    'week_end' => $currentLesson->date_to->toDateString(),
                 ]
                 : null,
             'qr_codes' => $qrCodeItems,

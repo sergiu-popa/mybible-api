@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\SabbathSchool;
 
-use App\Domain\SabbathSchool\Models\SabbathSchoolQuestion;
+use App\Domain\SabbathSchool\Models\SabbathSchoolSegmentContent;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin SabbathSchoolQuestion
+ * @mixin SabbathSchoolSegmentContent
  */
-final class SabbathSchoolQuestionResource extends JsonResource
+final class SabbathSchoolSegmentContentResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -20,7 +20,10 @@ final class SabbathSchoolQuestionResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'prompt' => $this->prompt,
+            'type' => $this->type,
+            'title' => $this->title,
+            'position' => $this->position,
+            'content' => $this->content,
         ];
     }
 }

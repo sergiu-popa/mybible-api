@@ -7,7 +7,7 @@ namespace Tests\Unit\Domain\SabbathSchool\Actions;
 use App\Domain\SabbathSchool\Actions\UpsertSabbathSchoolAnswerAction;
 use App\Domain\SabbathSchool\DataTransferObjects\UpsertSabbathSchoolAnswerData;
 use App\Domain\SabbathSchool\Models\SabbathSchoolAnswer;
-use App\Domain\SabbathSchool\Models\SabbathSchoolQuestion;
+use App\Domain\SabbathSchool\Models\SabbathSchoolSegmentContent;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,17 +19,17 @@ final class UpsertSabbathSchoolAnswerActionTest extends TestCase
     public function test_it_inserts_a_new_answer_when_none_exists(): void
     {
         $user = User::factory()->create();
-        $question = SabbathSchoolQuestion::factory()->create();
+        $content = SabbathSchoolSegmentContent::factory()->question()->create();
 
         $result = $this->app->make(UpsertSabbathSchoolAnswerAction::class)->execute(
-            new UpsertSabbathSchoolAnswerData($user, $question, 'Hello.'),
+            new UpsertSabbathSchoolAnswerData($user, $content, 'Hello.'),
         );
 
         $this->assertTrue($result->created);
         $this->assertSame('Hello.', $result->answer->content);
         $this->assertDatabaseHas('sabbath_school_answers', [
             'user_id' => $user->id,
-            'sabbath_school_question_id' => $question->id,
+            'segment_content_id' => $content->id,
             'content' => 'Hello.',
         ]);
     }
@@ -37,15 +37,15 @@ final class UpsertSabbathSchoolAnswerActionTest extends TestCase
     public function test_it_overwrites_the_existing_answer(): void
     {
         $user = User::factory()->create();
-        $question = SabbathSchoolQuestion::factory()->create();
+        $content = SabbathSchoolSegmentContent::factory()->question()->create();
 
         SabbathSchoolAnswer::factory()
             ->forUser($user)
-            ->forQuestion($question)
+            ->forSegmentContent($content)
             ->create(['content' => 'Old.']);
 
         $result = $this->app->make(UpsertSabbathSchoolAnswerAction::class)->execute(
-            new UpsertSabbathSchoolAnswerData($user, $question, 'New.'),
+            new UpsertSabbathSchoolAnswerData($user, $content, 'New.'),
         );
 
         $this->assertFalse($result->created);
@@ -57,15 +57,15 @@ final class UpsertSabbathSchoolAnswerActionTest extends TestCase
     {
         $alice = User::factory()->create();
         $bob = User::factory()->create();
-        $question = SabbathSchoolQuestion::factory()->create();
+        $content = SabbathSchoolSegmentContent::factory()->question()->create();
 
         SabbathSchoolAnswer::factory()
             ->forUser($alice)
-            ->forQuestion($question)
+            ->forSegmentContent($content)
             ->create(['content' => 'Alice.']);
 
         $result = $this->app->make(UpsertSabbathSchoolAnswerAction::class)->execute(
-            new UpsertSabbathSchoolAnswerData($bob, $question, 'Bob.'),
+            new UpsertSabbathSchoolAnswerData($bob, $content, 'Bob.'),
         );
 
         $this->assertTrue($result->created);

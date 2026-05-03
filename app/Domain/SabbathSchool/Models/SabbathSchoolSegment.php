@@ -16,7 +16,8 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $sabbath_school_lesson_id
- * @property int $day
+ * @property Carbon|null $for_date
+ * @property int|null $day
  * @property string $title
  * @property string $content
  * @property array<int, string>|null $passages
@@ -24,7 +25,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read SabbathSchoolLesson $lesson
- * @property-read Collection<int, SabbathSchoolQuestion> $questions
+ * @property-read Collection<int, SabbathSchoolSegmentContent> $segmentContents
  */
 #[UseFactory(SabbathSchoolSegmentFactory::class)]
 final class SabbathSchoolSegment extends Model
@@ -41,6 +42,7 @@ final class SabbathSchoolSegment extends Model
     {
         return [
             'passages' => 'array',
+            'for_date' => 'date',
             'day' => 'integer',
             'position' => 'integer',
         ];
@@ -55,11 +57,11 @@ final class SabbathSchoolSegment extends Model
     }
 
     /**
-     * @return HasMany<SabbathSchoolQuestion, $this>
+     * @return HasMany<SabbathSchoolSegmentContent, $this>
      */
-    public function questions(): HasMany
+    public function segmentContents(): HasMany
     {
-        return $this->hasMany(SabbathSchoolQuestion::class, 'sabbath_school_segment_id')
+        return $this->hasMany(SabbathSchoolSegmentContent::class, 'segment_id')
             ->orderBy('position');
     }
 }

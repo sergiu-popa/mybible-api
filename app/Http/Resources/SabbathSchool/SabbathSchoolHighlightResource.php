@@ -21,7 +21,10 @@ final class SabbathSchoolHighlightResource extends JsonResource
         return [
             'id' => $this->id,
             'segment_id' => $this->sabbath_school_segment_id,
-            'passage' => $this->passage,
+            'segment_content_id' => $this->segment_content_id,
+            'start_position' => $this->start_position,
+            'end_position' => $this->end_position,
+            'color' => $this->color,
             'created_at' => $this->created_at->toIso8601String(),
         ];
     }

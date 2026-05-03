@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1\Admin\SabbathSchool;
 
 use App\Domain\SabbathSchool\Models\SabbathSchoolLesson;
-use App\Domain\SabbathSchool\Models\SabbathSchoolQuestion;
 use App\Domain\SabbathSchool\Models\SabbathSchoolSegment;
+use App\Domain\SabbathSchool\Models\SabbathSchoolSegmentContent;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -65,21 +65,23 @@ final class ReorderTest extends TestCase
         $this->assertSame(99, $foreigner->refresh()->position);
     }
 
-    public function test_questions_reorder_returns_422_for_ids_from_other_segments(): void
+    public function test_segment_contents_reorder_returns_422_for_ids_from_other_segments(): void
     {
         $this->actingAsAdmin();
 
         $segment = SabbathSchoolSegment::factory()->create();
         $other = SabbathSchoolSegment::factory()->create();
 
-        $insider = SabbathSchoolQuestion::factory()->create(['sabbath_school_segment_id' => $segment->id]);
-        $foreigner = SabbathSchoolQuestion::factory()->create([
-            'sabbath_school_segment_id' => $other->id,
-            'position' => 99,
-        ]);
+        $insider = SabbathSchoolSegmentContent::factory()
+            ->forSegment($segment)
+            ->create();
+        $foreigner = SabbathSchoolSegmentContent::factory()
+            ->forSegment($other)
+            ->atPosition(99)
+            ->create();
 
         $this->postJson(
-            route('admin.sabbath-school.segments.questions.reorder', ['segment' => $segment->id]),
+            route('admin.sabbath-school.segments.contents.reorder', ['segment' => $segment->id]),
             ['ids' => [$insider->id, $foreigner->id]],
         )
             ->assertUnprocessable()
@@ -88,16 +90,16 @@ final class ReorderTest extends TestCase
         $this->assertSame(99, $foreigner->refresh()->position);
     }
 
-    public function test_questions_reorder_persists_full_ordering_inside_segment(): void
+    public function test_segment_contents_reorder_persists_full_ordering_inside_segment(): void
     {
         $this->actingAsAdmin();
 
         $segment = SabbathSchoolSegment::factory()->create();
-        $a = SabbathSchoolQuestion::factory()->create(['sabbath_school_segment_id' => $segment->id]);
-        $b = SabbathSchoolQuestion::factory()->create(['sabbath_school_segment_id' => $segment->id]);
+        $a = SabbathSchoolSegmentContent::factory()->forSegment($segment)->create();
+        $b = SabbathSchoolSegmentContent::factory()->forSegment($segment)->create();
 
         $this->postJson(
-            route('admin.sabbath-school.segments.questions.reorder', ['segment' => $segment->id]),
+            route('admin.sabbath-school.segments.contents.reorder', ['segment' => $segment->id]),
             ['ids' => [$b->id, $a->id]],
         )->assertOk();
 

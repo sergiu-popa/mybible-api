@@ -18,13 +18,43 @@ final class SabbathSchoolHighlightQueryBuilder extends Builder
         return $this->where('user_id', $user->id);
     }
 
+    /**
+     * List all highlights anchored to any content block belonging to
+     * the given segment. Joined for the public list endpoint.
+     */
     public function forSegment(int $segmentId): self
     {
-        return $this->where('sabbath_school_segment_id', $segmentId);
+        return $this
+            ->join(
+                'sabbath_school_segment_contents as ssc',
+                'ssc.id',
+                '=',
+                'sabbath_school_highlights.segment_content_id',
+            )
+            ->where('ssc.segment_id', $segmentId)
+            ->select('sabbath_school_highlights.*');
     }
 
-    public function forPassage(string $passage): self
+    public function forSegmentContent(int $segmentContentId): self
     {
-        return $this->where('passage', $passage);
+        return $this->where('segment_content_id', $segmentContentId);
+    }
+
+    public function forContentRange(int $segmentContentId, int $start, int $end): self
+    {
+        return $this
+            ->where('segment_content_id', $segmentContentId)
+            ->where('start_position', $start)
+            ->where('end_position', $end);
+    }
+
+    /**
+     * Filter out un-migrated rows so the public API never serves a
+     * half-shaped highlight (legacy `passage` only) during the rollout
+     * window.
+     */
+    public function migrated(): self
+    {
+        return $this->whereNotNull('segment_content_id');
     }
 }

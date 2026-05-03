@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Domain\SabbathSchool\Models\SabbathSchoolAnswer;
-use App\Domain\SabbathSchool\Models\SabbathSchoolQuestion;
+use App\Domain\SabbathSchool\Models\SabbathSchoolSegmentContent;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -23,7 +23,7 @@ final class SabbathSchoolAnswerFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'sabbath_school_question_id' => SabbathSchoolQuestion::factory(),
+            'segment_content_id' => SabbathSchoolSegmentContent::factory()->question(),
             'content' => fake()->paragraph(),
         ];
     }
@@ -35,10 +35,10 @@ final class SabbathSchoolAnswerFactory extends Factory
         ]);
     }
 
-    public function forQuestion(SabbathSchoolQuestion $question): self
+    public function forSegmentContent(SabbathSchoolSegmentContent $content): self
     {
         return $this->state(fn (): array => [
-            'sabbath_school_question_id' => $question->id,
+            'segment_content_id' => $content->id,
         ]);
     }
 }

@@ -7,7 +7,6 @@ namespace Tests\Feature\Api\V1\SabbathSchool;
 use App\Domain\SabbathSchool\Models\SabbathSchoolFavorite;
 use App\Domain\SabbathSchool\Models\SabbathSchoolLesson;
 use App\Domain\SabbathSchool\Models\SabbathSchoolSegment;
-use App\Domain\SabbathSchool\Support\SabbathSchoolFavoriteSentinel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\InteractsWithAuthentication;
 use Tests\TestCase;
@@ -33,7 +32,7 @@ final class SabbathSchoolFavoriteTest extends TestCase
         $this->assertDatabaseHas('sabbath_school_favorites', [
             'user_id' => $user->id,
             'sabbath_school_lesson_id' => $lesson->id,
-            'sabbath_school_segment_id' => SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
+            'sabbath_school_segment_id' => null,
         ]);
     }
 
@@ -45,6 +44,7 @@ final class SabbathSchoolFavoriteTest extends TestCase
         SabbathSchoolFavorite::factory()
             ->forUser($user)
             ->forLesson($lesson)
+            ->wholeLesson()
             ->create();
 
         $this->postJson(route('sabbath-school.favorites.toggle'), [
@@ -59,16 +59,16 @@ final class SabbathSchoolFavoriteTest extends TestCase
         ]);
     }
 
-    public function test_toggle_with_segment_id_creates_a_separate_row(): void
+    public function test_whole_lesson_and_per_segment_favorites_coexist(): void
     {
         $user = $this->givenAnAuthenticatedUser();
         $lesson = SabbathSchoolLesson::factory()->create();
         $segment = SabbathSchoolSegment::factory()->forLesson($lesson)->create();
 
-        // Whole-lesson favorite already exists.
         SabbathSchoolFavorite::factory()
             ->forUser($user)
             ->forLesson($lesson)
+            ->wholeLesson()
             ->create();
 
         $this->postJson(route('sabbath-school.favorites.toggle'), [
@@ -83,7 +83,7 @@ final class SabbathSchoolFavoriteTest extends TestCase
         $this->assertDatabaseHas('sabbath_school_favorites', [
             'user_id' => $user->id,
             'sabbath_school_lesson_id' => $lesson->id,
-            'sabbath_school_segment_id' => SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
+            'sabbath_school_segment_id' => null,
         ]);
         $this->assertDatabaseHas('sabbath_school_favorites', [
             'user_id' => $user->id,
@@ -135,10 +135,11 @@ final class SabbathSchoolFavoriteTest extends TestCase
         SabbathSchoolFavorite::factory()
             ->forUser($user)
             ->forLesson($lesson)
+            ->wholeLesson()
             ->create();
 
         $otherLesson = SabbathSchoolLesson::factory()->create();
-        SabbathSchoolFavorite::factory()->forLesson($otherLesson)->create(); // different user
+        SabbathSchoolFavorite::factory()->forLesson($otherLesson)->wholeLesson()->create(); // different user
 
         $this->getJson(route('sabbath-school.favorites.index'))
             ->assertOk()

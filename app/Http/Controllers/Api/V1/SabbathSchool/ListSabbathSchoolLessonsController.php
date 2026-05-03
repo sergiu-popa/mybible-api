@@ -19,8 +19,7 @@ final class ListSabbathSchoolLessonsController
      * List Sabbath School lessons.
      *
      * Returns a paginated list of published lessons in the resolved language,
-     * newest first. Intermediate caches MAY keep the response for 1 hour; the
-     * payload never embeds per-user state.
+     * newest first. Supports `?trimester=` and `?age_group=` filters.
      */
     public function __invoke(
         ListSabbathSchoolLessonsRequest $request,
@@ -32,6 +31,8 @@ final class ListSabbathSchoolLessonsController
             $request->resolvedLanguage(),
             $page,
             $request->perPage(),
+            $request->trimesterId(),
+            $request->ageGroup(),
         );
 
         return response()->json($payload)

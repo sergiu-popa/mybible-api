@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1\SabbathSchool;
 
 use App\Domain\SabbathSchool\Models\SabbathSchoolLesson;
-use App\Domain\SabbathSchool\Models\SabbathSchoolQuestion;
 use App\Domain\SabbathSchool\Models\SabbathSchoolSegment;
+use App\Domain\SabbathSchool\Models\SabbathSchoolSegmentContent;
+use App\Domain\SabbathSchool\Support\SegmentContentType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\WithApiKeyClient;
@@ -24,19 +25,45 @@ final class ShowSabbathSchoolLessonTest extends TestCase
         $this->setUpApiKeyClient();
     }
 
-    public function test_it_returns_the_lesson_with_segments_and_questions(): void
+    public function test_it_returns_the_lesson_with_segments_and_typed_contents(): void
     {
         $lesson = SabbathSchoolLesson::factory()->create();
         $segment = SabbathSchoolSegment::factory()->forLesson($lesson)->atPosition(0)->create();
-        $question = SabbathSchoolQuestion::factory()->forSegment($segment)->atPosition(0)->create();
+        $question = SabbathSchoolSegmentContent::factory()
+            ->forSegment($segment)
+            ->question()
+            ->atPosition(0)
+            ->create();
 
         $this->withHeaders($this->apiKeyHeaders())
             ->getJson(route('sabbath-school.lessons.show', ['lesson' => $lesson->id]))
             ->assertOk()
             ->assertJsonPath('data.id', $lesson->id)
+            ->assertJsonPath('data.age_group', $lesson->age_group)
+            ->assertJsonPath('data.number', $lesson->number)
+            ->assertJsonPath('data.date_from', $lesson->date_from->toDateString())
             ->assertJsonPath('data.segments.0.id', $segment->id)
-            ->assertJsonPath('data.segments.0.questions.0.id', $question->id)
-            ->assertJsonPath('data.segments.0.questions.0.prompt', $question->prompt);
+            ->assertJsonPath('data.segments.0.contents.0.id', $question->id)
+            ->assertJsonPath('data.segments.0.contents.0.type', SegmentContentType::Question->value);
+    }
+
+    public function test_it_falls_back_to_legacy_content_text_when_no_typed_blocks_exist(): void
+    {
+        $lesson = SabbathSchoolLesson::factory()->create();
+        SabbathSchoolSegment::factory()
+            ->forLesson($lesson)
+            ->atPosition(0)
+            ->create([
+                'content' => '<p>legacy body</p>',
+                'passages' => ['GEN.1:1.VDC'],
+            ]);
+
+        $this->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('sabbath-school.lessons.show', ['lesson' => $lesson->id]))
+            ->assertOk()
+            ->assertJsonPath('data.segments.0.content', '<p>legacy body</p>')
+            ->assertJsonPath('data.segments.0.passages.0', 'GEN.1:1.VDC')
+            ->assertJsonPath('data.segments.0.contents', []);
     }
 
     public function test_it_avoids_n_plus_one_on_a_large_fixture(): void
@@ -49,9 +76,10 @@ final class ShowSabbathSchoolLessonTest extends TestCase
                 ->atPosition($day)
                 ->create();
 
-            SabbathSchoolQuestion::factory()
+            SabbathSchoolSegmentContent::factory()
                 ->count(5)
-                ->state(fn (): array => ['sabbath_school_segment_id' => $segment->id])
+                ->forSegment($segment)
+                ->question()
                 ->create();
         }
 
@@ -65,10 +93,10 @@ final class ShowSabbathSchoolLessonTest extends TestCase
         DB::disableQueryLog();
 
         $response->assertJsonCount(7, 'data.segments');
-        $response->assertJsonCount(5, 'data.segments.0.questions');
+        $response->assertJsonCount(5, 'data.segments.0.contents');
 
-        // 1 for the lesson, 1 for segments, 1 for questions. Plus token/auth
-        // reads by sanctum. Cap well below a per-segment fan-out (1 + 7*N).
+        // 1 for the lesson, 1 for segments, 1 for contents. Plus
+        // token/auth reads by sanctum. Cap well below per-segment fan-out.
         $this->assertLessThanOrEqual(
             8,
             $queryCount,

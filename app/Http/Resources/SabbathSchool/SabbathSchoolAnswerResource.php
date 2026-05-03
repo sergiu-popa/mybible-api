@@ -20,7 +20,7 @@ final class SabbathSchoolAnswerResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'question_id' => $this->sabbath_school_question_id,
+            'segment_content_id' => $this->segment_content_id,
             'content' => $this->content,
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),

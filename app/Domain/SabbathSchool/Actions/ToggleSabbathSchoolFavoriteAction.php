@@ -12,21 +12,19 @@ use Illuminate\Support\Facades\DB;
 final class ToggleSabbathSchoolFavoriteAction
 {
     /**
-     * Flip the favorite state on `(user, lesson, segment)`.
+     * Flip the favorite state on `(user, lesson, ?segment)`.
      *
-     * When `segmentId` equals the whole-lesson sentinel (0), the row
-     * represents a lesson-level favorite. Segment-level and lesson-level
-     * favorites coexist independently on the unique index — toggling one
-     * does not affect the other.
+     * `segmentId === null` represents a whole-lesson favorite — stored
+     * as NULL in the column. Segment-level and lesson-level favorites
+     * coexist independently on the functional unique index.
      */
     public function execute(ToggleSabbathSchoolFavoriteData $data): ToggleSabbathSchoolFavoriteResult
     {
         return DB::transaction(function () use ($data): ToggleSabbathSchoolFavoriteResult {
             /** @var SabbathSchoolFavorite|null $existing */
             $existing = SabbathSchoolFavorite::withTrashed()
-                ->where('user_id', $data->user->id)
-                ->where('sabbath_school_lesson_id', $data->lessonId)
-                ->where('sabbath_school_segment_id', $data->segmentId)
+                ->forUser($data->user)
+                ->forLessonAndSegment($data->lessonId, $data->segmentId)
                 ->lockForUpdate()
                 ->first();
 

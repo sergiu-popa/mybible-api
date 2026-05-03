@@ -10,7 +10,9 @@ final readonly class ToggleSabbathSchoolHighlightData
 {
     public function __construct(
         public User $user,
-        public int $segmentId,
-        public string $passage,
+        public int $segmentContentId,
+        public int $startPosition,
+        public int $endPosition,
+        public string $color,
     ) {}
 }

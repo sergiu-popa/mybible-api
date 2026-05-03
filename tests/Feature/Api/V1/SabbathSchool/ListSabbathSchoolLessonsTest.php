@@ -44,8 +44,13 @@ final class ListSabbathSchoolLessonsTest extends TestCase
             ->assertJsonStructure([
                 'data' => [[
                     'id',
-                    'title',
+                    'trimester_id',
                     'language',
+                    'age_group',
+                    'number',
+                    'title',
+                    'date_from',
+                    'date_to',
                     'week_start',
                     'week_end',
                     'published_at',

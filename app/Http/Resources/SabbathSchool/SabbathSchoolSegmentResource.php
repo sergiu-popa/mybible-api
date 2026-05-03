@@ -18,14 +18,21 @@ final class SabbathSchoolSegmentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $hasContents = $this->relationLoaded('segmentContents')
+            && $this->segmentContents->isNotEmpty();
+
         return [
             'id' => $this->id,
+            'for_date' => $this->for_date?->toDateString(),
             'day' => $this->day,
             'title' => $this->title,
-            'content' => $this->content,
-            'passages' => $this->passages ?? [],
-            'questions' => SabbathSchoolQuestionResource::collection(
-                $this->whenLoaded('questions'),
+            // Legacy fallback: surface the longtext + passages only when
+            // no typed content rows exist (handles not-yet-migrated
+            // lessons during the rollout window).
+            'content' => $hasContents ? null : $this->content,
+            'passages' => $hasContents ? [] : ($this->passages ?? []),
+            'contents' => SabbathSchoolSegmentContentResource::collection(
+                $this->whenLoaded('segmentContents'),
             ),
         ];
     }

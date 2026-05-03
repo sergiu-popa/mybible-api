@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Domain\SabbathSchool\Models\SabbathSchoolLesson;
+use App\Domain\SabbathSchool\Models\SabbathSchoolTrimester;
 use App\Domain\Shared\Enums\Language;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -21,14 +22,18 @@ final class SabbathSchoolLessonFactory extends Factory
      */
     public function definition(): array
     {
-        $weekStart = CarbonImmutable::instance(fake()->dateTimeBetween('-2 years', '+2 months'))
+        $start = CarbonImmutable::instance(fake()->dateTimeBetween('-2 years', '+2 months'))
             ->startOfWeek();
 
         return [
             'language' => Language::En->value,
+            'age_group' => 'adult',
+            'number' => fake()->numberBetween(1, 13),
             'title' => fake()->sentence(4),
-            'week_start' => $weekStart->toDateString(),
-            'week_end' => $weekStart->addDays(6)->toDateString(),
+            'date_from' => $start->toDateString(),
+            'date_to' => $start->addDays(6)->toDateString(),
+            'memory_verse' => null,
+            'image_cdn_url' => null,
             'published_at' => now()->subDay(),
         ];
     }
@@ -51,6 +56,27 @@ final class SabbathSchoolLessonFactory extends Factory
     {
         return $this->state(fn (): array => [
             'language' => $language->value,
+        ]);
+    }
+
+    public function forAgeGroup(string $ageGroup): self
+    {
+        return $this->state(fn (): array => [
+            'age_group' => $ageGroup,
+        ]);
+    }
+
+    public function forTrimester(SabbathSchoolTrimester $trimester): self
+    {
+        return $this->state(fn (): array => [
+            'trimester_id' => $trimester->id,
+        ]);
+    }
+
+    public function numbered(int $number): self
+    {
+        return $this->state(fn (): array => [
+            'number' => $number,
         ]);
     }
 

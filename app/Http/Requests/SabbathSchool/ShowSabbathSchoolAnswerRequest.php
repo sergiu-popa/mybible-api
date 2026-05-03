@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\SabbathSchool;
 
-use App\Domain\SabbathSchool\Models\SabbathSchoolQuestion;
+use App\Domain\SabbathSchool\Models\SabbathSchoolSegmentContent;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class ShowSabbathSchoolAnswerRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Any authenticated user may read their own answer; cross-user access
-        // is prevented at the query level (see controller).
         return $this->user() !== null
-            && $this->route('question') instanceof SabbathSchoolQuestion;
+            && $this->route('content') instanceof SabbathSchoolSegmentContent;
     }
 
     /**
@@ -23,5 +21,13 @@ final class ShowSabbathSchoolAnswerRequest extends FormRequest
     public function rules(): array
     {
         return [];
+    }
+
+    public function segmentContent(): SabbathSchoolSegmentContent
+    {
+        /** @var SabbathSchoolSegmentContent $content */
+        $content = $this->route('content');
+
+        return $content;
     }
 }

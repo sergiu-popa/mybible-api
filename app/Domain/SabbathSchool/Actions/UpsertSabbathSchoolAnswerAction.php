@@ -12,19 +12,15 @@ use Illuminate\Support\Facades\DB;
 final class UpsertSabbathSchoolAnswerAction
 {
     /**
-     * Insert or overwrite the caller's single answer for a question.
-     *
-     * Matches the Symfony overwrite semantic: there is at most one row per
-     * `(user_id, sabbath_school_question_id)` and a subsequent save wins.
-     * The result flag `created` distinguishes 201 (insert) from 200 (update)
-     * at the controller layer.
+     * Insert or overwrite the caller's single answer for a question
+     * (now keyed by `segment_content_id`).
      */
     public function execute(UpsertSabbathSchoolAnswerData $data): UpsertSabbathSchoolAnswerResult
     {
         return DB::transaction(function () use ($data): UpsertSabbathSchoolAnswerResult {
             $existing = SabbathSchoolAnswer::query()
                 ->forUser($data->user)
-                ->forQuestion($data->question->id)
+                ->forSegmentContent($data->segmentContent->id)
                 ->lockForUpdate()
                 ->first();
 
@@ -37,7 +33,7 @@ final class UpsertSabbathSchoolAnswerAction
 
             $answer = SabbathSchoolAnswer::query()->create([
                 'user_id' => $data->user->id,
-                'sabbath_school_question_id' => $data->question->id,
+                'segment_content_id' => $data->segmentContent->id,
                 'content' => $data->content,
             ]);
 

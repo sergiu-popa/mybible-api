@@ -6,7 +6,7 @@ namespace Database\Factories;
 
 use App\Domain\SabbathSchool\Models\SabbathSchoolFavorite;
 use App\Domain\SabbathSchool\Models\SabbathSchoolLesson;
-use App\Domain\SabbathSchool\Support\SabbathSchoolFavoriteSentinel;
+use App\Domain\SabbathSchool\Models\SabbathSchoolSegment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -25,7 +25,7 @@ final class SabbathSchoolFavoriteFactory extends Factory
         return [
             'user_id' => User::factory(),
             'sabbath_school_lesson_id' => SabbathSchoolLesson::factory(),
-            'sabbath_school_segment_id' => SabbathSchoolFavoriteSentinel::WHOLE_LESSON,
+            'sabbath_school_segment_id' => null,
         ];
     }
 
@@ -40,6 +40,21 @@ final class SabbathSchoolFavoriteFactory extends Factory
     {
         return $this->state(fn (): array => [
             'sabbath_school_lesson_id' => $lesson->id,
+        ]);
+    }
+
+    public function wholeLesson(): self
+    {
+        return $this->state(fn (): array => [
+            'sabbath_school_segment_id' => null,
+        ]);
+    }
+
+    public function forSegment(SabbathSchoolSegment $segment): self
+    {
+        return $this->state(fn (): array => [
+            'sabbath_school_segment_id' => $segment->id,
+            'sabbath_school_lesson_id' => $segment->sabbath_school_lesson_id,
         ]);
     }
 

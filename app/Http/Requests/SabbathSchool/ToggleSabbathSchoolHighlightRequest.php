@@ -21,17 +21,16 @@ final class ToggleSabbathSchoolHighlightRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'segment_id' => ['required', 'integer', 'exists:sabbath_school_segments,id'],
-            // Full canonical parsing happens inside the Action so a parse
-            // failure can produce the domain-specific 422 envelope. Keep the
-            // validator fast — just confirm the field is a non-empty string.
-            'passage' => ['required', 'string', 'min:1'],
+            'segment_content_id' => ['required', 'integer', 'exists:sabbath_school_segment_contents,id'],
+            'start_position' => ['required', 'integer', 'min:0'],
+            'end_position' => ['required', 'integer', 'gt:start_position'],
+            'color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/'],
         ];
     }
 
     public function toData(): ToggleSabbathSchoolHighlightData
     {
-        /** @var array{segment_id: int, passage: string} $data */
+        /** @var array{segment_content_id: int, start_position: int, end_position: int, color: string} $data */
         $data = $this->validated();
 
         /** @var User $user */
@@ -39,8 +38,10 @@ final class ToggleSabbathSchoolHighlightRequest extends FormRequest
 
         return new ToggleSabbathSchoolHighlightData(
             user: $user,
-            segmentId: (int) $data['segment_id'],
-            passage: $data['passage'],
+            segmentContentId: (int) $data['segment_content_id'],
+            startPosition: (int) $data['start_position'],
+            endPosition: (int) $data['end_position'],
+            color: $data['color'],
         );
     }
 }

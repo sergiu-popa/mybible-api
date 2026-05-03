@@ -18,13 +18,13 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $user_id
- * @property int $sabbath_school_question_id
+ * @property int|null $segment_content_id
  * @property string $content
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property Carbon|null $deleted_at
  * @property-read User $user
- * @property-read SabbathSchoolQuestion $question
+ * @property-read SabbathSchoolSegmentContent|null $segmentContent
  */
 #[UseFactory(SabbathSchoolAnswerFactory::class)]
 final class SabbathSchoolAnswer extends Model
@@ -37,6 +37,16 @@ final class SabbathSchoolAnswer extends Model
     protected $guarded = [];
 
     /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'segment_content_id' => 'integer',
+        ];
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
@@ -45,11 +55,11 @@ final class SabbathSchoolAnswer extends Model
     }
 
     /**
-     * @return BelongsTo<SabbathSchoolQuestion, $this>
+     * @return BelongsTo<SabbathSchoolSegmentContent, $this>
      */
-    public function question(): BelongsTo
+    public function segmentContent(): BelongsTo
     {
-        return $this->belongsTo(SabbathSchoolQuestion::class, 'sabbath_school_question_id');
+        return $this->belongsTo(SabbathSchoolSegmentContent::class, 'segment_content_id');
     }
 
     /**
