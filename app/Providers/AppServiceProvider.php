@@ -10,6 +10,7 @@ use App\Domain\EducationalResources\Models\ResourceBook;
 use App\Domain\EducationalResources\Models\ResourceBookChapter;
 use App\Domain\Favorites\Models\Favorite;
 use App\Domain\Favorites\Models\FavoriteCategory;
+use App\Domain\Mobile\Support\MobileVersionsRepository;
 use App\Domain\Notes\Models\Note;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
 use App\Domain\Sync\Actions\ShowUserSyncAction;
@@ -59,6 +60,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ShowUserSyncAction::class, function ($app): ShowUserSyncAction {
             return new ShowUserSyncAction($app->tagged('sync.builder'));
         });
+
+        // Singleton so the in-process `$memo` map is shared across every
+        // collaborator that injects the repository within the same request
+        // (e.g. ShowMobileVersionAction + ShowAppBootstrapAction).
+        $this->app->singleton(MobileVersionsRepository::class);
 
         if (class_exists(Scramble::class)) {
             Scramble::ignoreDefaultRoutes();

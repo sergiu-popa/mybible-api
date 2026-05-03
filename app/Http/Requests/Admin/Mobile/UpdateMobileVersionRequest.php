@@ -8,6 +8,7 @@ use App\Domain\Mobile\DataTransferObjects\UpdateMobileVersionData;
 use App\Domain\Mobile\Models\MobileVersion;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class UpdateMobileVersionRequest extends FormRequest
 {
@@ -21,9 +22,29 @@ final class UpdateMobileVersionRequest extends FormRequest
      */
     public function rules(): array
     {
+        $version = $this->route('version');
+        $ignoreId = $version instanceof MobileVersion ? $version->id : null;
+        $effectivePlatform = $this->input('platform', $version instanceof MobileVersion ? $version->platform : null);
+        $effectiveKind = $this->input('kind', $version instanceof MobileVersion ? $version->kind : null);
+
+        $platformRule = Rule::unique('mobile_versions', 'platform')
+            ->ignore($ignoreId)
+            ->where(function ($query) use ($effectiveKind): void {
+                if (is_string($effectiveKind) && $effectiveKind !== '') {
+                    $query->where('kind', $effectiveKind);
+                }
+            });
+        $kindRule = Rule::unique('mobile_versions', 'kind')
+            ->ignore($ignoreId)
+            ->where(function ($query) use ($effectivePlatform): void {
+                if (is_string($effectivePlatform) && $effectivePlatform !== '') {
+                    $query->where('platform', $effectivePlatform);
+                }
+            });
+
         return [
-            'platform' => ['sometimes', 'required', 'string', 'in:ios,android'],
-            'kind' => ['sometimes', 'required', 'string', 'in:' . MobileVersion::KIND_MIN_REQUIRED . ',' . MobileVersion::KIND_LATEST],
+            'platform' => ['sometimes', 'required', 'string', 'in:ios,android', $platformRule],
+            'kind' => ['sometimes', 'required', 'string', 'in:' . MobileVersion::KIND_MIN_REQUIRED . ',' . MobileVersion::KIND_LATEST, $kindRule],
             'version' => ['sometimes', 'required', 'string', 'max:25', 'regex:/^\d+\.\d+\.\d+(?:[-+][\w.]+)?$/'],
             'released_at' => ['sometimes', 'nullable', 'date'],
             'release_notes' => ['sometimes', 'nullable', 'array'],

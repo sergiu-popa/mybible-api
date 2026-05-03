@@ -20,6 +20,16 @@ final class CollectionsCacheKeys
         return sprintf('col:topic:%d:%s', $topicId, $language->value);
     }
 
+    public static function collectionsList(Language $language, int $page, int $perPage): string
+    {
+        return sprintf('col:list:%s:p%d:%d', $language->value, $page, $perPage);
+    }
+
+    public static function collection(string $slug): string
+    {
+        return sprintf('col:show:%s', $slug);
+    }
+
     /**
      * @return array<int, string>
      */

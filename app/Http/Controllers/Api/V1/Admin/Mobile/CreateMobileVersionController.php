@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api\V1\Admin\Mobile;
 
 use App\Domain\Mobile\Actions\CreateMobileVersionAction;
 use App\Http\Requests\Admin\Mobile\CreateMobileVersionRequest;
-use App\Http\Resources\Mobile\MobileVersionResource;
+use App\Http\Resources\Mobile\AdminMobileVersionResource;
 use Illuminate\Http\JsonResponse;
 
 final class CreateMobileVersionController
@@ -17,7 +17,7 @@ final class CreateMobileVersionController
     ): JsonResponse {
         $version = $action->handle($request->toData());
 
-        return MobileVersionResource::make($version)
+        return AdminMobileVersionResource::make($version)
             ->response()
             ->setStatusCode(201);
     }

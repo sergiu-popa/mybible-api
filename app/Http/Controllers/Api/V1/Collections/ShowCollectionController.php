@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Api\V1\Collections;
 use App\Domain\Collections\Actions\ShowCollectionAction;
 use App\Domain\Collections\Models\Collection;
 use App\Http\Requests\Collections\ShowCollectionRequest;
-use App\Http\Resources\Collections\CollectionDetailResource;
+use Illuminate\Http\JsonResponse;
 
 /**
  * @tags Collections
@@ -18,7 +18,7 @@ final class ShowCollectionController
         ShowCollectionRequest $request,
         Collection $collection,
         ShowCollectionAction $action,
-    ): CollectionDetailResource {
-        return $action->handle($collection);
+    ): JsonResponse {
+        return response()->json($action->handle($collection));
     }
 }

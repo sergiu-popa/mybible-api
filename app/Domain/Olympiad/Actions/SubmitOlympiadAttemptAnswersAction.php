@@ -54,15 +54,31 @@ final class SubmitOlympiadAttemptAnswersAction
                     $isCorrect = $answer->is_correct;
                 }
 
-                OlympiadAttemptAnswer::query()->updateOrInsert(
-                    ['attempt_id' => $attempt->id, 'olympiad_question_id' => $questionId],
-                    [
+                $now = now();
+                $existing = OlympiadAttemptAnswer::query()
+                    ->where('attempt_id', $attempt->id)
+                    ->where('olympiad_question_id', $questionId)
+                    ->exists();
+
+                if ($existing) {
+                    OlympiadAttemptAnswer::query()
+                        ->where('attempt_id', $attempt->id)
+                        ->where('olympiad_question_id', $questionId)
+                        ->update([
+                            'selected_answer_id' => $selectedAnswerId,
+                            'is_correct' => $isCorrect,
+                            'updated_at' => $now,
+                        ]);
+                } else {
+                    OlympiadAttemptAnswer::query()->insert([
+                        'attempt_id' => $attempt->id,
+                        'olympiad_question_id' => $questionId,
                         'selected_answer_id' => $selectedAnswerId,
                         'is_correct' => $isCorrect,
-                        'updated_at' => now(),
-                        'created_at' => now(),
-                    ],
-                );
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
             }
         });
     }

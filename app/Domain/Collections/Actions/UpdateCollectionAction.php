@@ -6,6 +6,8 @@ namespace App\Domain\Collections\Actions;
 
 use App\Domain\Collections\DataTransferObjects\UpdateCollectionData;
 use App\Domain\Collections\Models\Collection;
+use App\Domain\Collections\Support\CollectionsCacheKeys;
+use Illuminate\Support\Facades\Cache;
 
 final class UpdateCollectionAction
 {
@@ -28,6 +30,8 @@ final class UpdateCollectionAction
         if ($attributes !== []) {
             $collection->update($attributes);
         }
+
+        Cache::tags(CollectionsCacheKeys::tagsForTopicsList())->flush();
 
         return $collection->fresh() ?? $collection;
     }

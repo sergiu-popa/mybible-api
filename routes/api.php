@@ -478,7 +478,9 @@ Route::prefix('v1')->group(function (): void {
                     Route::get(
                         'olympiad/attempts',
                         ListAdminOlympiadAttemptsController::class,
-                    )->name('olympiad.attempts.index');
+                    )
+                        ->middleware('super-admin')
+                        ->name('olympiad.attempts.index');
                 });
 
             Route::middleware(['auth:sanctum', 'super-admin'])

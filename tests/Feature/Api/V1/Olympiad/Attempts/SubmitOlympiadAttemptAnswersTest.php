@@ -89,6 +89,38 @@ final class SubmitOlympiadAttemptAnswersTest extends TestCase
         ]);
     }
 
+    public function test_it_preserves_created_at_on_idempotent_resubmit(): void
+    {
+        $this->postJson(route('olympiad.attempts.answers.store', ['attempt' => $this->attempt->id]), [
+            'answers' => [['question_uuid' => $this->question->uuid, 'selected_answer_uuid' => $this->wrong->uuid]],
+        ])->assertOk();
+
+        $row = OlympiadAttemptAnswer::query()
+            ->where('attempt_id', $this->attempt->id)
+            ->where('olympiad_question_id', $this->question->id)
+            ->firstOrFail();
+        $originalCreatedAt = $row->created_at;
+
+        CarbonImmutable::setTestNow(CarbonImmutable::now()->addMinute());
+
+        $this->postJson(route('olympiad.attempts.answers.store', ['attempt' => $this->attempt->id]), [
+            'answers' => [['question_uuid' => $this->question->uuid, 'selected_answer_uuid' => $this->correct->uuid]],
+        ])->assertOk();
+
+        $refreshed = OlympiadAttemptAnswer::query()
+            ->where('attempt_id', $this->attempt->id)
+            ->where('olympiad_question_id', $this->question->id)
+            ->firstOrFail();
+
+        $this->assertTrue(
+            $originalCreatedAt->equalTo($refreshed->created_at),
+            'created_at must not advance on idempotent resubmit',
+        );
+        $this->assertTrue($refreshed->updated_at->greaterThan($originalCreatedAt));
+
+        CarbonImmutable::setTestNow();
+    }
+
     public function test_it_rejects_cross_theme_question_uuid(): void
     {
         $other = OlympiadQuestion::factory()->forTheme('JHN', 1, 3, Language::Ro)->create();

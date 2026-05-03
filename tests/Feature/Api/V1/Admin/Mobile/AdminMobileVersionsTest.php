@@ -125,6 +125,25 @@ final class AdminMobileVersionsTest extends TestCase
             ->assertJsonPath('data.version', '3.5.0');
     }
 
+    public function test_update_rejects_duplicate_platform_kind_with_422(): void
+    {
+        $this->actingAsSuper();
+
+        MobileVersion::query()
+            ->whereIn('kind', [MobileVersion::KIND_LATEST, MobileVersion::KIND_MIN_REQUIRED])
+            ->where('platform', 'android')
+            ->delete();
+
+        MobileVersion::factory()->android()->latest()->create(['version' => '3.4.1']);
+        $other = MobileVersion::factory()->android()->minRequired()->create(['version' => '3.0.0']);
+
+        $this->patchJson(route('admin.mobile-versions.update', ['version' => $other->id]), [
+            'kind' => 'latest',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['kind']);
+    }
+
     public function test_destroy_removes_row(): void
     {
         $this->actingAsSuper();

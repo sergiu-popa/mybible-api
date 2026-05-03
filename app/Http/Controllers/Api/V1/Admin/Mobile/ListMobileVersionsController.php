@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api\V1\Admin\Mobile;
 
 use App\Domain\Mobile\Actions\ListMobileVersionsAction;
 use App\Http\Requests\Admin\Mobile\ListMobileVersionsRequest;
-use App\Http\Resources\Mobile\MobileVersionResource;
+use App\Http\Resources\Mobile\AdminMobileVersionResource;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 final class ListMobileVersionsController
@@ -15,7 +15,7 @@ final class ListMobileVersionsController
         ListMobileVersionsRequest $request,
         ListMobileVersionsAction $action,
     ): AnonymousResourceCollection {
-        return MobileVersionResource::collection(
+        return AdminMobileVersionResource::collection(
             $action->handle($request->platform(), $request->pageNumber(), $request->perPage()),
         );
     }
