@@ -6,8 +6,8 @@ namespace Tests\Unit\Domain\Devotional\Actions;
 
 use App\Domain\Devotional\Actions\FetchDevotionalAction;
 use App\Domain\Devotional\DataTransferObjects\FetchDevotionalData;
-use App\Domain\Devotional\Enums\DevotionalType;
 use App\Domain\Devotional\Models\Devotional;
+use App\Domain\Devotional\Models\DevotionalType;
 use App\Domain\Shared\Enums\Language;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -18,8 +18,16 @@ final class FetchDevotionalActionTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function adultsType(): DevotionalType
+    {
+        return DevotionalType::query()->where('slug', 'adults')->whereNull('language')->first()
+            ?? DevotionalType::factory()->adults()->create();
+    }
+
     public function test_it_returns_the_devotional_for_the_requested_tuple(): void
     {
+        $adults = $this->adultsType();
+
         $expected = Devotional::factory()
             ->adults()
             ->forLanguage(Language::Ro)
@@ -31,7 +39,8 @@ final class FetchDevotionalActionTest extends TestCase
 
         $result = app(FetchDevotionalAction::class)->execute(new FetchDevotionalData(
             language: Language::Ro,
-            type: DevotionalType::Adults,
+            typeId: $adults->id,
+            typeSlug: $adults->slug,
             date: CarbonImmutable::parse('2026-04-22'),
         ));
 
@@ -40,17 +49,22 @@ final class FetchDevotionalActionTest extends TestCase
 
     public function test_it_throws_model_not_found_when_no_devotional_matches(): void
     {
+        $adults = $this->adultsType();
+
         $this->expectException(ModelNotFoundException::class);
 
         app(FetchDevotionalAction::class)->execute(new FetchDevotionalData(
             language: Language::Ro,
-            type: DevotionalType::Adults,
+            typeId: $adults->id,
+            typeSlug: $adults->slug,
             date: CarbonImmutable::parse('2026-04-22'),
         ));
     }
 
     public function test_it_does_not_fall_back_across_languages(): void
     {
+        $adults = $this->adultsType();
+
         Devotional::factory()
             ->adults()
             ->forLanguage(Language::Hu)
@@ -61,7 +75,8 @@ final class FetchDevotionalActionTest extends TestCase
 
         app(FetchDevotionalAction::class)->execute(new FetchDevotionalData(
             language: Language::Ro,
-            type: DevotionalType::Adults,
+            typeId: $adults->id,
+            typeSlug: $adults->slug,
             date: CarbonImmutable::parse('2026-04-22'),
         ));
     }

@@ -26,17 +26,16 @@ final class ShowDevotionalRequestTest extends TestCase
         ])->passes());
     }
 
+    public function test_it_accepts_admin_defined_slug(): void
+    {
+        $this->assertTrue($this->validate([
+            'type' => 'youth',
+        ])->passes());
+    }
+
     public function test_it_requires_type(): void
     {
         $validator = $this->validate([]);
-
-        $this->assertTrue($validator->fails());
-        $this->assertArrayHasKey('type', $validator->errors()->toArray());
-    }
-
-    public function test_it_rejects_unknown_type(): void
-    {
-        $validator = $this->validate(['type' => 'toddlers']);
 
         $this->assertTrue($validator->fails());
         $this->assertArrayHasKey('type', $validator->errors()->toArray());

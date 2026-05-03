@@ -20,14 +20,15 @@ final class FetchDevotionalAction
     public function execute(FetchDevotionalData $data): array
     {
         return $this->cache->read(
-            DevotionalCacheKeys::show($data->language, $data->type, $data->date),
-            DevotionalCacheKeys::tagsForDevotional($data->language, $data->type),
+            DevotionalCacheKeys::show($data->language, $data->typeId, $data->date),
+            DevotionalCacheKeys::tagsForDevotional($data->language, $data->typeId),
             3600,
             static function () use ($data): array {
                 $devotional = Devotional::query()
                     ->forLanguage($data->language)
-                    ->ofType($data->type)
+                    ->ofTypeId($data->typeId)
                     ->onDate($data->date)
+                    ->with('typeRelation')
                     ->firstOrFail();
 
                 return DevotionalResource::make($devotional)

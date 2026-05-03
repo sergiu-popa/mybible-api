@@ -12,6 +12,11 @@ use App\Http\Controllers\Api\V1\Admin\Commentary\ReorderCommentaryTextsControlle
 use App\Http\Controllers\Api\V1\Admin\Commentary\UnpublishCommentaryController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\UpdateCommentaryController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\UpdateCommentaryTextController;
+use App\Http\Controllers\Api\V1\Admin\Devotionals\CreateDevotionalTypeController;
+use App\Http\Controllers\Api\V1\Admin\Devotionals\DeleteDevotionalTypeController;
+use App\Http\Controllers\Api\V1\Admin\Devotionals\ListDevotionalTypesController;
+use App\Http\Controllers\Api\V1\Admin\Devotionals\ReorderDevotionalTypesController;
+use App\Http\Controllers\Api\V1\Admin\Devotionals\UpdateDevotionalTypeController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\CreateResourceBookChapterController as AdminCreateResourceBookChapterController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\CreateResourceBookController as AdminCreateResourceBookController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\DeleteResourceBookChapterController as AdminDeleteResourceBookChapterController;
@@ -431,6 +436,17 @@ Route::prefix('v1')->group(function (): void {
                         ->where('book', '[A-Za-z0-9]+')
                         ->where('language', '[a-z]{2}')
                         ->name('olympiad.themes.questions.reorder');
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('devotional-types')
+                ->name('devotional-types.')
+                ->group(function (): void {
+                    Route::get('/', ListDevotionalTypesController::class)->name('index');
+                    Route::post('/', CreateDevotionalTypeController::class)->name('store');
+                    Route::post('reorder', ReorderDevotionalTypesController::class)->name('reorder');
+                    Route::patch('{type}', UpdateDevotionalTypeController::class)->name('update');
+                    Route::delete('{type}', DeleteDevotionalTypeController::class)->name('destroy');
                 });
 
             Route::middleware(['auth:sanctum', 'super-admin'])

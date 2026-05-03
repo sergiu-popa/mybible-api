@@ -122,10 +122,6 @@ final class ListDevotionalArchiveTest extends TestCase
     {
         Carbon::setTestNow('2026-04-22 09:00:00');
 
-        Devotional::factory()->count(35)->adults()->forLanguage(Language::Ro)->create([
-            'date' => '2026-04-01',
-        ]);
-
         $this
             ->withHeaders($this->apiKeyHeaders())
             ->getJson(route('devotionals.archive', [

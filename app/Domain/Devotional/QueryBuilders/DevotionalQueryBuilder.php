@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Devotional\QueryBuilders;
 
-use App\Domain\Devotional\Enums\DevotionalType;
 use App\Domain\Devotional\Models\Devotional;
 use App\Domain\Shared\Enums\Language;
 use Carbon\CarbonImmutable;
@@ -20,9 +19,9 @@ final class DevotionalQueryBuilder extends Builder
         return $this->where('language', $language->value);
     }
 
-    public function ofType(DevotionalType $type): self
+    public function ofTypeId(int $typeId): self
     {
-        return $this->where('type', $type->value);
+        return $this->where('type_id', $typeId);
     }
 
     public function onDate(CarbonImmutable $date): self

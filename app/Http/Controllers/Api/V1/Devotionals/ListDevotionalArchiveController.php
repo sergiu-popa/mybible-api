@@ -26,9 +26,10 @@ final class ListDevotionalArchiveController
 
         $paginator = Devotional::query()
             ->forLanguage($data->language)
-            ->ofType($data->type)
+            ->ofTypeId($data->typeId)
             ->publishedUpTo(CarbonImmutable::today())
             ->withinRange($data->from, $data->to)
+            ->with('typeRelation')
             ->newestFirst()
             ->paginate($data->perPage);
 

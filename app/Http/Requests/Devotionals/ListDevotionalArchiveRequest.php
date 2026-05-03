@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Devotionals;
 
+use App\Domain\Devotional\Actions\ResolveDevotionalTypeAction;
 use App\Domain\Devotional\DataTransferObjects\ListDevotionalArchiveData;
-use App\Domain\Devotional\Enums\DevotionalType;
 use App\Domain\Shared\Enums\Language;
 use App\Http\Middleware\ResolveRequestLanguage;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 final class ListDevotionalArchiveRequest extends FormRequest
 {
@@ -30,7 +29,7 @@ final class ListDevotionalArchiveRequest extends FormRequest
     {
         return [
             'language' => ['nullable', 'string'],
-            'type' => ['required', Rule::enum(DevotionalType::class)],
+            'type' => ['required', 'string', 'max:64'],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:' . self::MAX_PER_PAGE],
@@ -39,9 +38,13 @@ final class ListDevotionalArchiveRequest extends FormRequest
 
     public function toData(): ListDevotionalArchiveData
     {
+        $language = $this->resolvedLanguage();
+        $type = app(ResolveDevotionalTypeAction::class)
+            ->handle((string) $this->input('type'), $language);
+
         return new ListDevotionalArchiveData(
-            language: $this->resolvedLanguage(),
-            type: DevotionalType::from((string) $this->input('type')),
+            language: $language,
+            typeId: $type->id,
             from: $this->optionalDate('from'),
             to: $this->optionalDate('to'),
             perPage: $this->perPage(),

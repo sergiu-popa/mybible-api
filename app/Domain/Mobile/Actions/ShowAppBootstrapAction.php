@@ -6,8 +6,8 @@ namespace App\Domain\Mobile\Actions;
 
 use App\Domain\Bible\Actions\ListBibleVersionsAction;
 use App\Domain\Devotional\Actions\FetchDevotionalAction;
+use App\Domain\Devotional\Actions\ResolveDevotionalTypeAction;
 use App\Domain\Devotional\DataTransferObjects\FetchDevotionalData;
-use App\Domain\Devotional\Enums\DevotionalType;
 use App\Domain\Mobile\Support\MobileCacheKeys;
 use App\Domain\News\Actions\ListNewsAction;
 use App\Domain\QrCode\Actions\ListQrCodesAction;
@@ -26,6 +26,7 @@ final class ShowAppBootstrapAction
         private readonly ListNewsAction $listNews,
         private readonly GetDailyVerseAction $getDailyVerse,
         private readonly FetchDevotionalAction $fetchDevotional,
+        private readonly ResolveDevotionalTypeAction $resolveDevotionalType,
         private readonly ListBibleVersionsAction $listBibleVersions,
         private readonly ListQrCodesAction $listQrCodes,
     ) {}
@@ -72,29 +73,8 @@ final class ShowAppBootstrapAction
         $bibleVersions = $this->listBibleVersions->execute($language, 1, 100);
         $bibleVersionItems = $bibleVersions['data'] ?? [];
 
-        $adultsDevotional = null;
-        try {
-            $data = $this->fetchDevotional->execute(new FetchDevotionalData(
-                language: $language,
-                type: DevotionalType::Adults,
-                date: $today,
-            ));
-            $adultsDevotional = $data['data'] ?? $data;
-        } catch (ModelNotFoundException) {
-            $adultsDevotional = null;
-        }
-
-        $kidsDevotional = null;
-        try {
-            $data = $this->fetchDevotional->execute(new FetchDevotionalData(
-                language: $language,
-                type: DevotionalType::Kids,
-                date: $today,
-            ));
-            $kidsDevotional = $data['data'] ?? $data;
-        } catch (ModelNotFoundException) {
-            $kidsDevotional = null;
-        }
+        $adultsDevotional = $this->fetchDevotionalBySlug('adults', $language, $today);
+        $kidsDevotional = $this->fetchDevotionalBySlug('kids', $language, $today);
 
         $currentLesson = SabbathSchoolLesson::query()
             ->published()
@@ -142,6 +122,31 @@ final class ShowAppBootstrapAction
                 : null,
             'qr_codes' => $qrCodeItems,
         ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fetchDevotionalBySlug(string $slug, Language $language, CarbonImmutable $today): ?array
+    {
+        try {
+            $type = $this->resolveDevotionalType->handle($slug, $language);
+        } catch (ModelNotFoundException) {
+            return null;
+        }
+
+        try {
+            $data = $this->fetchDevotional->execute(new FetchDevotionalData(
+                language: $language,
+                typeId: $type->id,
+                typeSlug: $type->slug,
+                date: $today,
+            ));
+
+            return $data['data'] ?? $data;
+        } catch (ModelNotFoundException) {
+            return null;
+        }
     }
 
     private function tagSentryColdStart(): void

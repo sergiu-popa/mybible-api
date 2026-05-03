@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1\Devotionals;
 
 use App\Domain\Devotional\Models\Devotional;
+use App\Domain\Devotional\Models\DevotionalType;
 use App\Domain\Shared\Enums\Language;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -102,13 +103,74 @@ final class ShowDevotionalTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_it_rejects_unknown_type(): void
+    public function test_it_returns_404_for_unknown_type_slug(): void
     {
         $this
             ->withHeaders($this->apiKeyHeaders())
             ->getJson(route('devotionals.show', ['type' => 'toddlers']))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['type']);
+            ->assertNotFound();
+    }
+
+    public function test_it_resolves_admin_defined_type_slug(): void
+    {
+        $youth = DevotionalType::factory()->create([
+            'slug' => 'youth',
+            'title' => 'Youth',
+            'language' => null,
+        ]);
+
+        $devo = Devotional::factory()
+            ->ofType($youth)
+            ->forLanguage(Language::Ro)
+            ->onDate(CarbonImmutable::parse('2026-04-22'))
+            ->create(['title' => 'Youth devotional']);
+
+        $this
+            ->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('devotionals.show', [
+                'type' => 'youth',
+                'language' => 'ro',
+                'date' => '2026-04-22',
+            ]))
+            ->assertOk()
+            ->assertJsonPath('data.id', $devo->id)
+            ->assertJsonPath('data.type', 'youth');
+    }
+
+    public function test_it_prefers_language_specific_type_over_global(): void
+    {
+        $globalYouth = DevotionalType::factory()->create([
+            'slug' => 'youth',
+            'title' => 'Youth (global)',
+            'language' => null,
+        ]);
+        $roYouth = DevotionalType::factory()->create([
+            'slug' => 'youth',
+            'title' => 'Youth (RO)',
+            'language' => 'ro',
+        ]);
+
+        $devo = Devotional::factory()
+            ->ofType($roYouth)
+            ->forLanguage(Language::Ro)
+            ->onDate(CarbonImmutable::parse('2026-04-22'))
+            ->create();
+
+        Devotional::factory()
+            ->ofType($globalYouth)
+            ->forLanguage(Language::Ro)
+            ->onDate(CarbonImmutable::parse('2026-04-22'))
+            ->create();
+
+        $this
+            ->withHeaders($this->apiKeyHeaders())
+            ->getJson(route('devotionals.show', [
+                'type' => 'youth',
+                'language' => 'ro',
+                'date' => '2026-04-22',
+            ]))
+            ->assertOk()
+            ->assertJsonPath('data.id', $devo->id);
     }
 
     public function test_it_rejects_malformed_date(): void

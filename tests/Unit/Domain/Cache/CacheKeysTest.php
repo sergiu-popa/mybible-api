@@ -6,7 +6,6 @@ namespace Tests\Unit\Domain\Cache;
 
 use App\Domain\Bible\Support\BibleCacheKeys;
 use App\Domain\Collections\Support\CollectionsCacheKeys;
-use App\Domain\Devotional\Enums\DevotionalType;
 use App\Domain\Devotional\Support\DevotionalCacheKeys;
 use App\Domain\EducationalResources\Enums\ResourceType;
 use App\Domain\EducationalResources\Support\EducationalResourcesCacheKeys;
@@ -40,12 +39,12 @@ final class CacheKeysTest extends TestCase
     {
         $date = CarbonImmutable::parse('2026-04-29');
         $this->assertSame(
-            'dev:ro:adults:2026-04-29',
-            DevotionalCacheKeys::show(Language::Ro, DevotionalType::Adults, $date),
+            'dev:ro:7:2026-04-29',
+            DevotionalCacheKeys::show(Language::Ro, 7, $date),
         );
         $this->assertSame(
-            ['dev', 'dev:ro:adults'],
-            DevotionalCacheKeys::tagsForDevotional(Language::Ro, DevotionalType::Adults),
+            ['dev', 'dev:ro:7'],
+            DevotionalCacheKeys::tagsForDevotional(Language::Ro, 7),
         );
     }
 

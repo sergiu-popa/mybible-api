@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Devotional\Support;
 
-use App\Domain\Devotional\Enums\DevotionalType;
 use App\Domain\Shared\Enums\Language;
 use Carbon\CarbonInterface;
 
@@ -12,12 +11,12 @@ final class DevotionalCacheKeys
 {
     public const TAG_ROOT = 'dev';
 
-    public static function show(Language $language, DevotionalType $type, CarbonInterface $date): string
+    public static function show(Language $language, int $typeId, CarbonInterface $date): string
     {
         return sprintf(
-            'dev:%s:%s:%s',
+            'dev:%s:%d:%s',
             $language->value,
-            $type->value,
+            $typeId,
             $date->toDateString(),
         );
     }
@@ -25,8 +24,8 @@ final class DevotionalCacheKeys
     /**
      * @return array<int, string>
      */
-    public static function tagsForDevotional(Language $language, DevotionalType $type): array
+    public static function tagsForDevotional(Language $language, int $typeId): array
     {
-        return [self::TAG_ROOT, sprintf('dev:%s:%s', $language->value, $type->value)];
+        return [self::TAG_ROOT, sprintf('dev:%s:%d', $language->value, $typeId)];
     }
 }
