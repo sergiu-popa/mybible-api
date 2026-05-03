@@ -44,6 +44,20 @@ final class News extends Model
     }
 
     /**
+     * Restrict route-model binding to published rows so unpublished
+     * detail 404s rather than 200ing.
+     */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        $field ??= $this->getRouteKeyName();
+
+        return self::query()
+            ->published()
+            ->where($field, $value)
+            ->first();
+    }
+
+    /**
      * @param  \Illuminate\Database\Query\Builder  $query
      * @return NewsQueryBuilder
      */

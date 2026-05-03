@@ -15,6 +15,11 @@ final class NewsCacheKeys
         return sprintf('news:%s:p%d:%d', $language->value, $page, $perPage);
     }
 
+    public static function show(int $id): string
+    {
+        return sprintf('news:show:%d', $id);
+    }
+
     /**
      * @return array<int, string>
      */

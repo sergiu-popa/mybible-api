@@ -600,12 +600,12 @@ the new field; Actions persist it.
 
 ### News detail + language defaults
 
-- [ ] 69. Write `2026_05_03_002008_backfill_news_language_and_published_at.php` — `UPDATE news SET language='ro' WHERE language IS NULL`; `UPDATE news SET published_at = created_at WHERE published_at IS NULL`. (`language` column is already NOT NULL CHAR(2) in current schema; this migration is defensive for any pre-MBA-023 rows that slipped through.) Migration test asserts ro and chronological order preserved.
-- [ ] 70. Modify `News` model — override `resolveRouteBinding($value, $field)` to apply `published()` scope so unpublished detail 404s.
-- [ ] 71. Add `ShowNewsAction(News)` — cached 5 min via `NewsCacheKeys::show($id)` tagged `['news']`. Returns array via `NewsDetailResource`.
-- [ ] 72. Add `NewsDetailResource` (full content; same shape as list resource for now — left as a separate class so list can later trim `content` without breaking detail).
-- [ ] 73. Add `ShowNewsRequest` (empty rules, `authorize=true`) + `ShowNewsController` + route `GET /api/v1/news/{news}` under the existing news middleware group (cache headers 5 min).
-- [ ] 74. Feature test `ShowNewsEndpointTest` — happy path, 404 unpublished, 404 unknown, response shape includes `content`.
+- [x] 69. Write `2026_05_03_002008_backfill_news_language_and_published_at.php` — `UPDATE news SET language='ro' WHERE language IS NULL`; `UPDATE news SET published_at = created_at WHERE published_at IS NULL`. (`language` column is already NOT NULL CHAR(2) in current schema; this migration is defensive for any pre-MBA-023 rows that slipped through.) Migration test asserts ro and chronological order preserved.
+- [x] 70. Modify `News` model — override `resolveRouteBinding($value, $field)` to apply `published()` scope so unpublished detail 404s.
+- [x] 71. Add `ShowNewsAction(News)` — cached 5 min via `NewsCacheKeys::show($id)` tagged `['news']`. Returns array via `NewsDetailResource`.
+- [x] 72. Add `NewsDetailResource` (full content; same shape as list resource for now — left as a separate class so list can later trim `content` without breaking detail).
+- [x] 73. Add `ShowNewsRequest` (empty rules, `authorize=true`) + `ShowNewsController` + route `GET /api/v1/news/{news}` under the existing news middleware group (cache headers 5 min).
+- [x] 74. Feature test `ShowNewsEndpointTest` — happy path, 404 unpublished, 404 unknown, response shape includes `content`.
 
 ### Cleanup + gate
 

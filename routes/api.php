@@ -112,6 +112,7 @@ use App\Http\Controllers\Api\V1\Hymnal\ToggleHymnalFavoriteController;
 use App\Http\Controllers\Api\V1\Mobile\ShowAppBootstrapController;
 use App\Http\Controllers\Api\V1\Mobile\ShowMobileVersionController;
 use App\Http\Controllers\Api\V1\News\ListNewsController;
+use App\Http\Controllers\Api\V1\News\ShowNewsController;
 use App\Http\Controllers\Api\V1\Notes\DeleteNoteController;
 use App\Http\Controllers\Api\V1\Notes\ListNotesController;
 use App\Http\Controllers\Api\V1\Notes\StoreNoteController;
@@ -582,6 +583,7 @@ Route::prefix('v1')->group(function (): void {
         'cache.headers:public;max_age=300;etag',
     ])->group(function (): void {
         Route::get('news', ListNewsController::class)->name('news.index');
+        Route::get('news/{news}', ShowNewsController::class)->name('news.show');
     });
 
     Route::middleware([
