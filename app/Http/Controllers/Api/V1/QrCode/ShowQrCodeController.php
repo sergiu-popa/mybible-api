@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\QrCode;
 
-use App\Domain\QrCode\Actions\ShowQrCodeAction;
+use App\Domain\QrCode\Actions\ShowQrCodeByReferenceAction;
 use App\Domain\Reference\Formatter\ReferenceFormatter;
 use App\Http\Requests\QrCode\ShowQrCodeRequest;
 use Illuminate\Http\JsonResponse;
@@ -23,7 +23,7 @@ final class ShowQrCodeController
     public function __invoke(
         ShowQrCodeRequest $request,
         ReferenceFormatter $formatter,
-        ShowQrCodeAction $action,
+        ShowQrCodeByReferenceAction $action,
     ): JsonResponse {
         $canonical = $request->canonicalReference($formatter);
 

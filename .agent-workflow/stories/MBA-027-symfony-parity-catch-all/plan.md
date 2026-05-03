@@ -546,18 +546,18 @@ the new field; Actions persist it.
 
 ### QR codes full Symfony model
 
-- [ ] 34. Write `2026_05_03_002004_extend_qr_codes_for_full_symfony_shape.php` — add `place`, `base_url`, `source`, `destination`, `name`, `content`, `description` (with the placeholder defaults from the schema table); UPDATE `destination = url`, `content = url` for existing rows; alter `reference` to nullable; add UNIQUE `(place, source)` *only* if no two existing rows would collide on the empty defaults (engineer asserts via `count(*) <= 1` pre-check).
-- [ ] 35. Modify `QrCode` model — fillable extended; reference now nullable; `imageUrl()` unchanged.
-- [ ] 36. Modify `QrCodeQueryBuilder::forReference` — adds `whereNotNull('reference')` so reference-keyed lookups can't accidentally match a `NULL` row.
-- [ ] 37. Rename `ShowQrCodeAction` → `ShowQrCodeByReferenceAction` (semantic rename — only consumer is `ShowQrCodeController`, update the import).
-- [ ] 38. Add `App\Domain\QrCode\Events\QrCodeScanned` (broadcasts `qrCodeId`, `place`, `source`, `destination`, `scannedAt`).
-- [ ] 39. Add `RecordQrCodeScanAction(QrCode)` — dispatches `QrCodeScanned`. Returns void.
-- [ ] 40. Add `RecordQrCodeScanController` + `RecordQrCodeScanRequest` (empty body, `authorize() = true`); route `POST /api/v1/qr-codes/{qr}/scans` returning 204; under public read middleware group.
-- [ ] 41. Modify `QrCodeResource::toArray` — emit `place`, `source`, `destination` (falls back to `url` while both columns coexist), `name`, `content`, `description`; keep `reference`, `image_url` untouched. `QrCodeListItemResource` now extends the same base via inheritance or shares a `toArray` helper (whichever the engineer judges leaner; current duplicate is fine to keep).
-- [ ] 42. Admin DTOs (`CreateQrCodeData`, `UpdateQrCodeData`) + Actions (`ListAdminQrCodesAction` paginated; Create/Update/Delete).
-- [ ] 43. Admin Form Requests: `ListAdminQrCodesRequest`, `CreateQrCodeRequest` (place required, source required, name required ≤50, destination URL required, content required text, base_url URL nullable, description nullable, reference optional valid Bible reference, image_path optional from presigned upload `key`), `UpdateQrCodeRequest` (sometimes), `DeleteQrCodeRequest`.
-- [ ] 44. Admin Controllers + routes `admin.qr-codes.*` (list, store, update, destroy).
-- [ ] 45. Feature tests: `RecordQrCodeScanEndpointTest` (`Event::fake([QrCodeScanned::class])`, asserts dispatch; 404 unknown qr; 204 on success). `ShowQrCodeEndpointTest` (existing `?reference=` flow still works, NULL-reference rows aren't returned). `AdminQrCodesEndpointTest` (CRUD + UNIQUE `(place, source)` collision returns 422 + 401/403 paths).
+- [x] 34. Write `2026_05_03_002004_extend_qr_codes_for_full_symfony_shape.php` — add `place`, `base_url`, `source`, `destination`, `name`, `content`, `description` (with the placeholder defaults from the schema table); UPDATE `destination = url`, `content = url` for existing rows; alter `reference` to nullable; add UNIQUE `(place, source)` *only* if no two existing rows would collide on the empty defaults (engineer asserts via `count(*) <= 1` pre-check).
+- [x] 35. Modify `QrCode` model — fillable extended; reference now nullable; `imageUrl()` unchanged.
+- [x] 36. Modify `QrCodeQueryBuilder::forReference` — adds `whereNotNull('reference')` so reference-keyed lookups can't accidentally match a `NULL` row.
+- [x] 37. Rename `ShowQrCodeAction` → `ShowQrCodeByReferenceAction` (semantic rename — only consumer is `ShowQrCodeController`, update the import).
+- [x] 38. Add `App\Domain\QrCode\Events\QrCodeScanned` (broadcasts `qrCodeId`, `place`, `source`, `destination`, `scannedAt`).
+- [x] 39. Add `RecordQrCodeScanAction(QrCode)` — dispatches `QrCodeScanned`. Returns void.
+- [x] 40. Add `RecordQrCodeScanController` + `RecordQrCodeScanRequest` (empty body, `authorize() = true`); route `POST /api/v1/qr-codes/{qr}/scans` returning 204; under public read middleware group.
+- [x] 41. Modify `QrCodeResource::toArray` — emit `place`, `source`, `destination` (falls back to `url` while both columns coexist), `name`, `content`, `description`; keep `reference`, `image_url` untouched. `QrCodeListItemResource` now extends the same base via inheritance or shares a `toArray` helper (whichever the engineer judges leaner; current duplicate is fine to keep).
+- [x] 42. Admin DTOs (`CreateQrCodeData`, `UpdateQrCodeData`) + Actions (`ListAdminQrCodesAction` paginated; Create/Update/Delete).
+- [x] 43. Admin Form Requests: `ListAdminQrCodesRequest`, `CreateQrCodeRequest` (place required, source required, name required ≤50, destination URL required, content required text, base_url URL nullable, description nullable, reference optional valid Bible reference, image_path optional from presigned upload `key`), `UpdateQrCodeRequest` (sometimes), `DeleteQrCodeRequest`.
+- [x] 44. Admin Controllers + routes `admin.qr-codes.*` (list, store, update, destroy).
+- [x] 45. Feature tests: `RecordQrCodeScanEndpointTest` (`Event::fake([QrCodeScanned::class])`, asserts dispatch; 404 unknown qr; 204 on success). `ShowQrCodeEndpointTest` (existing `?reference=` flow still works, NULL-reference rows aren't returned). `AdminQrCodesEndpointTest` (CRUD + UNIQUE `(place, source)` collision returns 422 + 401/403 paths).
 
 ### Olympiad parity + user attempts
 

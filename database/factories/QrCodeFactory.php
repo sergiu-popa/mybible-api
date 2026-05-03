@@ -26,9 +26,18 @@ final class QrCodeFactory extends Factory
             fake()->numberBetween(1, 30),
         );
 
+        $url = 'https://web.mybible.local/' . strtolower(str_replace(['.', ':'], '-', $reference));
+
         return [
             'reference' => $reference,
-            'url' => 'https://web.mybible.local/' . strtolower(str_replace(['.', ':'], '-', $reference)),
+            'place' => 'place-' . fake()->unique()->numberBetween(1, 100_000),
+            'base_url' => 'https://qr.mybible.local',
+            'source' => 'source-' . fake()->unique()->numberBetween(1, 100_000),
+            'destination' => $url,
+            'name' => 'QR ' . fake()->numberBetween(1, 1_000_000),
+            'content' => $url,
+            'description' => null,
+            'url' => $url,
             'image_path' => 'qr-' . fake()->unique()->numberBetween(1, 1_000_000) . '.png',
         ];
     }

@@ -22,6 +22,7 @@ final class QrCodeResourceTest extends TestCase
         $qrCode = QrCode::factory()->create([
             'reference' => 'GEN.1:1.VDC',
             'url' => 'https://web.example/gen-1-1',
+            'destination' => 'https://web.example/gen-1-1',
             'image_path' => 'gen-1-1.png',
         ]);
 

@@ -46,6 +46,10 @@ use App\Http\Controllers\Api\V1\Admin\Mobile\DeleteMobileVersionController;
 use App\Http\Controllers\Api\V1\Admin\Mobile\ListMobileVersionsController;
 use App\Http\Controllers\Api\V1\Admin\Mobile\UpdateMobileVersionController;
 use App\Http\Controllers\Api\V1\Admin\Olympiad\ReorderOlympiadQuestionsController;
+use App\Http\Controllers\Api\V1\Admin\QrCode\CreateQrCodeController as AdminCreateQrCodeController;
+use App\Http\Controllers\Api\V1\Admin\QrCode\DeleteQrCodeController as AdminDeleteQrCodeController;
+use App\Http\Controllers\Api\V1\Admin\QrCode\ListAdminQrCodesController;
+use App\Http\Controllers\Api\V1\Admin\QrCode\UpdateQrCodeController as AdminUpdateQrCodeController;
 use App\Http\Controllers\Api\V1\Admin\References\ValidateReferenceController;
 use App\Http\Controllers\Api\V1\Admin\SabbathSchool\CreateLessonController as AdminCreateSabbathSchoolLessonController;
 use App\Http\Controllers\Api\V1\Admin\SabbathSchool\CreateSegmentContentController as AdminCreateSabbathSchoolSegmentContentController;
@@ -124,6 +128,7 @@ use App\Http\Controllers\Api\V1\Profile\DeleteUserAccountController;
 use App\Http\Controllers\Api\V1\Profile\RemoveUserAvatarController;
 use App\Http\Controllers\Api\V1\Profile\UpdateUserProfileController;
 use App\Http\Controllers\Api\V1\Profile\UploadUserAvatarController;
+use App\Http\Controllers\Api\V1\QrCode\RecordQrCodeScanController;
 use App\Http\Controllers\Api\V1\QrCode\ShowQrCodeController;
 use App\Http\Controllers\Api\V1\ReadingPlans\AbandonReadingPlanSubscriptionController;
 use App\Http\Controllers\Api\V1\ReadingPlans\CompleteReadingPlanSubscriptionDayController;
@@ -478,6 +483,16 @@ Route::prefix('v1')->group(function (): void {
                 });
 
             Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('qr-codes')
+                ->name('qr-codes.')
+                ->group(function (): void {
+                    Route::get('/', ListAdminQrCodesController::class)->name('index');
+                    Route::post('/', AdminCreateQrCodeController::class)->name('store');
+                    Route::patch('{qr}', AdminUpdateQrCodeController::class)->name('update');
+                    Route::delete('{qr}', AdminDeleteQrCodeController::class)->name('destroy');
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
                 ->prefix('collections')
                 ->name('collections.')
                 ->group(function (): void {
@@ -593,6 +608,12 @@ Route::prefix('v1')->group(function (): void {
     ])->group(function (): void {
         Route::get('qr-codes', ShowQrCodeController::class)->name('qr-codes.show');
     });
+
+    Route::middleware(['api-key-or-sanctum', 'throttle:public-anon'])
+        ->group(function (): void {
+            Route::post('qr-codes/{qr}/scans', RecordQrCodeScanController::class)
+                ->name('qr-codes.scans.store');
+        });
 
     Route::middleware([
         'api-key-or-sanctum',

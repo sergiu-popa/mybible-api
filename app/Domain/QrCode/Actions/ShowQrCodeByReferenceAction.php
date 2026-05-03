@@ -9,7 +9,7 @@ use App\Domain\QrCode\Support\QrCodeCacheKeys;
 use App\Http\Resources\QrCode\QrCodeResource;
 use App\Support\Caching\CachedRead;
 
-final class ShowQrCodeAction
+final class ShowQrCodeByReferenceAction
 {
     public function __construct(private readonly CachedRead $cache) {}
 

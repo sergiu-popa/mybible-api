@@ -15,7 +15,14 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
- * @property string $reference
+ * @property string $place
+ * @property string $base_url
+ * @property string $source
+ * @property string $destination
+ * @property string $name
+ * @property string $content
+ * @property ?string $description
+ * @property ?string $reference
  * @property string $url
  * @property ?string $image_path
  * @property Carbon $created_at

@@ -14,6 +14,6 @@ final class QrCodeQueryBuilder extends Builder
 {
     public function forReference(string $canonical): self
     {
-        return $this->where('reference', $canonical);
+        return $this->whereNotNull('reference')->where('reference', $canonical);
     }
 }

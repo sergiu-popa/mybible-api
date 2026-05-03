@@ -19,8 +19,13 @@ final class QrCodeListItemResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'reference' => $this->reference,
-            'url' => $this->url,
+            'place' => $this->place,
+            'source' => $this->source,
+            'destination' => $this->destination !== '' ? $this->destination : $this->url,
+            'name' => $this->name,
+            'url' => $this->destination !== '' ? $this->destination : $this->url,
             'image_url' => $this->imageUrl(),
         ];
     }
