@@ -20,6 +20,10 @@ final class OlympiadQuestionResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'uuid' => $this->uuid,
+            'verse' => $this->verse,
+            'chapter' => $this->chapter,
+            'is_reviewed' => $this->is_reviewed,
             'question' => $this->question,
             'explanation' => $this->explanation,
             'answers' => OlympiadAnswerResource::collection($this->answers),

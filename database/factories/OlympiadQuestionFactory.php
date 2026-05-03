@@ -8,6 +8,7 @@ use App\Domain\Olympiad\Models\OlympiadQuestion;
 use App\Domain\Reference\Data\BibleBookCatalog;
 use App\Domain\Shared\Enums\Language;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<OlympiadQuestion>
@@ -26,12 +27,16 @@ final class OlympiadQuestionFactory extends Factory
         $to = $from + fake()->numberBetween(0, 2);
 
         return [
+            'uuid' => (string) Str::uuid(),
             'book' => $book,
             'chapters_from' => $from,
             'chapters_to' => $to,
+            'chapter' => null,
+            'verse' => null,
             'language' => Language::En,
             'question' => rtrim(fake()->sentence(), '.') . '?',
             'explanation' => fake()->optional()->sentence(),
+            'is_reviewed' => false,
         ];
     }
 

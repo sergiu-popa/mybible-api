@@ -561,34 +561,34 @@ the new field; Actions persist it.
 
 ### Olympiad parity + user attempts
 
-- [ ] 46. Write `2026_05_03_002005_extend_olympiad_questions_and_answers.php` — add `uuid` (nullable + UNIQUE), `verse`, `chapter`, `is_reviewed` + index on `olympiad_questions`; alter `chapters_from`, `chapters_to` to nullable; add `uuid` (nullable + UNIQUE) on `olympiad_answers`; backfill `Str::uuid()` for every NULL `uuid` row; alter `uuid` columns NOT NULL.
-- [ ] 47. Write `2026_05_03_002006_create_olympiad_attempts_and_attempt_answers.php` — both tables per AC §25 / §26; FKs cascade where the AC requires; indices `(user_id, completed_at)`, `(language, book, chapters_label)`.
-- [ ] 48. Modify `OlympiadQuestion` model — casts `chapter` int, `verse` int, `is_reviewed` bool, `uuid` string; add `forVerse(?int)` / scope cleanup; route key untouched (admin reorder still uses id).
-- [ ] 49. Modify `OlympiadAnswer` model — `uuid` cast.
-- [ ] 50. Add `OlympiadQuestionQueryBuilder::matchingTheme(string $book, ChapterRange $range, Language $language)` — `WHERE language = ? AND book = ? AND ((chapters_from = ? AND chapters_to = ?) OR (range.isSingleChapter() AND chapter = ?))`. Used by submit/finish for theme-membership validation.
-- [ ] 51. Add `App\Domain\Olympiad\Models\OlympiadAttempt` — fillable from AC §25; casts (`started_at`/`completed_at` datetime, `language` Language enum); `user()` BelongsTo, `answers()` HasMany `OlympiadAttemptAnswer`; override `resolveRouteBinding` to scope `where('user_id', auth()->id())`.
-- [ ] 52. Add `OlympiadAttemptAnswer` model — composite PK via `protected $primaryKey = ['attempt_id', 'olympiad_question_id'];` + `$incrementing = false`; `$keyType = 'int'`; `attempt()`, `question()`, `selectedAnswer()` BelongsTo.
-- [ ] 53. Add `OlympiadAttemptQueryBuilder::forUser`, `forFilters(?Language, ?string $book, ?string $chaptersLabel)`, `newestFirst`.
-- [ ] 54. Add DTOs: `StartOlympiadAttemptData`, `SubmitOlympiadAnswerLine`, `SubmitOlympiadAnswersData`, `ListOlympiadAttemptsFilter`.
-- [ ] 55. Add Actions:
+- [x] - [ ] 46. Write `2026_05_03_002005_extend_olympiad_questions_and_answers.php` — add `uuid` (nullable + UNIQUE), `verse`, `chapter`, `is_reviewed` + index on `olympiad_questions`; alter `chapters_from`, `chapters_to` to nullable; add `uuid` (nullable + UNIQUE) on `olympiad_answers`; backfill `Str::uuid()` for every NULL `uuid` row; alter `uuid` columns NOT NULL.
+- [x] - [ ] 47. Write `2026_05_03_002006_create_olympiad_attempts_and_attempt_answers.php` — both tables per AC §25 / §26; FKs cascade where the AC requires; indices `(user_id, completed_at)`, `(language, book, chapters_label)`.
+- [x] - [ ] 48. Modify `OlympiadQuestion` model — casts `chapter` int, `verse` int, `is_reviewed` bool, `uuid` string; add `forVerse(?int)` / scope cleanup; route key untouched (admin reorder still uses id).
+- [x] - [ ] 49. Modify `OlympiadAnswer` model — `uuid` cast.
+- [x] 50. Add `OlympiadQuestionQueryBuilder::matchingTheme(string $book, ChapterRange $range, Language $language)` — `WHERE language = ? AND book = ? AND ((chapters_from = ? AND chapters_to = ?) OR (range.isSingleChapter() AND chapter = ?))`. Used by submit/finish for theme-membership validation.
+- [x] 51. Add `App\Domain\Olympiad\Models\OlympiadAttempt` — fillable from AC §25; casts (`started_at`/`completed_at` datetime, `language` Language enum); `user()` BelongsTo, `answers()` HasMany `OlympiadAttemptAnswer`; override `resolveRouteBinding` to scope `where('user_id', auth()->id())`.
+- [x] 52. Add `OlympiadAttemptAnswer` model — composite PK via `protected $primaryKey = ['attempt_id', 'olympiad_question_id'];` + `$incrementing = false`; `$keyType = 'int'`; `attempt()`, `question()`, `selectedAnswer()` BelongsTo.
+- [x] 53. Add `OlympiadAttemptQueryBuilder::forUser`, `forFilters(?Language, ?string $book, ?string $chaptersLabel)`, `newestFirst`.
+- [x] 54. Add DTOs: `StartOlympiadAttemptData`, `SubmitOlympiadAnswerLine`, `SubmitOlympiadAnswersData`, `ListOlympiadAttemptsFilter`.
+- [x] 55. Add Actions:
    - `StartOlympiadAttemptAction(StartOlympiadAttemptData)` — counts theme questions, persists attempt with `total = count`, returns `OlympiadAttempt` + `list<string> $questionUuids` (the locked-in UUID list, ordered deterministically — same `OlympiadQuestionQueryBuilder` order used by the public theme endpoint).
    - `SubmitOlympiadAttemptAnswersAction(SubmitOlympiadAnswersData)` — wrapped in `DB::transaction`, idempotent upsert on `(attempt_id, olympiad_question_id)`. Throws `OlympiadAttemptAlreadyFinishedException` when `completed_at` is set, `OlympiadAttemptThemeMismatchException` when a question UUID resolves to a question outside the attempt's theme, `OlympiadAnswerNotInQuestionException` when the selected_answer_uuid isn't a child of the question.
    - `FinishOlympiadAttemptAction(OlympiadAttempt)` — sets `completed_at = now()`; computes `score = COUNT(*) FROM attempt_answers WHERE is_correct AND attempt_id = ?`; throws `OlympiadAttemptAlreadyFinishedException` if already finished.
    - `ListUserOlympiadAttemptsAction(User, ListOlympiadAttemptsFilter, page, perPage)`.
    - `ListAdminOlympiadAttemptsAction(ListOlympiadAttemptsFilter, page, perPage)`.
-- [ ] 56. Register the two new exceptions in `bootstrap/app.php` exception renderer (422 status).
-- [ ] 57. Modify `OlympiadQuestionResource` — add `uuid`, `verse`, `chapter`, `is_reviewed`. Modify `OlympiadAnswerResource` — add `uuid`.
-- [ ] 58. Add `OlympiadAttemptResource` (id, book, chapters_label, language, score, total, started_at, completed_at, answers when loaded) and `OlympiadAttemptStartResource` (extends with `question_uuids[]`).
-- [ ] 59. Add Form Requests:
+- [x] 56. Register the two new exceptions in `bootstrap/app.php` exception renderer (422 status).
+- [x] 57. Modify `OlympiadQuestionResource` — add `uuid`, `verse`, `chapter`, `is_reviewed`. Modify `OlympiadAnswerResource` — add `uuid`.
+- [x] 58. Add `OlympiadAttemptResource` (id, book, chapters_label, language, score, total, started_at, completed_at, answers when loaded) and `OlympiadAttemptStartResource` (extends with `question_uuids[]`).
+- [x] 59. Add Form Requests:
    - `StartOlympiadAttemptRequest` — book USFM-3, chapters as `ChapterRange::fromSegment(string)`, language ISO-2.
    - `SubmitOlympiadAttemptAnswersRequest` — `answers[]` with `question_uuid` UUID + `selected_answer_uuid` UUID nullable; min 1.
    - `FinishOlympiadAttemptRequest` — empty body.
    - `ListUserOlympiadAttemptsRequest` — paginated, optional language/book/chapters filters.
    - `ListAdminOlympiadAttemptsRequest` — same plus optional `user_id`.
-- [ ] 60. Add Controllers + routes under `olympiad.attempts.*` with `auth:sanctum` + `resolve-language` + `throttle:per-user`; `scopeBindings` on the `{attempt}/...` group; admin route under `admin.olympiad.attempts.index`.
-- [ ] 61. Add `OlympiadAttemptFactory` (and `OlympiadAttemptAnswerFactory`) for tests.
-- [ ] 62. Feature tests: `StartOlympiadAttemptTest`, `SubmitOlympiadAttemptAnswersTest` (idempotent re-submit overwrites prior answer; cross-theme question UUID returns 422; submit after finish 422), `FinishOlympiadAttemptTest` (score computed; second finish 422), `ListUserOlympiadAttemptsTest` (pagination + filters + cross-user 404), `AdminListOlympiadAttemptsTest` (auth + filters).
-- [ ] 63. Unit test `OlympiadQuestionQueryBuilderMatchingThemeTest` covering: range-only match, chapter-only match (single-chapter range hits `chapter = X`), mismatch (book/language), `isSingleChapter()` boundary (range "5-5" matches both chapter=5 rows and chapters_from=5/_to=5 rows). Pure SQL semantics not exhaustively covered by feature tests.
+- [x] 60. Add Controllers + routes under `olympiad.attempts.*` with `auth:sanctum` + `resolve-language` + `throttle:per-user`; `scopeBindings` on the `{attempt}/...` group; admin route under `admin.olympiad.attempts.index`.
+- [x] 61. Add `OlympiadAttemptFactory` (and `OlympiadAttemptAnswerFactory`) for tests.
+- [x] 62. Feature tests: `StartOlympiadAttemptTest`, `SubmitOlympiadAttemptAnswersTest` (idempotent re-submit overwrites prior answer; cross-theme question UUID returns 422; submit after finish 422), `FinishOlympiadAttemptTest` (score computed; second finish 422), `ListUserOlympiadAttemptsTest` (pagination + filters + cross-user 404), `AdminListOlympiadAttemptsTest` (auth + filters).
+- [x] 63. Unit test `OlympiadQuestionQueryBuilderMatchingThemeTest` covering: range-only match, chapter-only match (single-chapter range hits `chapter = X`), mismatch (book/language), `isSingleChapter()` boundary (range "5-5" matches both chapter=5 rows and chapters_from=5/_to=5 rows). Pure SQL semantics not exhaustively covered by feature tests.
 
 ### Notes & Favorites colour
 

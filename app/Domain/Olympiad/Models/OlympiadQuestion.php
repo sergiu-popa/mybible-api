@@ -17,12 +17,16 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property string $book
- * @property int $chapters_from
- * @property int $chapters_to
+ * @property ?int $chapters_from
+ * @property ?int $chapters_to
+ * @property ?int $chapter
+ * @property ?int $verse
  * @property Language $language
  * @property string $question
  * @property string|null $explanation
+ * @property bool $is_reviewed
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Collection<int, OlympiadAnswer> $answers
@@ -43,6 +47,9 @@ final class OlympiadQuestion extends Model
         return [
             'chapters_from' => 'integer',
             'chapters_to' => 'integer',
+            'chapter' => 'integer',
+            'verse' => 'integer',
+            'is_reviewed' => 'boolean',
             'language' => Language::class,
         ];
     }

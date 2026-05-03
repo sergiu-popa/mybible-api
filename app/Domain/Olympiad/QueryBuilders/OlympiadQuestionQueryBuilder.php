@@ -32,14 +32,35 @@ final class OlympiadQuestionQueryBuilder extends Builder
     }
 
     /**
+     * Match questions belonging to a theme described by `(book, range, language)`.
+     * Supports both range-mode rows and single-chapter-mode rows.
+     */
+    public function matchingTheme(string $book, ChapterRange $range, Language $language): self
+    {
+        return $this
+            ->where('book', $book)
+            ->where('language', $language->value)
+            ->where(function (self $q) use ($range): void {
+                $q->where(function (self $sub) use ($range): void {
+                    $sub->where('chapters_from', $range->from)->where('chapters_to', $range->to);
+                });
+
+                if ($range->isSingleChapter()) {
+                    $q->orWhere('chapter', $range->from);
+                }
+            });
+    }
+
+    /**
      * Project the distinct `(book, chapters_from, chapters_to, language)`
      * tuples present in `olympiad_questions`, with a `question_count`
-     * aggregate. The caller is responsible for any `forLanguage()` filter
-     * and pagination.
+     * aggregate. Skips chapter-only rows where chapters_from is NULL.
      */
     public function themes(): self
     {
         return $this
+            ->whereNotNull('chapters_from')
+            ->whereNotNull('chapters_to')
             ->select([
                 'book',
                 'chapters_from',

@@ -15,6 +15,9 @@ final class OlympiadReconcileTest extends ReconcileTestCase
 
     public function test_it_renames_question_tables_and_correct_to_is_correct(): void
     {
+        // Drop dependent tables first (FK to olympiad_questions/olympiad_answers).
+        Schema::dropIfExists('olympiad_attempt_answers');
+        Schema::dropIfExists('olympiad_attempts');
         Schema::dropIfExists('olympiad_answers');
         Schema::dropIfExists('olympiad_questions');
 

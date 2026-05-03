@@ -7,6 +7,7 @@ namespace Database\Factories;
 use App\Domain\Olympiad\Models\OlympiadAnswer;
 use App\Domain\Olympiad\Models\OlympiadQuestion;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<OlympiadAnswer>
@@ -21,6 +22,7 @@ final class OlympiadAnswerFactory extends Factory
     public function definition(): array
     {
         return [
+            'uuid' => (string) Str::uuid(),
             'olympiad_question_id' => OlympiadQuestion::factory(),
             'text' => fake()->sentence(),
             'is_correct' => false,

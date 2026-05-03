@@ -20,6 +20,7 @@ final class OlympiadAnswerResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'uuid' => $this->uuid,
             'text' => $this->text,
             'is_correct' => $this->is_correct,
         ];

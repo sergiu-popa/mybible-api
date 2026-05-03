@@ -45,6 +45,7 @@ use App\Http\Controllers\Api\V1\Admin\Mobile\CreateMobileVersionController;
 use App\Http\Controllers\Api\V1\Admin\Mobile\DeleteMobileVersionController;
 use App\Http\Controllers\Api\V1\Admin\Mobile\ListMobileVersionsController;
 use App\Http\Controllers\Api\V1\Admin\Mobile\UpdateMobileVersionController;
+use App\Http\Controllers\Api\V1\Admin\Olympiad\ListAdminOlympiadAttemptsController;
 use App\Http\Controllers\Api\V1\Admin\Olympiad\ReorderOlympiadQuestionsController;
 use App\Http\Controllers\Api\V1\Admin\QrCode\CreateQrCodeController as AdminCreateQrCodeController;
 use App\Http\Controllers\Api\V1\Admin\QrCode\DeleteQrCodeController as AdminDeleteQrCodeController;
@@ -121,8 +122,12 @@ use App\Http\Controllers\Api\V1\Notes\DeleteNoteController;
 use App\Http\Controllers\Api\V1\Notes\ListNotesController;
 use App\Http\Controllers\Api\V1\Notes\StoreNoteController;
 use App\Http\Controllers\Api\V1\Notes\UpdateNoteController;
+use App\Http\Controllers\Api\V1\Olympiad\FinishOlympiadAttemptController;
 use App\Http\Controllers\Api\V1\Olympiad\ListOlympiadThemesController;
+use App\Http\Controllers\Api\V1\Olympiad\ListUserOlympiadAttemptsController;
 use App\Http\Controllers\Api\V1\Olympiad\ShowOlympiadThemeController;
+use App\Http\Controllers\Api\V1\Olympiad\StartOlympiadAttemptController;
+use App\Http\Controllers\Api\V1\Olympiad\SubmitOlympiadAttemptAnswersController;
 use App\Http\Controllers\Api\V1\Profile\ChangeUserPasswordController;
 use App\Http\Controllers\Api\V1\Profile\DeleteUserAccountController;
 use App\Http\Controllers\Api\V1\Profile\RemoveUserAvatarController;
@@ -225,6 +230,16 @@ Route::prefix('v1')->group(function (): void {
             Route::get('themes/{book}/{chapters}', ShowOlympiadThemeController::class)
                 ->where('book', '[A-Za-z0-9]+')
                 ->name('themes.show');
+        });
+
+    Route::prefix('olympiad/attempts')
+        ->name('olympiad.attempts.')
+        ->middleware(['auth:sanctum', 'resolve-language', 'throttle:per-user'])
+        ->group(function (): void {
+            Route::get('/', ListUserOlympiadAttemptsController::class)->name('index');
+            Route::post('/', StartOlympiadAttemptController::class)->name('store');
+            Route::post('{attempt}/answers', SubmitOlympiadAttemptAnswersController::class)->name('answers.store');
+            Route::post('{attempt}/finish', FinishOlympiadAttemptController::class)->name('finish');
         });
 
     Route::middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:public-anon', 'cache.headers:public;max_age=3600;etag'])
@@ -459,6 +474,11 @@ Route::prefix('v1')->group(function (): void {
                         ->where('book', '[A-Za-z0-9]+')
                         ->where('language', '[a-z]{2}')
                         ->name('olympiad.themes.questions.reorder');
+
+                    Route::get(
+                        'olympiad/attempts',
+                        ListAdminOlympiadAttemptsController::class,
+                    )->name('olympiad.attempts.index');
                 });
 
             Route::middleware(['auth:sanctum', 'super-admin'])

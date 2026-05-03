@@ -2,6 +2,9 @@
 
 use App\Domain\Auth\Exceptions\InvalidPasswordResetTokenException;
 use App\Domain\Bible\Exceptions\VerseRangeTooLargeException;
+use App\Domain\Olympiad\Exceptions\OlympiadAnswerNotInQuestionException;
+use App\Domain\Olympiad\Exceptions\OlympiadAttemptAlreadyFinishedException;
+use App\Domain\Olympiad\Exceptions\OlympiadAttemptThemeMismatchException;
 use App\Domain\Olympiad\Exceptions\OlympiadThemeNotFoundException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionAlreadyCompletedException;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionNotCompletableException;
@@ -144,6 +147,18 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (OlympiadThemeNotFoundException $e, Request $request) {
             return response()->json(['message' => $e->getMessage()], 404);
+        });
+
+        $exceptions->render(function (OlympiadAttemptAlreadyFinishedException $e, Request $request) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        });
+
+        $exceptions->render(function (OlympiadAttemptThemeMismatchException $e, Request $request) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        });
+
+        $exceptions->render(function (OlympiadAnswerNotInQuestionException $e, Request $request) {
+            return response()->json(['message' => $e->getMessage()], 422);
         });
 
         $exceptions->render(function (Throwable $e, Request $request) {

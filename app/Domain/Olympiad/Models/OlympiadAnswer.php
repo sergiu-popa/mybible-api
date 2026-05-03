@@ -13,6 +13,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property string $uuid
  * @property int $olympiad_question_id
  * @property string $text
  * @property bool $is_correct
