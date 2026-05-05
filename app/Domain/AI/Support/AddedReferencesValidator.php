@@ -40,8 +40,18 @@ final class AddedReferencesValidator
 
         $dom = new DOMDocument('1.0', 'UTF-8');
 
+        // libxml's loadHTML mis-decodes UTF-8 even with a meta charset
+        // declared, because it sniffs encoding from the first bytes
+        // before reaching <meta>. Pre-encoding multibyte characters as
+        // numeric entities sidesteps the sniffer entirely.
+        $encoded = mb_encode_numericentity(
+            $html,
+            [0x80, 0x10FFFF, 0, 0x1FFFFF],
+            'UTF-8',
+        );
+
         $wrapper = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>'
-            . $html
+            . $encoded
             . '</body></html>';
 
         $previous = libxml_use_internal_errors(true);
@@ -83,7 +93,11 @@ final class AddedReferencesValidator
         }
 
         return [
-            'html' => $serialized,
+            'html' => mb_decode_numericentity(
+                $serialized,
+                [0x80, 0x10FFFF, 0, 0x1FFFFF],
+                'UTF-8',
+            ),
             'references_added' => $kept,
         ];
     }

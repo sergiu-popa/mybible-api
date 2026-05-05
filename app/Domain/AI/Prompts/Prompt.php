@@ -31,4 +31,15 @@ abstract class Prompt
      * @param  array<string, mixed>  $payload
      */
     abstract public function userMessage(array $payload): string;
+
+    /**
+     * Optional per-prompt model override. Returning `null` (the default)
+     * tells callers to fall back to `config('ai.model.default')`. Use
+     * this to pin a specific model when the prompt only makes sense
+     * against it (e.g. a translation prompt that needs Opus).
+     */
+    public function model(): ?string
+    {
+        return null;
+    }
 }

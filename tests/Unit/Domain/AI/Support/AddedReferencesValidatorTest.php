@@ -77,4 +77,19 @@ final class AddedReferencesValidatorTest extends TestCase
         self::assertSame(0, $result['references_added']);
         self::assertSame('', $result['html']);
     }
+
+    public function test_preserves_utf8_diacritics(): void
+    {
+        $validator = new AddedReferencesValidator;
+
+        $html = '<p>Vezi <a class="reference" href="JHN.3:16.VDC">Ioan 3:16 — așa</a> a iubit Dumnezeu lumea: ăâșțî ŐŰé.</p>';
+
+        $result = $validator->validate($html);
+
+        self::assertSame(1, $result['references_added']);
+        self::assertStringContainsString('așa', $result['html']);
+        self::assertStringContainsString('ăâșțî', $result['html']);
+        self::assertStringContainsString('ŐŰé', $result['html']);
+        self::assertStringContainsString('—', $result['html']);
+    }
 }

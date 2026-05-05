@@ -33,6 +33,10 @@ final class AddReferencesAction
 
     public function execute(AddReferencesInput $input): AddReferencesOutput
     {
+        // Cap PHP wall-clock to match the upstream HTTP timeout so a slow
+        // Anthropic call cannot exceed the SLA the sync endpoint promises.
+        @set_time_limit((int) config('ai.request.timeout_seconds', 60));
+
         $version = $this->versionResolver->resolve(
             $input->language,
             $input->bibleVersionAbbreviation,
@@ -43,7 +47,7 @@ final class AddReferencesAction
         $response = $this->client->send(new ClaudeRequest(
             promptName: AddReferencesV1::NAME,
             promptVersion: AddReferencesV1::VERSION,
-            model: (string) config('ai.model.default'),
+            model: $prompt->model() ?? (string) config('ai.model.default'),
             systemPrompt: $prompt->systemPrompt(),
             userMessage: $prompt->userMessage([
                 'html' => $input->html,
@@ -57,8 +61,8 @@ final class AddReferencesAction
 
         if ($response->status !== AiCallStatus::Ok) {
             throw new ClaudeUnavailableException(
-                $response->errorMessage ?? 'Anthropic call failed.',
                 retryAfterSeconds: 30,
+                aiCallId: $response->aiCallId,
             );
         }
 

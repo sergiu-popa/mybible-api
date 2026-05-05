@@ -19,6 +19,7 @@ final class AddReferencesBatchController
     public function __invoke(AddReferencesBatchRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $filters = is_array($validated['filters'] ?? null) ? $validated['filters'] : [];
 
         $user = $request->user();
         $importJob = ImportJob::query()->create([
@@ -29,7 +30,7 @@ final class AddReferencesBatchController
                 'subject_type' => (string) $validated['subject_type'],
                 'subject_id' => (int) $validated['subject_id'],
                 'language' => (string) $validated['language'],
-                'filters' => is_array($validated['filters'] ?? null) ? $validated['filters'] : [],
+                'filters' => $filters,
             ],
             'user_id' => $user instanceof User ? (int) $user->id : null,
         ]);
@@ -39,7 +40,7 @@ final class AddReferencesBatchController
             subjectType: (string) $validated['subject_type'],
             subjectId: (int) $validated['subject_id'],
             language: (string) $validated['language'],
-            filters: is_array($validated['filters'] ?? null) ? $validated['filters'] : [],
+            filters: $filters,
         ));
 
         return ImportJobResource::make($importJob)

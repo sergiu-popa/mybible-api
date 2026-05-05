@@ -163,8 +163,13 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (ClaudeUnavailableException $e, Request $request) {
+            $payload = ['message' => $e->getMessage()];
+            if ($e->aiCallId !== null) {
+                $payload['ai_call_id'] = $e->aiCallId;
+            }
+
             return response()->json(
-                ['message' => $e->getMessage()],
+                $payload,
                 502,
                 ['Retry-After' => (string) $e->retryAfterSeconds],
             );
