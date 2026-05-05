@@ -10,19 +10,20 @@ use App\Domain\Admin\Imports\Models\ImportJob;
 use App\Domain\Commentary\Models\Commentary;
 use App\Http\Requests\Admin\Commentary\AICommentaryBatchRequest;
 use App\Http\Resources\Admin\Imports\ImportJobResource;
-use App\Models\User;
+use App\Support\Controllers\ResolvesTriggeringUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Bus;
 
 final class AIAddReferencesCommentaryBatchController
 {
+    use ResolvesTriggeringUser;
+
     public function __invoke(
         AICommentaryBatchRequest $request,
         Commentary $commentary,
     ): JsonResponse {
-        $user = $request->user();
-        $userId = $user instanceof User ? (int) $user->id : null;
+        $userId = $this->triggeringUserId($request);
         $filters = $request->filters();
 
         $importJob = ImportJob::query()->create([

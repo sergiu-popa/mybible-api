@@ -10,6 +10,5 @@ final readonly class TranslateCommentaryData
         public int $sourceCommentaryId,
         public string $targetLanguage,
         public bool $overwrite = false,
-        public ?int $triggeredByUserId = null,
     ) {}
 }

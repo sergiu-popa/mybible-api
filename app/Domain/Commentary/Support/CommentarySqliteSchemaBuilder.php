@@ -44,7 +44,6 @@ SQL);
         $pdo->exec(sprintf(
             <<<'SQL'
 CREATE TABLE commentary_text (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
     book TEXT NOT NULL,
     chapter INTEGER NOT NULL,
     position INTEGER NOT NULL,

@@ -9,17 +9,18 @@ use App\Domain\Commentary\DataTransferObjects\UpdateCommentaryErrorReportData;
 use App\Domain\Commentary\Models\CommentaryErrorReport;
 use App\Http\Requests\Admin\Commentary\UpdateCommentaryErrorReportRequest;
 use App\Http\Resources\Commentary\AdminCommentaryErrorReportResource;
-use App\Models\User;
+use App\Support\Controllers\ResolvesTriggeringUser;
 
 final class UpdateCommentaryErrorReportController
 {
+    use ResolvesTriggeringUser;
+
     public function __invoke(
         UpdateCommentaryErrorReportRequest $request,
         CommentaryErrorReport $report,
         UpdateCommentaryErrorReportStatusAction $action,
     ): AdminCommentaryErrorReportResource {
-        $user = $request->user();
-        $userId = $user instanceof User ? (int) $user->id : null;
+        $userId = $this->triggeringUserId($request);
 
         /** @var array<string, mixed> $validated */
         $validated = $request->validated();

@@ -50,7 +50,7 @@ final class AddReferencesCommentaryTextAction
             $text->forceFill([
                 'with_references' => $output->html,
                 'ai_referenced_at' => Carbon::now(),
-                'ai_referenced_prompt_version' => AddReferencesV1::VERSION,
+                'ai_referenced_prompt_version' => AddReferencesV1::NAME . '@' . AddReferencesV1::VERSION,
             ])->save();
         });
 

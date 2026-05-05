@@ -44,7 +44,11 @@ final class CommentaryBatchRunnerTest extends TestCase
 
     public function test_partial_status_when_one_row_throws(): void
     {
-        $rows = collect([1, 2, 3, 4, 5])->map(fn (int $p): CommentaryText => CommentaryText::factory()->create([
+        // 100 rows with chunk size 50 — exercises the multi-chunk
+        // progress update path; offending row sits at position 50 to
+        // straddle the chunk boundary and confirm the second chunk
+        // still runs.
+        $rows = collect(range(1, 100))->map(fn (int $p): CommentaryText => CommentaryText::factory()->create([
             'book' => 'GEN',
             'chapter' => 1,
             'position' => $p,
@@ -52,13 +56,15 @@ final class CommentaryBatchRunnerTest extends TestCase
         $importJob = ImportJob::factory()->create();
 
         /** @var CommentaryText $offending */
-        $offending = $rows->get(2);
+        $offending = $rows->get(49);
         $offendingId = (int) $offending->id;
 
+        $processed = 0;
         $status = (new CommentaryBatchRunner)->run(
             $importJob,
             CommentaryText::query()->whereIn('id', $rows->pluck('id')->all()),
-            function (CommentaryText $row) use ($offendingId): void {
+            function (CommentaryText $row) use ($offendingId, &$processed): void {
+                $processed++;
                 if ((int) $row->id === $offendingId) {
                     throw new RuntimeException('boom for row ' . $row->id);
                 }
@@ -66,6 +72,7 @@ final class CommentaryBatchRunnerTest extends TestCase
         );
 
         self::assertSame(ImportJobStatus::Partial, $status);
+        self::assertSame(100, $processed);
 
         $importJob->refresh();
         self::assertSame(ImportJobStatus::Partial, $importJob->status);

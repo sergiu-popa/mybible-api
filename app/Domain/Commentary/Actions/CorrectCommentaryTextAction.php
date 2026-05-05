@@ -66,7 +66,7 @@ final class CorrectCommentaryTextAction
             $updates = [
                 'plain' => $response->content,
                 'ai_corrected_at' => Carbon::now(),
-                'ai_corrected_prompt_version' => CorrectV1::VERSION,
+                'ai_corrected_prompt_version' => CorrectV1::NAME . '@' . CorrectV1::VERSION,
             ];
 
             // First-pass-after-ETL safety net: if the row arrived from

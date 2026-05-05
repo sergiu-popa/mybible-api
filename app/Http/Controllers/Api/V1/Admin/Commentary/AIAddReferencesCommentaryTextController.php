@@ -9,17 +9,18 @@ use App\Domain\Commentary\DataTransferObjects\AIAddReferencesCommentaryTextData;
 use App\Domain\Commentary\Models\CommentaryText;
 use App\Http\Requests\Admin\Commentary\AIAddReferencesCommentaryTextRequest;
 use App\Http\Resources\Commentary\AdminCommentaryTextResource;
-use App\Models\User;
+use App\Support\Controllers\ResolvesTriggeringUser;
 
 final class AIAddReferencesCommentaryTextController
 {
+    use ResolvesTriggeringUser;
+
     public function __invoke(
         AIAddReferencesCommentaryTextRequest $request,
         CommentaryText $text,
         AddReferencesCommentaryTextAction $action,
     ): AdminCommentaryTextResource {
-        $user = $request->user();
-        $userId = $user instanceof User ? (int) $user->id : null;
+        $userId = $this->triggeringUserId($request);
 
         $text->loadMissing('commentary');
 

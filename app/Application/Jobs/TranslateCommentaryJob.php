@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Jobs;
 
 use App\Application\Support\CommentaryBatchRunner;
+use App\Domain\Admin\Imports\Enums\ImportJobStatus;
 use App\Domain\Admin\Imports\Models\ImportJob;
 use App\Domain\Commentary\Actions\TranslateCommentaryAction;
 use App\Domain\Commentary\Actions\TranslateCommentaryTextAction;
@@ -15,7 +16,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use RuntimeException;
+use Illuminate\Support\Carbon;
 
 /**
  * Async per-row translation — iterates the source commentary's `plain`
@@ -53,10 +54,16 @@ final class TranslateCommentaryJob implements ShouldQueue
 
         $target = Commentary::query()->find($this->targetCommentaryId);
         if (! $target instanceof Commentary) {
-            throw new RuntimeException(sprintf(
-                'TranslateCommentaryJob: target commentary #%d not found.',
-                $this->targetCommentaryId,
-            ));
+            $importJob->update([
+                'status' => ImportJobStatus::Failed,
+                'error' => sprintf(
+                    'TranslateCommentaryJob: target commentary #%d not found.',
+                    $this->targetCommentaryId,
+                ),
+                'finished_at' => Carbon::now(),
+            ]);
+
+            return;
         }
 
         $query = CommentaryText::query()

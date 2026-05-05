@@ -52,7 +52,7 @@ final class CorrectCommentaryTextActionTest extends TestCase
 
         self::assertSame('<p>Corrected text.</p>', $updated->plain);
         self::assertNotNull($updated->ai_corrected_at);
-        self::assertSame('1.0.0', $updated->ai_corrected_prompt_version);
+        self::assertSame('commentary_correct@1.0.0', $updated->ai_corrected_prompt_version);
         self::assertSame(1, AiCall::query()->where('prompt_name', 'commentary_correct')->count());
     }
 

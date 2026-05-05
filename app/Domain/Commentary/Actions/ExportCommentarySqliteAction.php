@@ -58,12 +58,21 @@ final class ExportCommentarySqliteAction
 
             $key = sprintf('commentaries/%s/v%d.sqlite', $source->slug, $revision);
             $disk = Storage::disk((string) config('filesystems.default'));
-            $contents = file_get_contents($tmpPath);
-            if ($contents === false) {
-                throw new RuntimeException('Could not read generated SQLite file.');
+            // Stream the artefact rather than buffering it in memory: the
+            // SDA × 7-language bundle reaches 30–80 MB and back-to-back
+            // exports would push the worker past `memory_limit`.
+            $stream = fopen($tmpPath, 'rb');
+            if ($stream === false) {
+                throw new RuntimeException('Could not open generated SQLite file.');
             }
 
-            $disk->put($key, $contents);
+            try {
+                $disk->put($key, $stream);
+            } finally {
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            }
             // Surface a usable URL when the disk supports it; otherwise
             // store the bare key so admins can derive the URL by
             // convention (e.g. signed URLs in production).

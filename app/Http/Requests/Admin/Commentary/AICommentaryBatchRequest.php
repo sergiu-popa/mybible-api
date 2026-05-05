@@ -45,11 +45,15 @@ final class AICommentaryBatchRequest extends FormRequest
     public function filters(): array
     {
         $filters = [];
-        if (is_string($this->input('book')) && $this->input('book') !== '') {
-            $filters['book'] = strtoupper((string) $this->input('book'));
+
+        $book = $this->validated('book');
+        if (is_string($book) && $book !== '') {
+            $filters['book'] = strtoupper($book);
         }
-        if ($this->filled('chapter')) {
-            $filters['chapter'] = (int) $this->input('chapter');
+
+        $chapter = $this->validated('chapter');
+        if (is_int($chapter)) {
+            $filters['chapter'] = $chapter;
         }
 
         return $filters;

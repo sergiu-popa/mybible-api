@@ -40,13 +40,13 @@ return new class extends Migration
                 $table->timestamp('ai_corrected_at')->nullable()->after('errors_reported');
             }
             if (! Schema::hasColumn('commentary_texts', 'ai_corrected_prompt_version')) {
-                $table->string('ai_corrected_prompt_version', 20)->nullable()->after('ai_corrected_at');
+                $table->string('ai_corrected_prompt_version', 64)->nullable()->after('ai_corrected_at');
             }
             if (! Schema::hasColumn('commentary_texts', 'ai_referenced_at')) {
                 $table->timestamp('ai_referenced_at')->nullable()->after('ai_corrected_prompt_version');
             }
             if (! Schema::hasColumn('commentary_texts', 'ai_referenced_prompt_version')) {
-                $table->string('ai_referenced_prompt_version', 20)->nullable()->after('ai_referenced_at');
+                $table->string('ai_referenced_prompt_version', 64)->nullable()->after('ai_referenced_at');
             }
         });
     }

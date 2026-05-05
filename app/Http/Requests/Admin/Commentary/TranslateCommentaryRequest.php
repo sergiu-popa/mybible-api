@@ -27,6 +27,7 @@ final class TranslateCommentaryRequest extends FormRequest
                 'size:2',
                 Rule::in(array_map(fn (Language $l): string => $l->value, Language::cases())),
             ],
+            'overwrite' => ['sometimes', 'boolean'],
         ];
     }
 

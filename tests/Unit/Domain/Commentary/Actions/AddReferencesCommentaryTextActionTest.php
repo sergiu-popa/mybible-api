@@ -55,7 +55,7 @@ final class AddReferencesCommentaryTextActionTest extends TestCase
 
         self::assertStringContainsString('class="reference"', (string) $updated->with_references);
         self::assertNotNull($updated->ai_referenced_at);
-        self::assertSame('1.0.0', $updated->ai_referenced_prompt_version);
+        self::assertSame('add_references@1.0.0', $updated->ai_referenced_prompt_version);
     }
 
     public function test_throws_when_plain_is_missing(): void

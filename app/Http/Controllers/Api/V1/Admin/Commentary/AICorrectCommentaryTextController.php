@@ -9,17 +9,18 @@ use App\Domain\Commentary\DataTransferObjects\AICorrectCommentaryTextData;
 use App\Domain\Commentary\Models\CommentaryText;
 use App\Http\Requests\Admin\Commentary\AICorrectCommentaryTextRequest;
 use App\Http\Resources\Commentary\AdminCommentaryTextResource;
-use App\Models\User;
+use App\Support\Controllers\ResolvesTriggeringUser;
 
 final class AICorrectCommentaryTextController
 {
+    use ResolvesTriggeringUser;
+
     public function __invoke(
         AICorrectCommentaryTextRequest $request,
         CommentaryText $text,
         CorrectCommentaryTextAction $action,
     ): AdminCommentaryTextResource {
-        $user = $request->user();
-        $userId = $user instanceof User ? (int) $user->id : null;
+        $userId = $this->triggeringUserId($request);
 
         $text->loadMissing('commentary');
 

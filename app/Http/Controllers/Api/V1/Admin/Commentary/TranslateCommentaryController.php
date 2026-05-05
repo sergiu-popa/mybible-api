@@ -12,26 +12,26 @@ use App\Domain\Commentary\DataTransferObjects\TranslateCommentaryData;
 use App\Domain\Commentary\Models\Commentary;
 use App\Http\Requests\Admin\Commentary\TranslateCommentaryRequest;
 use App\Http\Resources\Admin\Imports\ImportJobResource;
-use App\Models\User;
+use App\Support\Controllers\ResolvesTriggeringUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Bus;
 
 final class TranslateCommentaryController
 {
+    use ResolvesTriggeringUser;
+
     public function __invoke(
         TranslateCommentaryRequest $request,
         Commentary $commentary,
         TranslateCommentaryAction $action,
     ): JsonResponse {
-        $user = $request->user();
-        $userId = $user instanceof User ? (int) $user->id : null;
+        $userId = $this->triggeringUserId($request);
 
         $target = $action->prepare(new TranslateCommentaryData(
             sourceCommentaryId: (int) $commentary->id,
             targetLanguage: $request->targetLanguage(),
             overwrite: $request->overwrite(),
-            triggeredByUserId: $userId,
         ));
 
         $importJob = ImportJob::query()->create([

@@ -27,17 +27,21 @@ final class UpdateCommentaryErrorReportStatusAction
         UpdateCommentaryErrorReportData $data,
     ): CommentaryErrorReport {
         return DB::transaction(function () use ($report, $data): CommentaryErrorReport {
-            /** @var CommentaryText|null $text */
+            // FK is `ON DELETE CASCADE`, so a parent text always exists
+            // while the report does — `findOrFail` surfaces an
+            // invariant break loudly instead of silently skipping the
+            // counter update.
+            /** @var CommentaryText $text */
             $text = CommentaryText::query()
                 ->lockForUpdate()
-                ->find($report->commentary_text_id);
+                ->findOrFail($report->commentary_text_id);
 
             $report->refresh();
             $previous = $report->status;
 
             $delta = $previous->counterDelta($data->status);
 
-            if ($text instanceof CommentaryText && $delta !== 0) {
+            if ($delta !== 0) {
                 $next = (int) $text->errors_reported + $delta;
                 $text->forceFill([
                     'errors_reported' => max(0, $next),

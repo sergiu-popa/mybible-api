@@ -81,7 +81,7 @@ final class CommentaryAiEndpointsTest extends TestCase
         $this->postJson(route('admin.commentary-texts.ai-correct', ['text' => $text->id]))
             ->assertOk()
             ->assertJsonPath('data.plain', '<p>fixed</p>')
-            ->assertJsonPath('data.ai_corrected_prompt_version', '1.0.0');
+            ->assertJsonPath('data.ai_corrected_prompt_version', 'commentary_correct@1.0.0');
     }
 
     public function test_ai_add_references_per_row_writes_with_references(): void
@@ -103,7 +103,7 @@ final class CommentaryAiEndpointsTest extends TestCase
 
         $this->postJson(route('admin.commentary-texts.ai-add-references', ['text' => $text->id]))
             ->assertOk()
-            ->assertJsonPath('data.ai_referenced_prompt_version', '1.0.0');
+            ->assertJsonPath('data.ai_referenced_prompt_version', 'add_references@1.0.0');
     }
 
     public function test_ai_correct_batch_dispatches_job_and_returns_202(): void

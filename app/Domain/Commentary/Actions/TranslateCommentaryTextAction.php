@@ -81,7 +81,7 @@ final class TranslateCommentaryTextAction
                 'original' => $sourcePlain,
                 'plain' => $response->content,
                 'ai_corrected_at' => Carbon::now(),
-                'ai_corrected_prompt_version' => TranslateV1::VERSION,
+                'ai_corrected_prompt_version' => TranslateV1::NAME . '@' . TranslateV1::VERSION,
             ]);
 
             return $row;
