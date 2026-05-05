@@ -85,7 +85,7 @@ final class ListBibleBooksTest extends TestCase
     {
         $this
             ->withHeaders($this->apiKeyHeaders())
-            ->getJson(route('books.index', ['language' => 'fr']))
+            ->getJson(route('books.index', ['language' => 'zz']))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['language']);
     }

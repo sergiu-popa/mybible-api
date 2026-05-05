@@ -98,31 +98,31 @@ No counts incremented this story. The owner-`authorize()` block (4/5) is untouch
 
 ## Tasks
 
-- [ ] 1. Extend `App\Domain\Shared\Enums\Language` to add `Es`, `Fr`, `De`, `It` cases and update any exhaustive `match`/`switch` consumers the test suite surfaces.
-- [ ] 2. Create migration `create_ai_calls_table` with the columns and indexes specified above.
-- [ ] 3. Create migration `create_language_settings_table` with three nullable FKs (`ON DELETE SET NULL`) and a unique `language` constraint.
-- [ ] 4. Create data migration `seed_language_settings_for_iso2_codes` inserting one row per `ro, en, hu, es, fr, de, it`, idempotent.
-- [ ] 5. Add `AiCallStatus` enum and `AiCall` Eloquent model with polymorphic `subject` and the required casts.
-- [ ] 6. Add `LanguageSetting` Eloquent model with `getRouteKeyName='language'` and three `belongsTo` relations.
-- [ ] 7. Add `config/ai.php` with the keys listed above and extend `config/services.php` with `anthropic.*`; document `ANTHROPIC_API_KEY` in `.env.example`.
-- [ ] 8. Implement `ClaudeRequest`, `ClaudeResponse` DTOs and the `ClaudeClient` HTTP wrapper (cache-control on system prompt, retry-with-backoff, per-call `AiCall` row write).
-- [ ] 9. Implement `Prompt` abstract base, `PromptRegistry`, and `UnknownPromptException`; wire the registry from `config('ai.prompts')`.
-- [ ] 10. Implement `Prompts\AddReferences\V1` (USFM book list + reference format spec in system prompt; HTML + language + version in user message).
-- [ ] 11. Implement `AddReferencesVersionResolver`, `AddedReferencesValidator`, the `AddReferencesInput`/`AddReferencesOutput` DTOs, and `AddReferencesAction`; throw `ClaudeUnavailableException` on upstream failure.
-- [ ] 12. Add `ListLanguageSettingsAction`, `UpdateLanguageSettingAction`, `ShowPublicLanguageSettingAction`, and the `UpdateLanguageSettingInput` DTO.
-- [ ] 13. Add Form Requests `AddReferencesRequest`, `AddReferencesBatchRequest`, `UpdateLanguageSettingRequest` (validation rules per the table above).
-- [ ] 14. Add API Resources `AddReferencesResource`, `LanguageSettingResource`, `PublicLanguageSettingResource`.
-- [ ] 15. Add invokable controllers `Admin\Ai\AddReferencesController`, `Admin\Ai\AddReferencesBatchController`, `Admin\LanguageSettings\ListLanguageSettingsController`, `Admin\LanguageSettings\UpdateLanguageSettingController`, `LanguageSettings\ShowLanguageSettingController`; controllers delegate to actions only.
-- [ ] 16. Implement `App\Application\Jobs\AddReferencesBatchJob` running on the `database` queue, iterating target rows, calling the action, and updating the `import_jobs` progress/status.
-- [ ] 17. Register routes in `routes/api.php` under `/api/v1` with `auth:sanctum` + `super-admin` (admin) and the public read; configure `Route::pattern('language', '[a-z]{2}')`.
-- [ ] 18. Map `ClaudeUnavailableException` to a 502 JSON envelope with `Retry-After` in `bootstrap/app.php`.
-- [ ] 19. Add factories: `AiCallFactory`, `LanguageSettingFactory`.
-- [ ] 20. Unit tests for `ClaudeClient`: cache-control payload shape on system block, retry+backoff on 429, `AiCall` row populated with cache-hit and cache-miss token fields on every call (Http::fake).
-- [ ] 21. Unit tests for `AddReferencesVersionResolver` (input > settings > VDC fallback) and `AddedReferencesValidator` (strips links missing `class="reference"`; strips links whose href fails to parse; counts surviving references).
-- [ ] 22. Unit tests for `AddReferencesAction` with a fake `ClaudeClient`: end-to-end orchestration covering happy path, version-resolution chain, invalid-link stripping, and `references_added` accuracy.
-- [ ] 23. Unit tests for `PromptRegistry` (pinned lookup, missing pair throws).
-- [ ] 24. Feature tests for `POST /api/v1/admin/ai/add-references`: 401 (no token), 403 (admin without `is_super`), 422 (missing `html` / `language`), happy path with `Http::fake`, 502 on Claude failure.
-- [ ] 25. Feature test for `POST /api/v1/admin/ai/add-references/batch` asserting 202 + `import_jobs.id` shape, and that `AddReferencesBatchJob` processes target rows when run synchronously under `Bus::fake()->dispatchAfterResponse()` semantics (or `$job->handle()` directly with action mocked).
-- [ ] 26. Feature tests for the language-settings endpoints: admin list (super-admin), admin patch (validation + persistence), public read (returns slug-only payload), 403 for non-super admin on admin routes.
-- [ ] 27. Migration test asserting `language_settings` is seeded with all 7 ISO-2 codes after `migrate --seed`.
-- [ ] 28. Update story status `draft` → `planned`.
+- [x] 1. Extend `App\Domain\Shared\Enums\Language` to add `Es`, `Fr`, `De`, `It` cases and update any exhaustive `match`/`switch` consumers the test suite surfaces.
+- [x] 2. Create migration `create_ai_calls_table` with the columns and indexes specified above.
+- [x] 3. Create migration `create_language_settings_table` with three nullable FKs (`ON DELETE SET NULL`) and a unique `language` constraint.
+- [x] 4. Create data migration `seed_language_settings_for_iso2_codes` inserting one row per `ro, en, hu, es, fr, de, it`, idempotent.
+- [x] 5. Add `AiCallStatus` enum and `AiCall` Eloquent model with polymorphic `subject` and the required casts.
+- [x] 6. Add `LanguageSetting` Eloquent model with `getRouteKeyName='language'` and three `belongsTo` relations.
+- [x] 7. Add `config/ai.php` with the keys listed above and extend `config/services.php` with `anthropic.*`; document `ANTHROPIC_API_KEY` in `.env.example`.
+- [x] 8. Implement `ClaudeRequest`, `ClaudeResponse` DTOs and the `ClaudeClient` HTTP wrapper (cache-control on system prompt, retry-with-backoff, per-call `AiCall` row write).
+- [x] 9. Implement `Prompt` abstract base, `PromptRegistry`, and `UnknownPromptException`; wire the registry from `config('ai.prompts')`.
+- [x] 10. Implement `Prompts\AddReferences\V1` (USFM book list + reference format spec in system prompt; HTML + language + version in user message).
+- [x] 11. Implement `AddReferencesVersionResolver`, `AddedReferencesValidator`, the `AddReferencesInput`/`AddReferencesOutput` DTOs, and `AddReferencesAction`; throw `ClaudeUnavailableException` on upstream failure.
+- [x] 12. Add `ListLanguageSettingsAction`, `UpdateLanguageSettingAction`, `ShowPublicLanguageSettingAction`, and the `UpdateLanguageSettingInput` DTO.
+- [x] 13. Add Form Requests `AddReferencesRequest`, `AddReferencesBatchRequest`, `UpdateLanguageSettingRequest` (validation rules per the table above).
+- [x] 14. Add API Resources `AddReferencesResource`, `LanguageSettingResource`, `PublicLanguageSettingResource`.
+- [x] 15. Add invokable controllers `Admin\Ai\AddReferencesController`, `Admin\Ai\AddReferencesBatchController`, `Admin\LanguageSettings\ListLanguageSettingsController`, `Admin\LanguageSettings\UpdateLanguageSettingController`, `LanguageSettings\ShowLanguageSettingController`; controllers delegate to actions only.
+- [x] 16. Implement `App\Application\Jobs\AddReferencesBatchJob` running on the `database` queue, iterating target rows, calling the action, and updating the `import_jobs` progress/status.
+- [x] 17. Register routes in `routes/api.php` under `/api/v1` with `auth:sanctum` + `super-admin` (admin) and the public read; configure `Route::pattern('language', '[a-z]{2}')`.
+- [x] 18. Map `ClaudeUnavailableException` to a 502 JSON envelope with `Retry-After` in `bootstrap/app.php`.
+- [x] 19. Add factories: `AiCallFactory`, `LanguageSettingFactory`.
+- [x] 20. Unit tests for `ClaudeClient`: cache-control payload shape on system block, retry+backoff on 429, `AiCall` row populated with cache-hit and cache-miss token fields on every call (Http::fake).
+- [x] 21. Unit tests for `AddReferencesVersionResolver` (input > settings > VDC fallback) and `AddedReferencesValidator` (strips links missing `class="reference"`; strips links whose href fails to parse; counts surviving references).
+- [x] 22. Unit tests for `AddReferencesAction` with a fake `ClaudeClient`: end-to-end orchestration covering happy path, version-resolution chain, invalid-link stripping, and `references_added` accuracy.
+- [x] 23. Unit tests for `PromptRegistry` (pinned lookup, missing pair throws).
+- [x] 24. Feature tests for `POST /api/v1/admin/ai/add-references`: 401 (no token), 403 (admin without `is_super`), 422 (missing `html` / `language`), happy path with `Http::fake`, 502 on Claude failure.
+- [x] 25. Feature test for `POST /api/v1/admin/ai/add-references/batch` asserting 202 + `import_jobs.id` shape, and that `AddReferencesBatchJob` processes target rows when run synchronously under `Bus::fake()->dispatchAfterResponse()` semantics (or `$job->handle()` directly with action mocked).
+- [x] 26. Feature tests for the language-settings endpoints: admin list (super-admin), admin patch (validation + persistence), public read (returns slug-only payload), 403 for non-super admin on admin routes.
+- [x] 27. Migration test asserting `language_settings` is seeded with all 7 ISO-2 codes after `migrate --seed`.
+- [x] 28. Update story status `draft` → `planned`.

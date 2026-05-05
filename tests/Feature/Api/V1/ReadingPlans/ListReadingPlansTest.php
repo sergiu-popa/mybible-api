@@ -93,7 +93,7 @@ final class ListReadingPlansTest extends TestCase
         ]);
 
         $this->withHeader('X-Api-Key', 'mobile-valid-key')
-            ->getJson(route('reading-plans.index', ['language' => 'fr']))
+            ->getJson(route('reading-plans.index', ['language' => 'zz']))
             ->assertOk()
             ->assertJsonPath('data.0.name', 'English Title')
             ->assertJsonPath('data.0.description', 'English description.');

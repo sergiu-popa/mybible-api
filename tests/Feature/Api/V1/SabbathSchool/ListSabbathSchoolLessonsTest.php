@@ -126,7 +126,7 @@ final class ListSabbathSchoolLessonsTest extends TestCase
     public function test_it_validates_the_language_filter(): void
     {
         $this->withHeaders($this->apiKeyHeaders())
-            ->getJson(route('sabbath-school.lessons.index', ['language' => 'fr']))
+            ->getJson(route('sabbath-school.lessons.index', ['language' => 'zz']))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['language']);
     }

@@ -21,7 +21,7 @@ final class ResolveRequestLanguageTest extends TestCase
 
     public function test_it_falls_back_to_english_for_an_unsupported_value(): void
     {
-        $captured = $this->runMiddleware(['language' => 'fr']);
+        $captured = $this->runMiddleware(['language' => 'zz']);
 
         $this->assertSame(Language::En, $captured);
     }

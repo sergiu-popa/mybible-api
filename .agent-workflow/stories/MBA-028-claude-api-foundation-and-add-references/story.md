@@ -9,7 +9,7 @@ service: HTML-in / HTML-out reference linker.
 
 ## Status
 
-`planned`
+`in-review`
 
 ## Description
 

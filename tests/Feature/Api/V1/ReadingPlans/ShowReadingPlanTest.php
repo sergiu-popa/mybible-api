@@ -65,7 +65,7 @@ final class ShowReadingPlanTest extends TestCase
         $plan = $this->givenABilingualPlanWithFragments();
 
         $this->withHeader('X-Api-Key', 'mobile-valid-key')
-            ->getJson(route('reading-plans.show', ['plan' => $plan->slug, 'language' => 'fr']))
+            ->getJson(route('reading-plans.show', ['plan' => $plan->slug, 'language' => 'zz']))
             ->assertOk()
             ->assertJsonPath('data.name', 'EN Name')
             ->assertJsonPath('data.days.0.fragments.0.content', '<p>EN D1 intro</p>');

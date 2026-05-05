@@ -9,6 +9,10 @@ enum Language: string
     case En = 'en';
     case Ro = 'ro';
     case Hu = 'hu';
+    case Es = 'es';
+    case Fr = 'fr';
+    case De = 'de';
+    case It = 'it';
 
     public static function fromRequest(?string $value, self $fallback = self::En): self
     {

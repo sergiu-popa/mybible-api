@@ -93,6 +93,9 @@ final class BibleReconcileTest extends ReconcileTestCase
     private function seedLegacyShape(): void
     {
         // Drop the Laravel-shape tables so the rename target is free.
+        // `language_settings` holds an FK back to `bible_versions`; drop
+        // it first so the rename target can be released.
+        Schema::dropIfExists('language_settings');
         Schema::dropIfExists('bible_verses');
         Schema::dropIfExists('bible_chapters');
         Schema::dropIfExists('bible_books');

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\AI\Prompts\Prompt;
+use App\Domain\AI\Prompts\PromptRegistry;
 use App\Domain\Analytics\Models\ResourceDownload;
 use App\Domain\EducationalResources\Models\EducationalResource;
 use App\Domain\EducationalResources\Models\ResourceBook;
@@ -65,6 +67,15 @@ class AppServiceProvider extends ServiceProvider
         // collaborator that injects the repository within the same request
         // (e.g. ShowMobileVersionAction + ShowAppBootstrapAction).
         $this->app->singleton(MobileVersionsRepository::class);
+
+        // Versioned prompt registry — fed by the static `config('ai.prompts')`
+        // map. Singleton so prompt instances are reused per-process.
+        $this->app->singleton(PromptRegistry::class, function ($app): PromptRegistry {
+            /** @var array<string, array<string, class-string<Prompt>>> $map */
+            $map = (array) $app['config']->get('ai.prompts', []);
+
+            return new PromptRegistry($app, $map);
+        });
 
         if (class_exists(Scramble::class)) {
             Scramble::ignoreDefaultRoutes();

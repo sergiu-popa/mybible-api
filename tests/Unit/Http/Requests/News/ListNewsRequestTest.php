@@ -28,7 +28,7 @@ final class ListNewsRequestTest extends TestCase
 
     public function test_it_rejects_unknown_language(): void
     {
-        $validator = $this->validate(['language' => 'fr']);
+        $validator = $this->validate(['language' => 'zz']);
 
         $this->assertTrue($validator->fails());
         $this->assertArrayHasKey('language', $validator->errors()->toArray());

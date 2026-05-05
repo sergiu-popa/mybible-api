@@ -78,7 +78,7 @@ final class UpdateUserProfileTest extends TestCase
         $this->givenAnAuthenticatedUser();
 
         $this->patchJson(route('profile.update'), [
-            'language' => 'de',
+            'language' => 'zz',
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['language']);

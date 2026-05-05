@@ -115,7 +115,7 @@ final class ListHymnalBooksTest extends TestCase
     public function test_it_validates_the_language_filter(): void
     {
         $this->withHeaders($this->apiKeyHeaders())
-            ->getJson(route('hymnal-books.index', ['language' => 'fr']))
+            ->getJson(route('hymnal-books.index', ['language' => 'zz']))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['language']);
     }

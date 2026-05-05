@@ -42,7 +42,7 @@ final class UpdateUserProfileRequestTest extends TestCase
 
     public function test_it_rejects_unknown_language(): void
     {
-        $validator = $this->buildValidator(['language' => 'de']);
+        $validator = $this->buildValidator(['language' => 'zz']);
 
         $this->assertTrue($validator->fails());
         $this->assertArrayHasKey('language', $validator->errors()->toArray());

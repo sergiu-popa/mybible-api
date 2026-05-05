@@ -32,7 +32,7 @@ final class ListBibleVersionsRequestTest extends TestCase
 
     public function test_it_rejects_unsupported_languages(): void
     {
-        $this->assertFalse(Validator::make(['language' => 'fr'], $this->rules())->passes());
+        $this->assertFalse(Validator::make(['language' => 'zz'], $this->rules())->passes());
     }
 
     public function test_it_rejects_per_page_over_max(): void

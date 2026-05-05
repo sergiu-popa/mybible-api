@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\AI\Exceptions\ClaudeUnavailableException;
 use App\Domain\Auth\Exceptions\InvalidPasswordResetTokenException;
 use App\Domain\Bible\Exceptions\VerseRangeTooLargeException;
 use App\Domain\Olympiad\Exceptions\OlympiadAnswerNotInQuestionException;
@@ -159,6 +160,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (OlympiadAnswerNotInQuestionException $e, Request $request) {
             return response()->json(['message' => $e->getMessage()], 422);
+        });
+
+        $exceptions->render(function (ClaudeUnavailableException $e, Request $request) {
+            return response()->json(
+                ['message' => $e->getMessage()],
+                502,
+                ['Retry-After' => (string) $e->retryAfterSeconds],
+            );
         });
 
         $exceptions->render(function (Throwable $e, Request $request) {

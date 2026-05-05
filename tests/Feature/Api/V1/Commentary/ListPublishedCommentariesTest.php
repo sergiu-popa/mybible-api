@@ -93,7 +93,7 @@ final class ListPublishedCommentariesTest extends TestCase
     public function test_it_validates_the_language_filter(): void
     {
         $this->withHeaders($this->apiKeyHeaders())
-            ->getJson(route('commentaries.index', ['language' => 'fr']))
+            ->getJson(route('commentaries.index', ['language' => 'zz']))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['language']);
     }

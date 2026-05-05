@@ -23,13 +23,13 @@ final class LanguageTest extends TestCase
 
     public function test_it_returns_the_fallback_for_unknown_values(): void
     {
-        $this->assertSame(Language::En, Language::fromRequest('fr'));
+        $this->assertSame(Language::En, Language::fromRequest('zz'));
         $this->assertSame(Language::En, Language::fromRequest(''));
     }
 
     public function test_it_respects_a_custom_fallback(): void
     {
         $this->assertSame(Language::Ro, Language::fromRequest(null, Language::Ro));
-        $this->assertSame(Language::Ro, Language::fromRequest('zz', Language::Ro));
+        $this->assertSame(Language::Ro, Language::fromRequest('xx', Language::Ro));
     }
 }

@@ -136,7 +136,7 @@ final class ListResourceCategoriesTest extends TestCase
     public function test_it_rejects_an_unsupported_language(): void
     {
         $this->withHeaders($this->apiKeyHeaders())
-            ->getJson(route('resource-categories.index', ['language' => 'fr']))
+            ->getJson(route('resource-categories.index', ['language' => 'zz']))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['language']);
     }

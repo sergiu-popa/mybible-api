@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\Ai\AddReferencesBatchController;
+use App\Http\Controllers\Api\V1\Admin\Ai\AddReferencesController;
 use App\Http\Controllers\Api\V1\Admin\Collections\CreateCollectionController;
 use App\Http\Controllers\Api\V1\Admin\Collections\CreateCollectionTopicController;
 use App\Http\Controllers\Api\V1\Admin\Collections\DeleteCollectionController;
@@ -41,6 +43,8 @@ use App\Http\Controllers\Api\V1\Admin\EducationalResources\UnpublishResourceBook
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\UpdateResourceBookChapterController as AdminUpdateResourceBookChapterController;
 use App\Http\Controllers\Api\V1\Admin\EducationalResources\UpdateResourceBookController as AdminUpdateResourceBookController;
 use App\Http\Controllers\Api\V1\Admin\Imports\ShowImportJobController;
+use App\Http\Controllers\Api\V1\Admin\LanguageSettings\ListLanguageSettingsController;
+use App\Http\Controllers\Api\V1\Admin\LanguageSettings\UpdateLanguageSettingController;
 use App\Http\Controllers\Api\V1\Admin\Mobile\CreateMobileVersionController;
 use App\Http\Controllers\Api\V1\Admin\Mobile\DeleteMobileVersionController;
 use App\Http\Controllers\Api\V1\Admin\Mobile\ListMobileVersionsController;
@@ -114,6 +118,7 @@ use App\Http\Controllers\Api\V1\Hymnal\ListHymnalBookSongsController;
 use App\Http\Controllers\Api\V1\Hymnal\ListHymnalFavoritesController;
 use App\Http\Controllers\Api\V1\Hymnal\ShowHymnalSongController;
 use App\Http\Controllers\Api\V1\Hymnal\ToggleHymnalFavoriteController;
+use App\Http\Controllers\Api\V1\LanguageSettings\ShowLanguageSettingController;
 use App\Http\Controllers\Api\V1\Mobile\ShowAppBootstrapController;
 use App\Http\Controllers\Api\V1\Mobile\ShowMobileVersionController;
 use App\Http\Controllers\Api\V1\News\ListNewsController;
@@ -158,6 +163,8 @@ use App\Http\Controllers\Api\V1\Sync\ShowUserSyncController;
 use App\Http\Controllers\Api\V1\Verses\GetDailyVerseController;
 use App\Http\Controllers\Api\V1\Verses\ResolveVersesController;
 use Illuminate\Support\Facades\Route;
+
+Route::pattern('language', '[a-z]{2}');
 
 Route::prefix('v1')->group(function (): void {
     Route::prefix('auth')->name('auth.')->group(function (): void {
@@ -571,6 +578,24 @@ Route::prefix('v1')->group(function (): void {
                 });
 
             Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('language-settings')
+                ->name('language-settings.')
+                ->group(function (): void {
+                    Route::get('/', ListLanguageSettingsController::class)->name('index');
+                    Route::patch('{language}', UpdateLanguageSettingController::class)->name('update');
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('ai')
+                ->name('ai.')
+                ->group(function (): void {
+                    Route::post('add-references', AddReferencesController::class)
+                        ->name('add-references');
+                    Route::post('add-references/batch', AddReferencesBatchController::class)
+                        ->name('add-references.batch');
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
                 ->prefix('commentaries')
                 ->name('commentaries.')
                 ->group(function (): void {
@@ -644,6 +669,12 @@ Route::prefix('v1')->group(function (): void {
     ])->group(function (): void {
         Route::get('mobile/version', ShowMobileVersionController::class)->name('mobile.version');
     });
+
+    Route::middleware(['api-key-or-sanctum', 'throttle:public-anon'])
+        ->group(function (): void {
+            Route::get('language-settings/{language}', ShowLanguageSettingController::class)
+                ->name('language-settings.show');
+        });
 
     // Bootstrap endpoint — aggregates cold-start data in one round-trip.
     // Public (api-key-or-sanctum), cached at edge via Cache-Control header.
