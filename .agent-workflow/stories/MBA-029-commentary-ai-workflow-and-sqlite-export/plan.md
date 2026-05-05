@@ -188,39 +188,39 @@ immediately. Improver should not log this as a duplication.
 
 ## Tasks
 
-- [ ] 1. Migration: add the eight columns (`original`, `plain`, `with_references`, `errors_reported`, four AI stamps) to `commentary_texts`. Default `errors_reported` to `0` NOT NULL, others nullable.
-- [ ] 2. Migration: create `commentary_error_reports` per the schema table above (FKs, indexes). Add factory + seeder is not needed.
-- [ ] 3. Extend `App\Domain\Admin\Imports\Enums\ImportJobStatus` with `Partial = 'partial'` (terminal in `isTerminal()`); update `ImportJobResource` + tests that enumerate the cases.
-- [ ] 4. Add `CommentaryErrorReportStatus` enum with `decrementsCounter()` and `isOpen()` helpers.
-- [ ] 5. Add `CommentaryErrorReport` model (timestamps, FKs cast) + `CommentaryErrorReportFactory` + `CommentaryErrorReportQueryBuilder` (`pending()`, `forStatus()`, `forCommentaryText()`).
-- [ ] 6. Extend `CommentaryText` model casts/`@property` for the new columns; add the `errorReports()` hasMany relation.
-- [ ] 7. Add `App\Domain\AI\Prompts\Commentary\CorrectV1` extending the MBA-028 `Prompt` base — version `1.0.0`, system prompt covers the no-meaning-change rule + HTML-structure preservation; user message takes `original` and `language`.
-- [ ] 8. Add `App\Domain\AI\Prompts\Commentary\TranslateV1` — version `1.0.0`, system prompt covers structure preservation + idiomatic translation; user message takes `plain`, `source_language`, `target_language`. Pin `claude-opus-4-7` per MBA-028 §AC1 note.
-- [ ] 9. Register both new prompts in MBA-028's prompt registry.
-- [ ] 10. Add `AICorrectCommentaryTextData`, `AIAddReferencesCommentaryTextData`, `TranslateCommentaryData`, `SubmitCommentaryErrorReportData`, `UpdateCommentaryErrorReportData` readonly DTOs.
-- [ ] 11. Add `CorrectCommentaryTextAction` — calls `ClaudeClient` via `CorrectV1`, writes `plain` + stamps in a transaction, polymorphic `subject_type/subject_id` on the resulting `ai_calls` row points at the `CommentaryText`.
-- [ ] 12. Add `AddReferencesCommentaryTextAction` — resolves bible version via `language_settings.default_bible_version_id`, calls MBA-028 `AddReferencesAction`, writes `with_references` + stamps in a transaction.
-- [ ] 13. Add `TranslateCommentaryAction` — implements the four-step translation pipeline above; reuses `CreateCommentaryAction` (MBA-024) for the target-commentary creation path; deletes target texts when `overwrite=true`.
-- [ ] 14. Add `SubmitCommentaryErrorReportAction` — creates the report and increments `errors_reported` atomically (`lockForUpdate` on the `CommentaryText`).
-- [ ] 15. Add `UpdateCommentaryErrorReportStatusAction` — applies the counter delta from the transition matrix above, with a 0 floor; rejects unknown status transitions with a domain exception that maps to 422.
-- [ ] 16. Add `CommentarySqliteSchemaBuilder` — exposes the `meta` DDL, the `commentary_text` DDL parameterised by populated languages, the index list, and the two pragmas; consumed only by `ExportCommentarySqliteAction`.
-- [ ] 17. Add `CommentarySqliteRevisionResolver` — list the S3 prefix `commentaries/{slug}/` and pick the next `v{n}`; bumped at most once per export job.
-- [ ] 18. Add `ExportCommentarySqliteAction` — implements the six-step export above; uploads to the default disk under `commentaries/{slug}/v{n}.sqlite`.
-- [ ] 19. Add `App\Application\Support\CommentaryBatchRunner` — shared chunk/transaction/per-row error-trail helper for the three batch jobs, parameterised by the chunk size (default 50) and the per-row callable; updates `import_jobs.progress` after each chunk and writes per-row failures into the `error` JSON list, returning the final `succeeded` / `partial` status.
-- [ ] 20. Add `CorrectCommentaryBatchJob`, `AddReferencesCommentaryBatchJob`, `TranslateCommentaryJob`, `ExportCommentarySqliteJob` — each delegating to the relevant Action via `CommentaryBatchRunner` (the export job is single-shot, not chunked, so it bypasses the runner). Connection: `database`, queue: `ai`.
-- [ ] 21. Form Requests for all eight admin endpoints + the public submission endpoint (validation per AC §10–22). The translate request enforces "all source texts have non-null `plain`" via a dedicated rule class (`Commentary\Rules\AllTextsCorrected`).
-- [ ] 22. Controllers for all eight admin endpoints + the public submission endpoint. Each is a single-action invokable controller delegating to the matching Action.
-- [ ] 23. Resources: `CommentaryErrorReportResource` (public) and `AdminCommentaryErrorReportResource` (adds `id`, reviewer, status timestamps, full description). Extend `AdminCommentaryTextResource` to expose the new columns + AI stamps + counter; extend public `CommentaryTextResource` to expose `errors_reported` and to switch the `content` field to the resolved fallback (`with_references` → `content`).
-- [ ] 24. Routes: add the nine routes per the HTTP table above to `routes/api.php` under the existing `commentaries` admin group + a new `commentary-texts` admin group + a new public `commentary-texts/{text}/error-reports` group; the admin `commentary-error-reports` group lives under the existing super-admin block.
-- [ ] 25. Register `commentary-error-reports` rate limiter in `AppServiceProvider`.
-- [ ] 26. Unit tests for `CorrectCommentaryTextAction`, `AddReferencesCommentaryTextAction`, `TranslateCommentaryAction` with a faked `ClaudeClient` returning canned HTML — assert the right prompt version is recorded, the right column is written, and the right `ai_calls` audit row is produced.
-- [ ] 27. Unit tests for `SubmitCommentaryErrorReportAction` and `UpdateCommentaryErrorReportStatusAction` covering every cell of the counter-math matrix above and the 0 floor.
-- [ ] 28. Unit test for `ExportCommentarySqliteAction` against a 3-row × 2-language fixture: assert the output file's `meta` row, `commentary_text` schema (column set, indexes, pragmas), populated `content_<lang>` cells, and NULL where translations are absent. Open the artefact via PDO sqlite to assert.
-- [ ] 29. Unit test for `CommentaryBatchRunner` partial-failure semantics: 100 rows where row 50 throws → 99 rows succeed, runner returns `Partial`, `import_jobs.error` payload lists the offending row id and message.
-- [ ] 30. Feature tests for each admin endpoint (auth + super-admin gate, 422 validation paths, happy path); 409 on existing translation target without `?overwrite=true`; 5/min throttle on the public submission endpoint via the named limiter.
-- [ ] 31. Feature test for the public reader contract: extended `CommentaryTextResource` returns `with_references` when present, falls back to `content`, and surfaces `errors_reported`.
-- [ ] 32. Feature test for the SQLite export endpoint asserting 202 + `import_jobs.id` and (with `Bus::fake()` + manual job dispatch) that the resulting `import_jobs.payload` records the S3 URL + revision and the artefact lands at the expected key.
-- [ ] 33. Run `make lint-fix`, `make stan`, `make test-api filter=Commentary`, then `make test-api` for full-suite green.
+- [x] 1. Migration: add the eight columns (`original`, `plain`, `with_references`, `errors_reported`, four AI stamps) to `commentary_texts`. Default `errors_reported` to `0` NOT NULL, others nullable.
+- [x] 2. Migration: create `commentary_error_reports` per the schema table above (FKs, indexes). Add factory + seeder is not needed.
+- [x] 3. Extend `App\Domain\Admin\Imports\Enums\ImportJobStatus` with `Partial = 'partial'` (terminal in `isTerminal()`); update `ImportJobResource` + tests that enumerate the cases.
+- [x] 4. Add `CommentaryErrorReportStatus` enum with `decrementsCounter()` and `isOpen()` helpers.
+- [x] 5. Add `CommentaryErrorReport` model (timestamps, FKs cast) + `CommentaryErrorReportFactory` + `CommentaryErrorReportQueryBuilder` (`pending()`, `forStatus()`, `forCommentaryText()`).
+- [x] 6. Extend `CommentaryText` model casts/`@property` for the new columns; add the `errorReports()` hasMany relation.
+- [x] 7. Add `App\Domain\AI\Prompts\Commentary\CorrectV1` extending the MBA-028 `Prompt` base — version `1.0.0`, system prompt covers the no-meaning-change rule + HTML-structure preservation; user message takes `original` and `language`.
+- [x] 8. Add `App\Domain\AI\Prompts\Commentary\TranslateV1` — version `1.0.0`, system prompt covers structure preservation + idiomatic translation; user message takes `plain`, `source_language`, `target_language`. Pin `claude-opus-4-7` per MBA-028 §AC1 note.
+- [x] 9. Register both new prompts in MBA-028's prompt registry.
+- [x] 10. Add `AICorrectCommentaryTextData`, `AIAddReferencesCommentaryTextData`, `TranslateCommentaryData`, `SubmitCommentaryErrorReportData`, `UpdateCommentaryErrorReportData` readonly DTOs.
+- [x] 11. Add `CorrectCommentaryTextAction` — calls `ClaudeClient` via `CorrectV1`, writes `plain` + stamps in a transaction, polymorphic `subject_type/subject_id` on the resulting `ai_calls` row points at the `CommentaryText`.
+- [x] 12. Add `AddReferencesCommentaryTextAction` — resolves bible version via `language_settings.default_bible_version_id`, calls MBA-028 `AddReferencesAction`, writes `with_references` + stamps in a transaction.
+- [x] 13. Add `TranslateCommentaryAction` — implements the four-step translation pipeline above; reuses `CreateCommentaryAction` (MBA-024) for the target-commentary creation path; deletes target texts when `overwrite=true`.
+- [x] 14. Add `SubmitCommentaryErrorReportAction` — creates the report and increments `errors_reported` atomically (`lockForUpdate` on the `CommentaryText`).
+- [x] 15. Add `UpdateCommentaryErrorReportStatusAction` — applies the counter delta from the transition matrix above, with a 0 floor; rejects unknown status transitions with a domain exception that maps to 422.
+- [x] 16. Add `CommentarySqliteSchemaBuilder` — exposes the `meta` DDL, the `commentary_text` DDL parameterised by populated languages, the index list, and the two pragmas; consumed only by `ExportCommentarySqliteAction`.
+- [x] 17. Add `CommentarySqliteRevisionResolver` — list the S3 prefix `commentaries/{slug}/` and pick the next `v{n}`; bumped at most once per export job.
+- [x] 18. Add `ExportCommentarySqliteAction` — implements the six-step export above; uploads to the default disk under `commentaries/{slug}/v{n}.sqlite`.
+- [x] 19. Add `App\Application\Support\CommentaryBatchRunner` — shared chunk/transaction/per-row error-trail helper for the three batch jobs, parameterised by the chunk size (default 50) and the per-row callable; updates `import_jobs.progress` after each chunk and writes per-row failures into the `error` JSON list, returning the final `succeeded` / `partial` status.
+- [x] 20. Add `CorrectCommentaryBatchJob`, `AddReferencesCommentaryBatchJob`, `TranslateCommentaryJob`, `ExportCommentarySqliteJob` — each delegating to the relevant Action via `CommentaryBatchRunner` (the export job is single-shot, not chunked, so it bypasses the runner). Connection: `database`, queue: `ai`.
+- [x] 21. Form Requests for all eight admin endpoints + the public submission endpoint (validation per AC §10–22). The translate request enforces "all source texts have non-null `plain`" via a dedicated rule class (`Commentary\Rules\AllTextsCorrected`).
+- [x] 22. Controllers for all eight admin endpoints + the public submission endpoint. Each is a single-action invokable controller delegating to the matching Action.
+- [x] 23. Resources: `CommentaryErrorReportResource` (public) and `AdminCommentaryErrorReportResource` (adds `id`, reviewer, status timestamps, full description). Extend `AdminCommentaryTextResource` to expose the new columns + AI stamps + counter; extend public `CommentaryTextResource` to expose `errors_reported` and to switch the `content` field to the resolved fallback (`with_references` → `content`).
+- [x] 24. Routes: add the nine routes per the HTTP table above to `routes/api.php` under the existing `commentaries` admin group + a new `commentary-texts` admin group + a new public `commentary-texts/{text}/error-reports` group; the admin `commentary-error-reports` group lives under the existing super-admin block.
+- [x] 25. Register `commentary-error-reports` rate limiter in `AppServiceProvider`.
+- [x] 26. Unit tests for `CorrectCommentaryTextAction`, `AddReferencesCommentaryTextAction`, `TranslateCommentaryAction` with a faked `ClaudeClient` returning canned HTML — assert the right prompt version is recorded, the right column is written, and the right `ai_calls` audit row is produced.
+- [x] 27. Unit tests for `SubmitCommentaryErrorReportAction` and `UpdateCommentaryErrorReportStatusAction` covering every cell of the counter-math matrix above and the 0 floor.
+- [x] 28. Unit test for `ExportCommentarySqliteAction` against a 3-row × 2-language fixture: assert the output file's `meta` row, `commentary_text` schema (column set, indexes, pragmas), populated `content_<lang>` cells, and NULL where translations are absent. Open the artefact via PDO sqlite to assert.
+- [x] 29. Unit test for `CommentaryBatchRunner` partial-failure semantics: 100 rows where row 50 throws → 99 rows succeed, runner returns `Partial`, `import_jobs.error` payload lists the offending row id and message.
+- [x] 30. Feature tests for each admin endpoint (auth + super-admin gate, 422 validation paths, happy path); 409 on existing translation target without `?overwrite=true`; 5/min throttle on the public submission endpoint via the named limiter.
+- [x] 31. Feature test for the public reader contract: extended `CommentaryTextResource` returns `with_references` when present, falls back to `content`, and surfaces `errors_reported`.
+- [x] 32. Feature test for the SQLite export endpoint asserting 202 + `import_jobs.id` and (with `Bus::fake()` + manual job dispatch) that the resulting `import_jobs.payload` records the S3 URL + revision and the artefact lands at the expected key.
+- [x] 33. Run `make lint-fix`, `make stan`, `make test-api filter=Commentary`, then `make test-api` for full-suite green.
 
 ## Risks
 

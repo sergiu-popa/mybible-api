@@ -25,7 +25,8 @@ class CommentaryTextResource extends JsonResource
             'verse_from' => $this->verse_from,
             'verse_to' => $this->verse_to,
             'verse_label' => $this->verse_label,
-            'content' => $this->content,
+            'content' => $this->resolvedContent(),
+            'errors_reported' => (int) $this->errors_reported,
         ];
     }
 }

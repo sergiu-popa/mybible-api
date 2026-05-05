@@ -136,6 +136,15 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(300)->by($key);
         });
 
+        // Anonymous-friendly commentary error-report submission. Tight
+        // bucket because reports are user-typed prose: there's no good
+        // legitimate reason for a single IP to submit faster than this.
+        // Distinct from `public-anon` so a corporate NAT doesn't poison
+        // ordinary reads when one user spams reports.
+        RateLimiter::for('commentary-error-reports', static function (Request $request): Limit {
+            return Limit::perMinute(5)->by((string) $request->ip());
+        });
+
         // Per (ip, device_id) bucket so corporate NAT does not throttle
         // hundreds of legitimate users sharing one egress IP. Falls back
         // to ip-only when no device_id was sent.

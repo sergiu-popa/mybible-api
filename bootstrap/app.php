@@ -3,6 +3,9 @@
 use App\Domain\AI\Exceptions\ClaudeUnavailableException;
 use App\Domain\Auth\Exceptions\InvalidPasswordResetTokenException;
 use App\Domain\Bible\Exceptions\VerseRangeTooLargeException;
+use App\Domain\Commentary\Exceptions\CommentaryNotCorrectedException;
+use App\Domain\Commentary\Exceptions\CommentaryTextNotCorrectedException;
+use App\Domain\Commentary\Exceptions\TranslationTargetExistsException;
 use App\Domain\Olympiad\Exceptions\OlympiadAnswerNotInQuestionException;
 use App\Domain\Olympiad\Exceptions\OlympiadAttemptAlreadyFinishedException;
 use App\Domain\Olympiad\Exceptions\OlympiadAttemptThemeMismatchException;
@@ -160,6 +163,21 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (OlympiadAnswerNotInQuestionException $e, Request $request) {
             return response()->json(['message' => $e->getMessage()], 422);
+        });
+
+        $exceptions->render(function (CommentaryTextNotCorrectedException $e, Request $request) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        });
+
+        $exceptions->render(function (CommentaryNotCorrectedException $e, Request $request) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        });
+
+        $exceptions->render(function (TranslationTargetExistsException $e, Request $request) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'existing_commentary_id' => $e->existingCommentaryId,
+            ], 409);
         });
 
         $exceptions->render(function (ClaudeUnavailableException $e, Request $request) {

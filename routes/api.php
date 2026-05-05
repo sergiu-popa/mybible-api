@@ -12,15 +12,23 @@ use App\Http\Controllers\Api\V1\Admin\Collections\ListAdminCollectionsController
 use App\Http\Controllers\Api\V1\Admin\Collections\ListAdminCollectionTopicsController;
 use App\Http\Controllers\Api\V1\Admin\Collections\UpdateCollectionController;
 use App\Http\Controllers\Api\V1\Admin\Collections\UpdateCollectionTopicController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\AIAddReferencesCommentaryBatchController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\AIAddReferencesCommentaryTextController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\AICorrectCommentaryBatchController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\AICorrectCommentaryTextController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\CreateCommentaryController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\CreateCommentaryTextController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\DeleteCommentaryTextController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\ExportCommentarySqliteController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\ListCommentariesController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\ListCommentaryErrorReportsController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\ListCommentaryTextsController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\PublishCommentaryController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\ReorderCommentaryTextsController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\TranslateCommentaryController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\UnpublishCommentaryController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\UpdateCommentaryController;
+use App\Http\Controllers\Api\V1\Admin\Commentary\UpdateCommentaryErrorReportController;
 use App\Http\Controllers\Api\V1\Admin\Commentary\UpdateCommentaryTextController;
 use App\Http\Controllers\Api\V1\Admin\Devotionals\CreateDevotionalTypeController;
 use App\Http\Controllers\Api\V1\Admin\Devotionals\DeleteDevotionalTypeController;
@@ -92,6 +100,7 @@ use App\Http\Controllers\Api\V1\Collections\ShowCollectionTopicController;
 use App\Http\Controllers\Api\V1\Commentary\ListCommentaryChapterTextsController;
 use App\Http\Controllers\Api\V1\Commentary\ListCommentaryVerseTextsController;
 use App\Http\Controllers\Api\V1\Commentary\ListPublishedCommentariesController;
+use App\Http\Controllers\Api\V1\Commentary\SubmitCommentaryErrorReportController;
 use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalArchiveController;
 use App\Http\Controllers\Api\V1\Devotionals\ListDevotionalFavoritesController;
 use App\Http\Controllers\Api\V1\Devotionals\ShowDevotionalController;
@@ -258,6 +267,14 @@ Route::prefix('v1')->group(function (): void {
             Route::get('hymnal-songs/{song}', ShowHymnalSongController::class)
                 ->name('hymnal-songs.show');
         });
+
+    Route::middleware([
+        'api-key-or-sanctum',
+        'throttle:commentary-error-reports',
+    ])->group(function (): void {
+        Route::post('commentary-texts/{text}/error-reports', SubmitCommentaryErrorReportController::class)
+            ->name('commentary-texts.error-reports.store');
+    });
 
     Route::prefix('commentaries')
         ->name('commentaries.')
@@ -610,6 +627,15 @@ Route::prefix('v1')->group(function (): void {
                         ReorderCommentaryTextsController::class,
                     )->name('texts.reorder');
 
+                    Route::post('{commentary}/ai-correct-batch', AICorrectCommentaryBatchController::class)
+                        ->name('ai-correct-batch');
+                    Route::post('{commentary}/ai-add-references-batch', AIAddReferencesCommentaryBatchController::class)
+                        ->name('ai-add-references-batch');
+                    Route::post('{commentary}/translate', TranslateCommentaryController::class)
+                        ->name('translate');
+                    Route::post('{commentary}/sqlite-export', ExportCommentarySqliteController::class)
+                        ->name('sqlite-export');
+
                     Route::scopeBindings()->group(function (): void {
                         Route::get('{commentary}/texts', ListCommentaryTextsController::class)
                             ->name('texts.index');
@@ -620,6 +646,24 @@ Route::prefix('v1')->group(function (): void {
                         Route::delete('{commentary}/texts/{text}', DeleteCommentaryTextController::class)
                             ->name('texts.destroy');
                     });
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('commentary-texts')
+                ->name('commentary-texts.')
+                ->group(function (): void {
+                    Route::post('{text}/ai-correct', AICorrectCommentaryTextController::class)
+                        ->name('ai-correct');
+                    Route::post('{text}/ai-add-references', AIAddReferencesCommentaryTextController::class)
+                        ->name('ai-add-references');
+                });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('commentary-error-reports')
+                ->name('commentary-error-reports.')
+                ->group(function (): void {
+                    Route::get('/', ListCommentaryErrorReportsController::class)->name('index');
+                    Route::patch('{report}', UpdateCommentaryErrorReportController::class)->name('update');
                 });
         });
 

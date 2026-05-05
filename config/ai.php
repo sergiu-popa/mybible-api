@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Domain\AI\Prompts\AddReferences\V1 as AddReferencesV1;
+use App\Domain\AI\Prompts\Commentary\CorrectV1 as CommentaryCorrectV1;
+use App\Domain\AI\Prompts\Commentary\TranslateV1 as CommentaryTranslateV1;
 
 return [
 
@@ -58,6 +60,12 @@ return [
     'prompts' => [
         'add_references' => [
             '1.0.0' => AddReferencesV1::class,
+        ],
+        'commentary_correct' => [
+            '1.0.0' => CommentaryCorrectV1::class,
+        ],
+        'commentary_translate' => [
+            '1.0.0' => CommentaryTranslateV1::class,
         ],
     ],
 

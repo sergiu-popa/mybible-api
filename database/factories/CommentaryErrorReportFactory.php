@@ -1,0 +1,60 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Database\Factories;
+
+use App\Domain\Commentary\Enums\CommentaryErrorReportStatus;
+use App\Domain\Commentary\Models\CommentaryErrorReport;
+use App\Domain\Commentary\Models\CommentaryText;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends Factory<CommentaryErrorReport>
+ */
+final class CommentaryErrorReportFactory extends Factory
+{
+    protected $model = CommentaryErrorReport::class;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'commentary_text_id' => CommentaryText::factory(),
+            'user_id' => null,
+            'device_id' => fake()->uuid(),
+            'book' => 'GEN',
+            'chapter' => 1,
+            'verse' => 1,
+            'description' => fake()->sentence(),
+            'status' => CommentaryErrorReportStatus::Pending,
+            'reviewed_by_user_id' => null,
+            'reviewed_at' => null,
+        ];
+    }
+
+    public function reviewed(): self
+    {
+        return $this->state(fn (): array => [
+            'status' => CommentaryErrorReportStatus::Reviewed,
+        ]);
+    }
+
+    public function fixed(): self
+    {
+        return $this->state(fn (): array => [
+            'status' => CommentaryErrorReportStatus::Fixed,
+            'reviewed_at' => now(),
+        ]);
+    }
+
+    public function dismissed(): self
+    {
+        return $this->state(fn (): array => [
+            'status' => CommentaryErrorReportStatus::Dismissed,
+            'reviewed_at' => now(),
+        ]);
+    }
+}
