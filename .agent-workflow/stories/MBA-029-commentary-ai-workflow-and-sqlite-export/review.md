@@ -1,8 +1,22 @@
 # Code Review — MBA-029-commentary-ai-workflow-and-sqlite-export
 
-Scope: commit `ca9e934` ("[MBA-029] Implement commentary AI workflow + SQLite export") on top of MBA-028.
+Scope: commits `ca9e934` ("[MBA-029] Implement commentary AI workflow + SQLite export") and `2f251d0` ("[MBA-029] Address review.md W1–W5 + S1–S6") on top of MBA-028.
 
-Verdict: **REQUEST CHANGES**. The implementation matches the plan's domain layout, schema, and HTTP contract; tests cover the counter-math matrix, SQLite output shape, batch-runner partial semantics, and every new endpoint's auth/validation/dispatch. Issues below are correctness and contract gaps rather than architectural problems.
+Verdict: **APPROVE**. The fix-up pass correctly resolves every Warning and Suggestion from the first review, no new issues introduced. Implementation matches plan's domain layout, schema, HTTP contract; tests cover the counter-math matrix, SQLite output shape, batch-runner partial semantics, and every new endpoint's auth/validation/dispatch.
+
+## Re-review summary
+
+- **W1** — `ai_*_prompt_version` writers and migration column width (64) checked; tests assert qualified `name@version` strings (`commentary_correct@1.0.0`, `add_references@1.0.0`). `TranslateCommentaryTextAction` writes `commentary_translate@1.0.0` so the corrected-vs-translated provenance is now distinguishable on the row.
+- **W2** — `overwrite` is `['sometimes', 'boolean']` in `TranslateCommentaryRequest::rules()`; controller continues to read via `$this->boolean('overwrite')`.
+- **W3** — `ExportCommentarySqliteAction` opens an `rb` stream and passes the resource to `$disk->put()`, with `fclose` in a `finally`. No more `file_get_contents`.
+- **W4** — `TranslateCommentaryJob` updates the import job to `Failed` (with `error` + `finished_at`) when the target is missing instead of throwing.
+- **W5** — `CommentaryErrorReportFactory::configure()` overlays `book`/`chapter`/`verse` from the parent `CommentaryText` via `afterMaking`. Note: this overlay also overrides hand-set states (e.g. `factory()->create(['book' => 'JHN'])`) — acceptable for the W5 intent (denorm consistency) but worth remembering when a future test wants a deliberate mismatch; current callers do not hit this.
+- **S1** — `commentary_text` SQLite schema no longer declares an `id INTEGER PRIMARY KEY AUTOINCREMENT`; `UNIQUE(book, chapter, position)` plus the implicit `rowid` carry identity.
+- **S2** — `UpdateCommentaryErrorReportStatusAction` uses `findOrFail` and drops the `instanceof` guard on the FK-cascade-protected parent text.
+- **S3** — `triggeredByUserId` removed from `TranslateCommentaryData`; `TranslateCommentaryController` no longer passes it.
+- **S4** — `AICommentaryBatchRequest::filters()` reads `$this->validated('book' / 'chapter')`.
+- **S5** — `App\Support\Controllers\ResolvesTriggeringUser` trait applied to all eight commentary controllers; the duplicated `instanceof User` block is gone.
+- **S6** — `CommentaryBatchRunnerTest::test_partial_status_when_one_row_throws` now runs 100 rows with row 50 failing, exercises the multi-chunk progress path, and asserts 100 rows were processed.
 
 ---
 

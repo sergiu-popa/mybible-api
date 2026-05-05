@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use PDO;
 use PDOStatement;
+use RuntimeException;
 use Tests\TestCase;
 
 final class ExportCommentarySqliteActionTest extends TestCase
@@ -113,6 +114,27 @@ final class ExportCommentarySqliteActionTest extends TestCase
         } finally {
             @unlink($tmp);
         }
+    }
+
+    public function test_export_rejects_source_language_outside_allow_list(): void
+    {
+        Storage::fake('local');
+        config()->set('filesystems.default', 'local');
+
+        $source = Commentary::factory()->create([
+            'language' => 'pt',
+            'slug' => 'sda-pt',
+        ]);
+
+        $action = new ExportCommentarySqliteAction(
+            new CommentarySqliteSchemaBuilder,
+            new CommentarySqliteRevisionResolver,
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/source language "pt".*allow-list/');
+
+        $action->execute($source);
     }
 
     /**

@@ -9,7 +9,6 @@ use App\Domain\Commentary\Enums\CommentaryErrorReportStatus;
 use App\Domain\Commentary\Models\CommentaryErrorReport;
 use App\Domain\Commentary\Models\CommentaryText;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 
 /**
  * Records a user-reported error against a `CommentaryText` and bumps
@@ -21,17 +20,13 @@ final class SubmitCommentaryErrorReportAction
     public function execute(SubmitCommentaryErrorReportData $data): CommentaryErrorReport
     {
         return DB::transaction(function () use ($data): CommentaryErrorReport {
-            /** @var CommentaryText|null $text */
+            // Controller model-binding already proved the text exists;
+            // `findOrFail` here is just to surface a broken invariant
+            // loudly if the FK contract is ever violated.
+            /** @var CommentaryText $text */
             $text = CommentaryText::query()
                 ->lockForUpdate()
-                ->find($data->commentaryTextId);
-
-            if (! $text instanceof CommentaryText) {
-                throw new RuntimeException(sprintf(
-                    'CommentaryText #%d not found.',
-                    $data->commentaryTextId,
-                ));
-            }
+                ->findOrFail($data->commentaryTextId);
 
             /** @var CommentaryErrorReport $report */
             $report = $text->errorReports()->create([

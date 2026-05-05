@@ -44,6 +44,22 @@ final class ExportCommentarySqliteAction
      */
     public function execute(Commentary $source): array
     {
+        // The export schema reserves a `content_<lang>` column per
+        // allow-listed language; if the source's language sits outside
+        // that allow-list, it has no column to write into and would be
+        // silently dropped from the artefact (only `meta.source_language`
+        // would hint at it). Fail fast so the import job records a clear
+        // error rather than producing a misleading file.
+        $sourceLanguage = (string) $source->language;
+        if (! in_array($sourceLanguage, CommentarySqliteSchemaBuilder::ALLOWED_LANGUAGES, true)) {
+            throw new RuntimeException(sprintf(
+                'Cannot export commentary #%d: source language "%s" is not in the SQLite export allow-list (%s).',
+                (int) $source->id,
+                $sourceLanguage,
+                implode(', ', CommentarySqliteSchemaBuilder::ALLOWED_LANGUAGES),
+            ));
+        }
+
         $tmpPath = storage_path('app/tmp/' . Str::uuid()->toString() . '.sqlite');
         $tmpDir = dirname($tmpPath);
         if (! is_dir($tmpDir) && ! mkdir($tmpDir, 0775, true) && ! is_dir($tmpDir)) {
