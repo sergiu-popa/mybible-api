@@ -8,7 +8,7 @@ content domains, admin read endpoints for the dashboard.
 
 ## Status
 
-`draft`
+`planned`
 
 ## Description
 

@@ -9,7 +9,7 @@ bundles for mobile offline use.
 
 ## Status
 
-`draft`
+`planned`
 
 ## Description
 
