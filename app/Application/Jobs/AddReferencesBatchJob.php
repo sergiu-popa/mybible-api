@@ -64,14 +64,17 @@ final class AddReferencesBatchJob implements ShouldQueue
             $total = max(1, count($rows));
             $processed = 0;
 
+            $triggeredByUserId = $importJob->user_id;
+
             foreach ($rows as $row) {
-                DB::transaction(function () use ($action, $row): void {
+                DB::transaction(function () use ($action, $row, $triggeredByUserId): void {
                     $output = $action->execute(new AddReferencesInput(
                         html: (string) ($row['html'] ?? ''),
                         language: $this->language,
                         bibleVersionAbbreviation: null,
                         subjectType: $this->subjectType,
                         subjectId: isset($row['id']) ? (int) $row['id'] : null,
+                        triggeredByUserId: $triggeredByUserId,
                     ));
 
                     $this->writeBack($row, $output->html);

@@ -30,9 +30,10 @@ return [
 
     'retry' => [
         'max_attempts' => (int) env('AI_RETRY_MAX_ATTEMPTS', 3),
-        // Pre-attempt sleeps in milliseconds. The first sleep is consumed
-        // before retry #2; the array length must be >= max_attempts - 1.
-        'backoff_ms' => [500, 2000, 5000],
+        // Pre-attempt sleeps in milliseconds. With max_attempts=3 the loop
+        // consumes at most two sleeps (between attempts 1→2 and 2→3); the
+        // last attempt has no follow-up. Length must be >= max_attempts-1.
+        'backoff_ms' => [500, 2000],
     ],
 
     /*

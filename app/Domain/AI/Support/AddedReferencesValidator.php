@@ -25,6 +25,11 @@ final class AddedReferencesValidator
 {
     public const SECURITY_EVENT = 'ai_invalid_reference_link_stripped';
 
+    /** Attributes a kept reference anchor is allowed to carry. Anything else
+     *  is dropped to neutralise AI-injected event handlers (`onclick`),
+     *  inline styles, or `target`/`rel` overrides we never asked for. */
+    private const ALLOWED_ATTRIBUTES = ['class', 'href'];
+
     public function __construct(
         private readonly ReferenceParser $parser = new ReferenceParser,
     ) {}
@@ -84,6 +89,8 @@ final class AddedReferencesValidator
                 continue;
             }
 
+            $this->stripDisallowedAttributes($anchor);
+
             $kept++;
         }
 
@@ -116,6 +123,20 @@ final class AddedReferencesValidator
             return false;
         } catch (Throwable) {
             return false;
+        }
+    }
+
+    private function stripDisallowedAttributes(DOMElement $anchor): void
+    {
+        $toRemove = [];
+        foreach ($anchor->attributes ?? [] as $attribute) {
+            if (! in_array($attribute->name, self::ALLOWED_ATTRIBUTES, true)) {
+                $toRemove[] = $attribute->name;
+            }
+        }
+
+        foreach ($toRemove as $name) {
+            $anchor->removeAttribute($name);
         }
     }
 

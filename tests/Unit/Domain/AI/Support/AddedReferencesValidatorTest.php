@@ -78,6 +78,23 @@ final class AddedReferencesValidatorTest extends TestCase
         self::assertSame('', $result['html']);
     }
 
+    public function test_strips_disallowed_attributes_from_kept_anchors(): void
+    {
+        $validator = new AddedReferencesValidator;
+
+        $html = '<p><a class="reference" href="JHN.3:16.VDC" onclick="alert(1)" '
+            . 'style="color:red" target="_blank">John 3:16</a></p>';
+
+        $result = $validator->validate($html);
+
+        self::assertSame(1, $result['references_added']);
+        self::assertStringContainsString('class="reference"', $result['html']);
+        self::assertStringContainsString('href="JHN.3:16.VDC"', $result['html']);
+        self::assertStringNotContainsString('onclick', $result['html']);
+        self::assertStringNotContainsString('style', $result['html']);
+        self::assertStringNotContainsString('target', $result['html']);
+    }
+
     public function test_preserves_utf8_diacritics(): void
     {
         $validator = new AddedReferencesValidator;

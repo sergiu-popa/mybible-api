@@ -11,7 +11,6 @@ use App\Domain\AI\Models\AiCall;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Client\Response as HttpResponse;
-use Illuminate\Support\Carbon;
 use Throwable;
 
 /**
@@ -34,7 +33,10 @@ final class ClaudeClient
         /** @var array<int, int> $backoff */
         $backoff = (array) config('ai.retry.backoff_ms', [500, 2000, 5000]);
 
-        $startedAt = Carbon::now();
+        // Anchor latency on microtime (a monotonic-ish wall clock) rather
+        // than Carbon, so test-time travel via Carbon::setTestNow() does not
+        // distort the recorded latency_ms.
+        $startedAt = microtime(true);
         $attempt = 0;
         $lastErrorMessage = null;
         $lastStatus = AiCallStatus::Error;
@@ -151,7 +153,7 @@ final class ClaudeClient
     private function onSuccess(
         ClaudeRequest $request,
         HttpResponse $response,
-        Carbon $startedAt,
+        float $startedAt,
     ): ClaudeResponse {
         $latencyMs = $this->latencyMs($startedAt);
         $body = (array) $response->json();
@@ -178,7 +180,6 @@ final class ClaudeClient
             'subject_type' => $request->subjectType,
             'subject_id' => $request->subjectId,
             'triggered_by_user_id' => $request->triggeredByUserId,
-            'created_at' => Carbon::now(),
         ]);
 
         return new ClaudeResponse(
@@ -196,7 +197,7 @@ final class ClaudeClient
 
     private function onFailure(
         ClaudeRequest $request,
-        Carbon $startedAt,
+        float $startedAt,
         AiCallStatus $status,
         ?string $errorMessage,
     ): ClaudeResponse {
@@ -216,7 +217,6 @@ final class ClaudeClient
             'subject_type' => $request->subjectType,
             'subject_id' => $request->subjectId,
             'triggered_by_user_id' => $request->triggeredByUserId,
-            'created_at' => Carbon::now(),
         ]);
 
         return new ClaudeResponse(
@@ -232,9 +232,9 @@ final class ClaudeClient
         );
     }
 
-    private function latencyMs(Carbon $startedAt): int
+    private function latencyMs(float $startedAt): int
     {
-        return max(0, (int) round((microtime(true) - $startedAt->getTimestampMs() / 1000) * 1000));
+        return max(0, (int) round((microtime(true) - $startedAt) * 1000));
     }
 
     /**
