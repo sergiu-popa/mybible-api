@@ -65,7 +65,7 @@ final class EtlBibleBooksAndVersesJob extends BaseEtlJob
             UPDATE bible_verses bv
             JOIN _legacy_book_map m ON m.legacy_book_id = bv.book_id
             SET bv.bible_book_id = m.bible_book_id,
-                bv.bible_version_id = COALESCE(bv.bible_version_id, m.bible_version_id)
+                bv.bible_version_id = m.bible_version_id
             WHERE bv.bible_book_id IS NULL
         SQL;
 

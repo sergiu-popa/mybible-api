@@ -20,8 +20,10 @@ use Throwable;
  *
  * Lifecycle:
  *   1. Constructor pins the job onto Horizon's `etl` supervisor.
- *   2. `handle()` resolves the {@see ImportJob} ledger row, then delegates
- *      to {@see execute()} for the actual transformation.
+ *   2. `handle()` materialises the {@see ImportJob} ledger row at execution
+ *      time via {@see EtlJobReporter::start()} (so `started_at` reflects
+ *      when the worker actually picked the job up rather than when the
+ *      orchestrator dispatched it), then delegates to {@see execute()}.
  *   3. Result → reporter → terminal status (succeeded / partial / failed).
  *
  * Sub-jobs are idempotent by contract: re-running on already-migrated rows
@@ -36,7 +38,7 @@ abstract class BaseEtlJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public function __construct(public readonly int $importJobId)
+    public function __construct()
     {
         $this->onQueue('etl');
     }
@@ -49,11 +51,7 @@ abstract class BaseEtlJob implements ShouldQueue
 
     final public function handle(EtlJobReporter $reporter): void
     {
-        $importJob = ImportJob::query()->find($this->importJobId);
-
-        if (! $importJob instanceof ImportJob) {
-            return;
-        }
+        $importJob = $reporter->start(static::slug());
 
         if ($reporter->isAlreadyTerminal($importJob)) {
             return;

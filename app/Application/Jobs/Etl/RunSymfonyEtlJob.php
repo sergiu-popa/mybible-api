@@ -28,10 +28,11 @@ use Illuminate\Support\Facades\Schema;
  *   • Stage 2a — domain ETL not depending on SS content rows.
  *   • Stage 2b — Sabbath School highlights (depends on 2a's content rows).
  *
- * On chain success the orchestrator marks itself succeeded and emits a
- * `symfony_etl_completed` event; on chain failure the failure event is
- * emitted and the row stays `Failed` so `--resume` re-runs the
- * unfinished sub-jobs.
+ * Sub-job ledger rows are NOT pre-created here — each `BaseEtlJob`
+ * materialises its own row via the reporter when the worker picks it up,
+ * so `started_at` reflects actual work time rather than chain dispatch
+ * time. On chain success the orchestrator marks itself succeeded; on chain
+ * failure it stays `Failed` so `--resume` re-runs the unfinished sub-jobs.
  */
 final class RunSymfonyEtlJob implements ShouldQueue
 {
@@ -81,9 +82,9 @@ final class RunSymfonyEtlJob implements ShouldQueue
 
         $this->emitSecurityEvent('symfony_etl_started', $orchestratorJobId);
 
-        $stage1 = $this->buildStage(self::STAGE_1, $reporter);
-        $stage2a = $this->buildStage(self::STAGE_2A, $reporter);
-        $stage2b = $this->buildStage(self::STAGE_2B, $reporter);
+        $stage1 = $this->buildStage(self::STAGE_1);
+        $stage2a = $this->buildStage(self::STAGE_2A);
+        $stage2b = $this->buildStage(self::STAGE_2B);
 
         $batches = [];
         if ($stage1 !== []) {
@@ -118,7 +119,7 @@ final class RunSymfonyEtlJob implements ShouldQueue
      * @param  list<class-string<BaseEtlJob>>  $jobClasses
      * @return list<BaseEtlJob>
      */
-    private function buildStage(array $jobClasses, EtlJobReporter $reporter): array
+    private function buildStage(array $jobClasses): array
     {
         $jobs = [];
 
@@ -129,20 +130,28 @@ final class RunSymfonyEtlJob implements ShouldQueue
                 continue;
             }
 
-            $importJob = $reporter->start($slug);
-
-            if (
-                $this->options->resume
-                && $importJob->status->isTerminal()
-                && $importJob->status !== ImportJobStatus::Failed
-            ) {
+            if ($this->options->resume && $this->isAlreadySettled($slug)) {
                 continue;
             }
 
-            $jobs[] = new $class((int) $importJob->id);
+            $jobs[] = new $class;
         }
 
         return $jobs;
+    }
+
+    /**
+     * Resume mode skips a sub-job whose latest ledger row is already
+     * `Succeeded` or `Partial` — both are non-failed terminal states the
+     * sub-job's own `start()` would short-circuit on anyway, but checking
+     * here avoids spending a worker tick to reach that conclusion.
+     */
+    private function isAlreadySettled(string $slug): bool
+    {
+        return ImportJob::query()
+            ->where('type', $slug)
+            ->whereIn('status', [ImportJobStatus::Succeeded, ImportJobStatus::Partial])
+            ->exists();
     }
 
     private function onFailure(int $orchestratorJobId): Closure

@@ -23,7 +23,7 @@ use App\Application\Jobs\Etl\EtlSabbathSchoolHighlightsJob;
 use App\Application\Jobs\Etl\EtlSabbathSchoolQuestionsJob;
 use App\Application\Jobs\Etl\EtlUserPreferredLanguageJob;
 use App\Application\Jobs\Etl\RunSymfonyEtlJob;
-use App\Domain\Admin\Imports\Enums\ImportJobStatus;
+use App\Application\Support\DryRunRollback;
 use App\Domain\Admin\Imports\Models\ImportJob;
 use App\Domain\Migration\Etl\DataTransferObjects\EtlRunOptions;
 use App\Domain\Migration\Etl\Support\EtlJobReporter;
@@ -147,20 +147,22 @@ final class RunSymfonyEtlCommand extends Command
 
         try {
             DB::transaction(function () use ($class, $reporter, &$result): void {
-                $importJob = ImportJob::query()->create([
-                    'type' => $class::slug() . '_dry_run',
-                    'status' => ImportJobStatus::Running,
-                    'progress' => 0,
-                    'payload' => [],
-                ]);
-
                 /** @var BaseEtlJob $job */
-                $job = new $class((int) $importJob->id);
+                $job = new $class;
                 $job->handle($reporter);
 
-                $importJob->refresh();
-                $result['status'] = $importJob->status->value;
-                $result['payload'] = $importJob->payload;
+                // The job created its own ledger row inside this rolled-back
+                // transaction; surface it so the dry-run summary reports the
+                // rehearsed status before the rollback erases it.
+                $importJob = ImportJob::query()
+                    ->where('type', $class::slug())
+                    ->latest('id')
+                    ->first();
+
+                if ($importJob instanceof ImportJob) {
+                    $result['status'] = $importJob->status->value;
+                    $result['payload'] = $importJob->payload;
+                }
 
                 throw new DryRunRollback;
             });
@@ -178,10 +180,3 @@ final class RunSymfonyEtlCommand extends Command
         return $result;
     }
 }
-
-/**
- * Internal sentinel: wrapping each dry-run sub-job in a transaction and
- * forcing a rollback by throwing this is the cleanest way to keep
- * persistent DB state pristine without disabling foreign-key checks.
- */
-final class DryRunRollback extends \RuntimeException {}

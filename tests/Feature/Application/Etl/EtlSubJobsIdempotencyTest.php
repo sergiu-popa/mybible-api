@@ -22,7 +22,6 @@ use App\Application\Jobs\Etl\EtlSabbathSchoolContentJob;
 use App\Application\Jobs\Etl\EtlSabbathSchoolHighlightsJob;
 use App\Application\Jobs\Etl\EtlSabbathSchoolQuestionsJob;
 use App\Application\Jobs\Etl\EtlUserPreferredLanguageJob;
-use App\Domain\Admin\Imports\Enums\ImportJobStatus;
 use App\Domain\Admin\Imports\Models\ImportJob;
 use App\Domain\Migration\Etl\Support\EtlJobReporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,12 +30,17 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * AC §9, §14 — every ETL sub-job is idempotent: running it twice on the
- * same DB state produces the same row counts and does not duplicate
- * data. Source tables are not present in the test schema (Symfony data
- * is not seeded into CI), so each sub-job's defensive `Schema::hasTable`
- * guard keeps it as a no-op — but the idempotency assertion still
- * meaningfully holds.
+ * AC §9 — every ETL sub-job is idempotent at the protocol level: running
+ * it twice never produces a different terminal status, and re-running on
+ * an already-`Succeeded` ledger row short-circuits without doing more
+ * work. Source tables are not present in the test schema (Symfony source
+ * data is not seeded into CI), so each sub-job's defensive
+ * `Schema::hasTable` guard makes the body a no-op — but the protocol
+ * assertion (start → handle → terminal status, twice) is meaningful
+ * regardless.
+ *
+ * Per-sub-job behavioural assertions (target shape, error routing) live
+ * in dedicated fixture-driven tests under this same namespace.
  */
 final class EtlSubJobsIdempotencyTest extends TestCase
 {
@@ -80,36 +84,41 @@ final class EtlSubJobsIdempotencyTest extends TestCase
     public function sub_job_runs_to_a_terminal_state_and_is_idempotent(string $jobClass): void
     {
         $reporter = app(EtlJobReporter::class);
-        $importJob = ImportJob::query()->create([
-            'type' => $jobClass::slug(),
-            'status' => ImportJobStatus::Pending,
-            'progress' => 0,
-            'payload' => [],
-        ]);
 
-        // First pass.
-        (new $jobClass($importJob->id))->handle($reporter);
-        $importJob->refresh();
+        // First pass — sub-job opens its own ImportJob row via the reporter.
+        (new $jobClass)->handle($reporter);
+
+        $first = ImportJob::query()
+            ->where('type', $jobClass::slug())
+            ->latest('id')
+            ->first();
+
+        $this->assertInstanceOf(ImportJob::class, $first);
         $this->assertTrue(
-            $importJob->status->isTerminal(),
+            $first->status->isTerminal(),
             sprintf('%s should reach a terminal state on first pass.', $jobClass::slug()),
         );
-        $firstPayload = $importJob->payload;
 
-        // Second pass — re-running should be a clean no-op.
-        $importJob2 = ImportJob::query()->create([
-            'type' => $jobClass::slug(),
-            'status' => ImportJobStatus::Pending,
-            'progress' => 0,
-            'payload' => [],
-        ]);
-        (new $jobClass($importJob2->id))->handle($reporter);
-        $importJob2->refresh();
+        $firstSucceeded = (int) ($first->payload['succeeded'] ?? 0);
 
-        $this->assertTrue($importJob2->status->isTerminal());
+        // Second pass — re-running should be a clean no-op: the reporter
+        // surfaces the existing terminal row and the job short-circuits.
+        (new $jobClass)->handle($reporter);
+
+        $rowsForType = ImportJob::query()
+            ->where('type', $jobClass::slug())
+            ->count();
+
         $this->assertSame(
-            $firstPayload['succeeded'] ?? 0,
-            $importJob2->payload['succeeded'] ?? 0,
+            1,
+            $rowsForType,
+            sprintf('%s must reuse its terminal row on re-run, not pile new ones up.', $jobClass::slug()),
+        );
+
+        $first->refresh();
+        $this->assertSame(
+            $firstSucceeded,
+            (int) ($first->payload['succeeded'] ?? 0),
             sprintf('%s succeeded count should match across runs.', $jobClass::slug()),
         );
     }

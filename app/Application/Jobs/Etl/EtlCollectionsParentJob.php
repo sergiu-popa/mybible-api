@@ -75,9 +75,9 @@ final class EtlCollectionsParentJob extends BaseEtlJob
         $cdnBase = rtrim((string) config('filesystems.disks.s3.cdn_url', ''), '/');
 
         return (int) DB::affectingStatement(
-            'UPDATE collection_topics
-             SET image_cdn_url = CONCAT(?, "/", image_path)
-             WHERE image_cdn_url IS NULL AND image_path IS NOT NULL AND image_path <> ""',
+            "UPDATE collection_topics
+             SET image_cdn_url = CONCAT(?, '/', image_path)
+             WHERE image_cdn_url IS NULL AND image_path IS NOT NULL AND image_path <> ''",
             [$cdnBase],
         );
     }

@@ -12,7 +12,7 @@
         "laravel/tinker": "^3.0"
     },
     "require-dev": {
-        "dedoc/scramble": "^0.13.20",
+        "dedoc/scramble": "^0.13.22",
         "fakerphp/faker": "^1.23",
         "larastan/larastan": "^3.9",
         "laravel/boost": "^2.2",
@@ -87,8 +87,7 @@
             "php-http/discovery": true
         },
         "audit": {
-            "abandoned": "ignore",
-            "ignore": ["PKSA-qgg1-cfs4-rkb8"]
+            "abandoned": "ignore"
         }
     },
     "minimum-stability": "stable",

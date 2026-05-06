@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "edbad44e3c5b76df18e86001bb1d00a8",
+    "content-hash": "fb60ed61bad692215aa2be69c16b465c",
     "packages": [
         {
             "name": "brick/math",
@@ -6169,16 +6169,16 @@
     "packages-dev": [
         {
             "name": "dedoc/scramble",
-            "version": "v0.13.20",
+            "version": "v0.13.22",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dedoc/scramble.git",
-                "reference": "55545987558fdd44d676831a41bf0a41365c5ab6"
+                "reference": "b54b0c43bdebaa01f66cc3dfdd8f91e19b12da96"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dedoc/scramble/zipball/55545987558fdd44d676831a41bf0a41365c5ab6",
-                "reference": "55545987558fdd44d676831a41bf0a41365c5ab6",
+                "url": "https://api.github.com/repos/dedoc/scramble/zipball/b54b0c43bdebaa01f66cc3dfdd8f91e19b12da96",
+                "reference": "b54b0c43bdebaa01f66cc3dfdd8f91e19b12da96",
                 "shasum": ""
             },
             "require": {
@@ -6237,7 +6237,7 @@
             ],
             "support": {
                 "issues": "https://github.com/dedoc/scramble/issues",
-                "source": "https://github.com/dedoc/scramble/tree/v0.13.20"
+                "source": "https://github.com/dedoc/scramble/tree/v0.13.22"
             },
             "funding": [
                 {
@@ -6245,7 +6245,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-04-16T14:13:35+00:00"
+            "time": "2026-04-27T20:30:51+00:00"
         },
         {
             "name": "fakerphp/faker",
