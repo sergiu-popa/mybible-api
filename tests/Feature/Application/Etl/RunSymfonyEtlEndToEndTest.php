@@ -130,14 +130,24 @@ final class RunSymfonyEtlEndToEndTest extends TestCase
 
         $orchestratorRow = ImportJob::query()->where('type', 'symfony_etl')->latest('id')->firstOrFail();
 
-        // Simulate the chain's catch() callback firing on failure: the
-        // orchestrator's onFailure closure flips the status to Failed
-        // and emits a security event.
-        ImportJob::query()->where('id', $orchestratorRow->id)->update([
-            'status' => ImportJobStatus::Failed,
-        ]);
+        // Drive the actual catch() closure produced by `onFailure()` —
+        // simulating the path Bus::chain takes when a stage batch fails.
+        // The closure must persist the throwable's message on the
+        // orchestrator row so operators can diagnose without paging
+        // through every sub-job ledger.
+        $reflection = new \ReflectionMethod(RunSymfonyEtlJob::class, 'onFailure');
+        $reflection->setAccessible(true);
+        /** @var \Closure $callback */
+        $callback = $reflection->invoke($orchestrator, (int) $orchestratorRow->id);
+        $callback(new \RuntimeException('stage 2a aborted'));
+
         $orchestratorRow->refresh();
         $this->assertSame(ImportJobStatus::Failed, $orchestratorRow->status);
+        $this->assertSame('stage 2a aborted', $orchestratorRow->error);
+        $this->assertSame(
+            1,
+            DB::table('security_events')->where('event', 'symfony_etl_failed')->count(),
+        );
     }
 
     private function seedFixtures(): void

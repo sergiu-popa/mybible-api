@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 /**
  * Top-level orchestrator. Opens an `ImportJob` of `type='symfony_etl'`,
@@ -168,9 +169,14 @@ final class RunSymfonyEtlJob implements ShouldQueue
 
     private function onFailure(int $orchestratorJobId): Closure
     {
-        return function () use ($orchestratorJobId): void {
+        return function (Throwable $exception) use ($orchestratorJobId): void {
+            // Persist the failing exception's message on the orchestrator
+            // ledger row so operators do not need to dig through the
+            // failed sub-job's own row to find the cause. The chain's
+            // catch callback receives the Throwable that aborted it.
             ImportJob::query()->where('id', $orchestratorJobId)->update([
                 'status' => ImportJobStatus::Failed,
+                'error' => $exception->getMessage(),
                 'finished_at' => Carbon::now(),
             ]);
             $this->emitSecurityEvent('symfony_etl_failed', $orchestratorJobId);
