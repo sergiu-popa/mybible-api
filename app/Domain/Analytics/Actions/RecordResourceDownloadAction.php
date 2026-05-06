@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Analytics\Actions;
 
 use App\Domain\Analytics\DataTransferObjects\ResourceDownloadContextData;
+use App\Domain\Analytics\Enums\EventType;
 use App\Domain\Analytics\Events\DownloadOccurred;
 use App\Domain\Analytics\Models\ResourceDownload;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,10 @@ use InvalidArgumentException;
 
 final class RecordResourceDownloadAction
 {
+    public function __construct(
+        private readonly RecordAnalyticsEventAction $recordAnalyticsEvent,
+    ) {}
+
     public function execute(
         Model $target,
         ResourceDownloadContextData $context,
@@ -35,13 +40,26 @@ final class RecordResourceDownloadAction
             $download->user_id = $context->userId;
             $download->device_id = $context->deviceId;
             $download->language = $context->language;
-            $download->source = $context->source;
+            $download->source = $context->source?->value;
             $download->save();
 
             return $download;
         });
 
+        // Keep the legacy `DownloadOccurred` event so any in-process
+        // listener still fires, but route the canonical analytics
+        // emission through `RecordAnalyticsEventAction` so this download
+        // appears in the unified `analytics_events` store.
         DownloadOccurred::dispatch($eventType, $target, $context, $row);
+
+        $analyticsEventType = EventType::tryFrom($eventType);
+        if ($analyticsEventType !== null) {
+            $this->recordAnalyticsEvent->execute(
+                eventType: $analyticsEventType,
+                context: $context,
+                subject: $target,
+            );
+        }
 
         return $row;
     }

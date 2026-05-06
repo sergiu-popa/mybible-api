@@ -71,39 +71,39 @@ Reuse: extend the existing `App\Domain\Analytics\Support\ClientContextResolver` 
 
 ## Tasks
 
-- [ ] 1. Create migration `create_analytics_events_table` matching the AC schema and indexes.
-- [ ] 2. Create migration `create_analytics_daily_rollups_table` with the composite primary key from AC §4.
-- [ ] 3. Create migration `create_analytics_user_active_daily_table` per AC §5.
-- [ ] 4. Create migration `create_analytics_device_active_daily_table` per AC §6.
-- [ ] 5. Add `AnalyticsEvent`, `AnalyticsDailyRollup`, `AnalyticsUserActiveDaily`, `AnalyticsDeviceActiveDaily` models with factories.
-- [ ] 6. Add `AnalyticsEventQueryBuilder` (scopes per Domain table); wire via `newEloquentBuilder`.
-- [ ] 7. Add `AnalyticsDailyRollupQueryBuilder`; wire via `newEloquentBuilder`.
-- [ ] 8. Add `EventType` enum with `expectedSubjectType()` + `metadataRules()`.
-- [ ] 9. Add `EventSubjectType` enum and register every alias in `AppServiceProvider`'s `Relation::morphMap` (extend the existing block; do not duplicate it).
-- [ ] 10. Add `EventSource` enum and refactor `ClientContextResolver` to return it instead of a raw string.
-- [ ] 11. Add `IngestEventData`, `IngestBatchData`, `AnalyticsRangeQueryData`, `EventCountsQueryData`, `ReadingPlanFunnelQueryData` DTOs.
-- [ ] 12. Add `RecordAnalyticsEventJob` (database queue, tries+backoff) that writes one event row.
-- [ ] 13. Add `RecordAnalyticsEventAction` (single dispatch) and `RecordAnalyticsEventBatchAction` (loop dispatch).
-- [ ] 14. Add `IngestAnalyticsEventsRequest` with batch shape, allowlist enforcement, and per-event metadata-rule application.
-- [ ] 15. Add `IngestAnalyticsEventsController` returning 204; wire to `RecordAnalyticsEventBatchAction`.
-- [ ] 16. Register `analytics-ingest` rate-limiter in `AppServiceProvider` (600/min per `ip|device_id`).
-- [ ] 17. Add `RollupAnalyticsForDateAction` covering all three rollup tables idempotently in one transaction.
-- [ ] 18. Add `RollupAnalyticsDailyJob` and `RollupAnalyticsTodayJob` invoking the action with the right date.
-- [ ] 19. Register both rollup jobs in `routes/console.php` (`Schedule::job(...)->dailyAt('01:00')` and `->everyThirtyMinutes()`).
-- [ ] 20. Add `SummariseAnalyticsAction` + `ShowAnalyticsSummaryRequest` + `ShowAnalyticsSummaryController` + `AnalyticsSummaryResource`; wire route under the existing `admin` prefix group with `super-admin`.
-- [ ] 21. Add `ListEventCountsAction` + `ListAnalyticsEventCountsRequest` + controller + `AnalyticsEventCountsResource`; route same group.
-- [ ] 22. Add `ComputeDauMauAction` + `ShowDauMauRequest` + controller + `DauMauSeriesResource`; route same group.
-- [ ] 23. Add `BuildReadingPlanFunnelAction` + `ShowReadingPlanFunnelRequest` + controller + `ReadingPlanFunnelResource`; uses raw events; route same group.
-- [ ] 24. Add `SummariseBibleVersionUsageAction` + `ShowBibleVersionUsageRequest` + controller + `BibleVersionUsageResource`; route same group.
-- [ ] 25. Emit `auth.login` from `LoginUserAction` immediately after `createToken`.
-- [ ] 26. Emit lifecycle events from each of `StartReadingPlanSubscriptionAction`, `CompleteReadingPlanSubscriptionDayAction`, `AbandonReadingPlanSubscriptionAction`, `FinishReadingPlanSubscriptionAction` (one event each).
-- [ ] 27. Migrate `RecordResourceDownloadAction` to also emit through `RecordAnalyticsEventAction` (preserving the existing `DownloadOccurred` dispatch).
-- [ ] 28. Emit `qr_code.scanned` from `RecordQrCodeScanAction`.
-- [ ] 29. Feature test the ingest endpoint: anonymous accept, authed user_id capture, source inference (web/ios/android UA), batch (100 events) accept, validation failures, rate-limit triggering at 601st event.
-- [ ] 30. Feature test each of the five admin endpoints: `super-admin` gate (403 for non-super), valid range query, period switch (day/week/month), JSON shape via `assertJsonStructure`.
-- [ ] 31. Feature test the rollup job: 100 events / 5 users / 1 day → expected `event_count=100`, `unique_users=5`, `unique_devices=N`; rerun is idempotent.
-- [ ] 32. Feature test DAU/MAU: seed events across April 2026, assert 28-day rolling MAU equals the union over the trailing 28 days.
-- [ ] 33. Feature test server-side emissions: hitting each lifecycle endpoint (login, start/complete/abandon/finish reading-plan, QR scan, resource downloads ×3) inserts the matching `analytics_events` row (run jobs synchronously via `Queue::fake` + assert dispatched, or `Bus::fake` then dispatch).
+- [x] 1. Create migration `create_analytics_events_table` matching the AC schema and indexes.
+- [x] 2. Create migration `create_analytics_daily_rollups_table` with the composite primary key from AC §4.
+- [x] 3. Create migration `create_analytics_user_active_daily_table` per AC §5.
+- [x] 4. Create migration `create_analytics_device_active_daily_table` per AC §6.
+- [x] 5. Add `AnalyticsEvent`, `AnalyticsDailyRollup`, `AnalyticsUserActiveDaily`, `AnalyticsDeviceActiveDaily` models with factories.
+- [x] 6. Add `AnalyticsEventQueryBuilder` (scopes per Domain table); wire via `newEloquentBuilder`.
+- [x] 7. Add `AnalyticsDailyRollupQueryBuilder`; wire via `newEloquentBuilder`.
+- [x] 8. Add `EventType` enum with `expectedSubjectType()` + `metadataRules()`.
+- [x] 9. Add `EventSubjectType` enum and register every alias in `AppServiceProvider`'s `Relation::morphMap` (extend the existing block; do not duplicate it).
+- [x] 10. Add `EventSource` enum and refactor `ClientContextResolver` to return it instead of a raw string.
+- [x] 11. Add `IngestEventData`, `IngestBatchData`, `AnalyticsRangeQueryData`, `EventCountsQueryData`, `ReadingPlanFunnelQueryData` DTOs.
+- [x] 12. Add `RecordAnalyticsEventJob` (database queue, tries+backoff) that writes one event row.
+- [x] 13. Add `RecordAnalyticsEventAction` (single dispatch) and `RecordAnalyticsEventBatchAction` (loop dispatch).
+- [x] 14. Add `IngestAnalyticsEventsRequest` with batch shape, allowlist enforcement, and per-event metadata-rule application.
+- [x] 15. Add `IngestAnalyticsEventsController` returning 204; wire to `RecordAnalyticsEventBatchAction`.
+- [x] 16. Register `analytics-ingest` rate-limiter in `AppServiceProvider` (600/min per `ip|device_id`).
+- [x] 17. Add `RollupAnalyticsForDateAction` covering all three rollup tables idempotently in one transaction.
+- [x] 18. Add `RollupAnalyticsDailyJob` and `RollupAnalyticsTodayJob` invoking the action with the right date.
+- [x] 19. Register both rollup jobs in `routes/console.php` (`Schedule::job(...)->dailyAt('01:00')` and `->everyThirtyMinutes()`).
+- [x] 20. Add `SummariseAnalyticsAction` + `ShowAnalyticsSummaryRequest` + `ShowAnalyticsSummaryController` + `AnalyticsSummaryResource`; wire route under the existing `admin` prefix group with `super-admin`.
+- [x] 21. Add `ListEventCountsAction` + `ListAnalyticsEventCountsRequest` + controller + `AnalyticsEventCountsResource`; route same group.
+- [x] 22. Add `ComputeDauMauAction` + `ShowDauMauRequest` + controller + `DauMauSeriesResource`; route same group.
+- [x] 23. Add `BuildReadingPlanFunnelAction` + `ShowReadingPlanFunnelRequest` + controller + `ReadingPlanFunnelResource`; uses raw events; route same group.
+- [x] 24. Add `SummariseBibleVersionUsageAction` + `ShowBibleVersionUsageRequest` + controller + `BibleVersionUsageResource`; route same group.
+- [x] 25. Emit `auth.login` from `LoginUserAction` immediately after `createToken`.
+- [x] 26. Emit lifecycle events from each of `StartReadingPlanSubscriptionAction`, `CompleteReadingPlanSubscriptionDayAction`, `AbandonReadingPlanSubscriptionAction`, `FinishReadingPlanSubscriptionAction` (one event each).
+- [x] 27. Migrate `RecordResourceDownloadAction` to also emit through `RecordAnalyticsEventAction` (preserving the existing `DownloadOccurred` dispatch).
+- [x] 28. Emit `qr_code.scanned` from `RecordQrCodeScanAction`.
+- [x] 29. Feature test the ingest endpoint: anonymous accept, authed user_id capture, source inference (web/ios/android UA), batch (100 events) accept, validation failures, rate-limit triggering at 601st event.
+- [x] 30. Feature test each of the five admin endpoints: `super-admin` gate (403 for non-super), valid range query, period switch (day/week/month), JSON shape via `assertJsonStructure`.
+- [x] 31. Feature test the rollup job: 100 events / 5 users / 1 day → expected `event_count=100`, `unique_users=5`, `unique_devices=N`; rerun is idempotent.
+- [x] 32. Feature test DAU/MAU: seed events across April 2026, assert 28-day rolling MAU equals the union over the trailing 28 days.
+- [x] 33. Feature test server-side emissions: hitting each lifecycle endpoint (login, start/complete/abandon/finish reading-plan, QR scan, resource downloads ×3) inserts the matching `analytics_events` row (run jobs synchronously via `Queue::fake` + assert dispatched, or `Bus::fake` then dispatch).
 
 ## Risks
 

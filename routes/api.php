@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Admin\Ai\AddReferencesBatchController;
 use App\Http\Controllers\Api\V1\Admin\Ai\AddReferencesController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\ListAnalyticsEventCountsController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\ShowAnalyticsSummaryController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\ShowBibleVersionUsageController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\ShowDauMauController;
+use App\Http\Controllers\Api\V1\Admin\Analytics\ShowReadingPlanFunnelController;
 use App\Http\Controllers\Api\V1\Admin\Collections\CreateCollectionController;
 use App\Http\Controllers\Api\V1\Admin\Collections\CreateCollectionTopicController;
 use App\Http\Controllers\Api\V1\Admin\Collections\DeleteCollectionController;
@@ -84,6 +89,7 @@ use App\Http\Controllers\Api\V1\Admin\Users\DisableAdminUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\EnableAdminUserController;
 use App\Http\Controllers\Api\V1\Admin\Users\ListAdminUsersController;
 use App\Http\Controllers\Api\V1\Admin\Users\SendAdminPasswordResetController;
+use App\Http\Controllers\Api\V1\Analytics\IngestAnalyticsEventsController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\MeController;
@@ -665,6 +671,22 @@ Route::prefix('v1')->group(function (): void {
                     Route::get('/', ListCommentaryErrorReportsController::class)->name('index');
                     Route::patch('{report}', UpdateCommentaryErrorReportController::class)->name('update');
                 });
+
+            Route::middleware(['auth:sanctum', 'super-admin'])
+                ->prefix('analytics')
+                ->name('analytics.')
+                ->group(function (): void {
+                    Route::get('summary', ShowAnalyticsSummaryController::class)->name('summary');
+                    Route::get('event-counts', ListAnalyticsEventCountsController::class)
+                        ->name('event-counts');
+                    Route::get('dau-mau', ShowDauMauController::class)->name('dau-mau');
+                    Route::get(
+                        'reading-plans/funnel',
+                        ShowReadingPlanFunnelController::class,
+                    )->name('reading-plans.funnel');
+                    Route::get('bible/version-usage', ShowBibleVersionUsageController::class)
+                        ->name('bible.version-usage');
+                });
         });
 
     Route::middleware(['auth:sanctum', 'throttle:per-user'])
@@ -704,6 +726,14 @@ Route::prefix('v1')->group(function (): void {
         ->group(function (): void {
             Route::post('qr-codes/{qr}/scans', RecordQrCodeScanController::class)
                 ->name('qr-codes.scans.store');
+        });
+
+    Route::middleware(['api-key-or-sanctum', 'resolve-language', 'throttle:analytics-ingest'])
+        ->prefix('analytics')
+        ->name('analytics.')
+        ->group(function (): void {
+            Route::post('events', IngestAnalyticsEventsController::class)
+                ->name('events.store');
         });
 
     Route::middleware([

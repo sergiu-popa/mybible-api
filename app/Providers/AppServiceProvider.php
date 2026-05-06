@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Domain\AI\Prompts\Prompt;
 use App\Domain\AI\Prompts\PromptRegistry;
+use App\Domain\Analytics\Enums\EventSubjectType;
 use App\Domain\Analytics\Models\ResourceDownload;
 use App\Domain\EducationalResources\Models\EducationalResource;
 use App\Domain\EducationalResources\Models\ResourceBook;
@@ -158,16 +159,34 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by(sprintf('%s|%s', (string) $request->ip(), $deviceId));
         });
 
+        // Analytics ingest: high enough for normal use (60s of mobile
+        // batches at the 100-event cap = 6000 events/min sustained),
+        // low enough to deflect a single hostile IP+device pair from
+        // flooding the queue. Keyed identically to `downloads` so a
+        // shared corporate IP isn't punished for one rogue device.
+        RateLimiter::for('analytics-ingest', static function (Request $request): Limit {
+            $deviceHeader = $request->header('X-Device-Id');
+            $deviceBody = $request->input('device_id');
+            $deviceId = is_string($deviceHeader) && $deviceHeader !== ''
+                ? $deviceHeader
+                : (is_string($deviceBody) && $deviceBody !== '' ? $deviceBody : 'no-device');
+
+            return Limit::perMinute(600)->by(sprintf('%s|%s', (string) $request->ip(), $deviceId));
+        });
+
         // Aliases for the three downloadable morph targets so legacy
         // rows survive namespace moves. Other polymorphic relations
         // (Sanctum tokenables) keep falling back to FQCN, so we use
         // morphMap (not enforceMorphMap) to avoid forcing every model
         // in the app to register an alias.
-        Relation::morphMap([
-            ResourceDownload::TYPE_EDUCATIONAL_RESOURCE => EducationalResource::class,
-            ResourceDownload::TYPE_RESOURCE_BOOK => ResourceBook::class,
-            ResourceDownload::TYPE_RESOURCE_BOOK_CHAPTER => ResourceBookChapter::class,
-        ]);
+        Relation::morphMap(array_merge(
+            [
+                ResourceDownload::TYPE_EDUCATIONAL_RESOURCE => EducationalResource::class,
+                ResourceDownload::TYPE_RESOURCE_BOOK => ResourceBook::class,
+                ResourceDownload::TYPE_RESOURCE_BOOK_CHAPTER => ResourceBookChapter::class,
+            ],
+            EventSubjectType::morphMap(),
+        ));
 
         if (! $this->app->environment('local', 'testing')) {
             SlowQueryListener::register();

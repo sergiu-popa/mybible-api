@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Analytics\Support;
 
 use App\Domain\Analytics\DataTransferObjects\ResourceDownloadContextData;
+use App\Domain\Analytics\Enums\EventSource;
 use App\Domain\Shared\Enums\Language;
 use App\Http\Middleware\ResolveRequestLanguage;
 use Illuminate\Http\Request;
@@ -31,11 +32,17 @@ final class ClientContextResolver
         $language = $request->attributes->get(ResolveRequestLanguage::ATTRIBUTE_KEY);
         $languageCode = $language instanceof Language ? $language->value : null;
 
-        $bodySource = $request->input('source');
-        if (is_string($bodySource) && in_array($bodySource, ['ios', 'android', 'web'], true)) {
-            $source = $bodySource;
-        } else {
-            $source = self::inferSourceFromUserAgent((string) $request->userAgent());
+        // Per stakeholder F: User-Agent is the source of truth for
+        // `source`. Body-supplied `source` is accepted only as a hint
+        // when the User-Agent is unparseable, so a malicious client
+        // cannot mis-attribute its events.
+        $source = EventSource::fromUserAgent((string) $request->userAgent());
+
+        if ($source === null) {
+            $bodySource = $request->input('source');
+            if (is_string($bodySource)) {
+                $source = EventSource::tryFrom($bodySource);
+            }
         }
 
         return new ResourceDownloadContextData(
@@ -44,30 +51,5 @@ final class ClientContextResolver
             language: $languageCode,
             source: $source,
         );
-    }
-
-    private static function inferSourceFromUserAgent(string $userAgent): ?string
-    {
-        if ($userAgent === '') {
-            return null;
-        }
-
-        if (str_contains($userAgent, 'MyBibleMobile')) {
-            if (str_contains($userAgent, 'ios')) {
-                return 'ios';
-            }
-
-            if (str_contains($userAgent, 'android')) {
-                return 'android';
-            }
-
-            return null;
-        }
-
-        if (preg_match('/(Mozilla|Chrome|Safari|Firefox|Edge)/i', $userAgent) === 1) {
-            return 'web';
-        }
-
-        return null;
     }
 }

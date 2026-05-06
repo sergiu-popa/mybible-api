@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\Auth\Actions;
 
+use App\Domain\Analytics\Actions\RecordAnalyticsEventAction;
+use App\Domain\Analytics\DataTransferObjects\ResourceDownloadContextData;
+use App\Domain\Analytics\Enums\EventType;
 use App\Domain\Auth\DataTransferObjects\AuthTokenData;
 use App\Domain\Auth\DataTransferObjects\LoginUserData;
 use App\Domain\Auth\Exceptions\InvalidCredentialsException;
@@ -12,6 +15,10 @@ use Illuminate\Support\Facades\Hash;
 
 final class LoginUserAction
 {
+    public function __construct(
+        private readonly RecordAnalyticsEventAction $recordAnalyticsEvent,
+    ) {}
+
     /**
      * Lazily-computed dummy hash used to burn CPU when the user does not exist,
      * so a failed lookup is not trivially distinguishable from a wrong
@@ -20,7 +27,7 @@ final class LoginUserAction
      */
     private static ?string $dummyHash = null;
 
-    public function execute(LoginUserData $data): AuthTokenData
+    public function execute(LoginUserData $data, ?ResourceDownloadContextData $context = null): AuthTokenData
     {
         $user = User::where('email', $data->email)->first();
 
@@ -53,6 +60,22 @@ final class LoginUserAction
         }
 
         $token = $user->createToken('auth')->plainTextToken;
+
+        // The resolved request context arrives without a user_id (the
+        // request is unauthenticated until the token is minted) — copy
+        // it over with the freshly authenticated id so the emitted
+        // event carries proper attribution.
+        $eventContext = new ResourceDownloadContextData(
+            userId: (int) $user->getKey(),
+            deviceId: $context?->deviceId,
+            language: $context?->language,
+            source: $context?->source,
+        );
+
+        $this->recordAnalyticsEvent->execute(
+            eventType: EventType::AuthLogin,
+            context: $eventContext,
+        );
 
         return new AuthTokenData(
             user: $user,

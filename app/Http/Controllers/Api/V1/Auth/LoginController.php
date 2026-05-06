@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Domain\Analytics\Support\ClientContextResolver;
 use App\Domain\Auth\Actions\LoginUserAction;
 use App\Http\Requests\Auth\LoginUserRequest;
 use App\Http\Resources\Auth\UserResource;
@@ -13,7 +14,10 @@ final class LoginController
 {
     public function __invoke(LoginUserRequest $request, LoginUserAction $action): JsonResponse
     {
-        $authToken = $action->execute($request->toData());
+        $authToken = $action->execute(
+            $request->toData(),
+            ClientContextResolver::fromRequest($request),
+        );
 
         return response()->json([
             'data' => [

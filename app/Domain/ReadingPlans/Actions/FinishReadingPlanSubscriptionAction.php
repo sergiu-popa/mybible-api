@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace App\Domain\ReadingPlans\Actions;
 
+use App\Domain\Analytics\Actions\RecordAnalyticsEventAction;
+use App\Domain\Analytics\DataTransferObjects\ResourceDownloadContextData;
+use App\Domain\Analytics\Enums\EventType;
 use App\Domain\ReadingPlans\Enums\SubscriptionStatus;
 use App\Domain\ReadingPlans\Exceptions\SubscriptionNotCompletableException;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
 
 final class FinishReadingPlanSubscriptionAction
 {
+    public function __construct(
+        private readonly RecordAnalyticsEventAction $recordAnalyticsEvent,
+    ) {}
+
     public function execute(ReadingPlanSubscription $subscription): ReadingPlanSubscription
     {
         if ($subscription->status === SubscriptionStatus::Completed) {
@@ -36,6 +43,17 @@ final class FinishReadingPlanSubscriptionAction
         $subscription->status = SubscriptionStatus::Completed;
         $subscription->completed_at = now();
         $subscription->save();
+
+        $this->recordAnalyticsEvent->execute(
+            eventType: EventType::ReadingPlanSubscriptionCompleted,
+            context: new ResourceDownloadContextData(
+                userId: (int) $subscription->user_id,
+                deviceId: null,
+                language: null,
+                source: null,
+            ),
+            subject: $subscription,
+        );
 
         return $this->withProgressCounts($subscription);
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domain\Analytics;
 
+use App\Domain\Analytics\Enums\EventSource;
 use App\Domain\Analytics\Support\ClientContextResolver;
 use App\Domain\Shared\Enums\Language;
 use App\Http\Middleware\ResolveRequestLanguage;
@@ -57,7 +58,7 @@ final class ClientContextResolverTest extends TestCase
 
         $context = ClientContextResolver::fromRequest($request);
 
-        $this->assertSame('ios', $context->source);
+        $this->assertSame(EventSource::Ios, $context->source);
     }
 
     public function test_infers_android_source_from_user_agent(): void
@@ -67,7 +68,7 @@ final class ClientContextResolverTest extends TestCase
 
         $context = ClientContextResolver::fromRequest($request);
 
-        $this->assertSame('android', $context->source);
+        $this->assertSame(EventSource::Android, $context->source);
     }
 
     public function test_infers_web_source_from_browser_user_agent(): void
@@ -77,7 +78,7 @@ final class ClientContextResolverTest extends TestCase
 
         $context = ClientContextResolver::fromRequest($request);
 
-        $this->assertSame('web', $context->source);
+        $this->assertSame(EventSource::Web, $context->source);
     }
 
     public function test_returns_null_source_for_unrecognised_user_agent(): void

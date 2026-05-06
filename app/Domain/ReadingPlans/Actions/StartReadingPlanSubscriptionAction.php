@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\ReadingPlans\Actions;
 
+use App\Domain\Analytics\Actions\RecordAnalyticsEventAction;
+use App\Domain\Analytics\DataTransferObjects\ResourceDownloadContextData;
+use App\Domain\Analytics\Enums\EventType;
 use App\Domain\ReadingPlans\DataTransferObjects\StartReadingPlanSubscriptionData;
 use App\Domain\ReadingPlans\Enums\SubscriptionStatus;
 use App\Domain\ReadingPlans\Models\ReadingPlanSubscription;
@@ -11,6 +14,10 @@ use Illuminate\Support\Facades\DB;
 
 final class StartReadingPlanSubscriptionAction
 {
+    public function __construct(
+        private readonly RecordAnalyticsEventAction $recordAnalyticsEvent,
+    ) {}
+
     /**
      * Multiple active subscriptions to the same plan for the same user are
      * intentionally allowed (e.g., a user restarting a plan alongside the
@@ -19,7 +26,7 @@ final class StartReadingPlanSubscriptionAction
      */
     public function execute(StartReadingPlanSubscriptionData $data): ReadingPlanSubscription
     {
-        return DB::transaction(function () use ($data): ReadingPlanSubscription {
+        $subscription = DB::transaction(function () use ($data): ReadingPlanSubscription {
             $subscription = ReadingPlanSubscription::query()->create([
                 'user_id' => $data->user->id,
                 'reading_plan_id' => $data->plan->id,
@@ -57,5 +64,22 @@ final class StartReadingPlanSubscriptionAction
                     'days as completed_days_count' => fn ($query) => $query->whereNotNull('completed_at'),
                 ]);
         });
+
+        $this->recordAnalyticsEvent->execute(
+            eventType: EventType::ReadingPlanSubscriptionStarted,
+            context: new ResourceDownloadContextData(
+                userId: (int) $subscription->user_id,
+                deviceId: null,
+                language: null,
+                source: null,
+            ),
+            subject: $subscription,
+            metadata: [
+                'plan_id' => (int) $data->plan->id,
+                'plan_slug' => (string) $data->plan->slug,
+            ],
+        );
+
+        return $subscription;
     }
 }
