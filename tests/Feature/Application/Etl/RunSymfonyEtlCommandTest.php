@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Application\Etl;
 
 use App\Application\Jobs\Etl\RunSymfonyEtlJob;
+use App\Domain\Admin\Imports\Enums\ImportJobStatus;
 use App\Domain\Admin\Imports\Models\ImportJob;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
@@ -65,6 +66,37 @@ final class RunSymfonyEtlCommandTest extends TestCase
                 && $job->options->dryRun === false
                 && $job->queue === 'etl';
         });
+    }
+
+    #[Test]
+    public function dry_run_bypasses_prior_terminal_ledger_rows(): void
+    {
+        // Simulate a prior real run for one slug — a Succeeded ledger row
+        // for `etl_news_language_default`. Without the dry-run wipe, the
+        // reporter would surface this row and the BaseEtlJob short-circuit
+        // would fire, leaving the dry-run summary reporting stale state
+        // instead of rehearsing the transformation.
+        ImportJob::query()->create([
+            'type' => 'etl_news_language_default',
+            'status' => ImportJobStatus::Succeeded,
+            'progress' => 100,
+            'payload' => ['rehearsal_marker' => 'old-run'],
+            'started_at' => now()->subDay(),
+            'finished_at' => now()->subDay(),
+        ]);
+
+        $pending = $this->artisan('symfony:etl', [
+            '--dry-run' => true,
+            '--only' => ['etl_news_language_default'],
+        ]);
+        $this->assertInstanceOf(PendingCommand::class, $pending);
+        $pending->assertSuccessful();
+        $pending->run();
+
+        // Prior terminal row is still present (rolled back deletion).
+        $row = ImportJob::query()->where('type', 'etl_news_language_default')->firstOrFail();
+        $this->assertSame(ImportJobStatus::Succeeded, $row->status);
+        $this->assertSame(['rehearsal_marker' => 'old-run'], $row->payload);
     }
 
     #[Test]

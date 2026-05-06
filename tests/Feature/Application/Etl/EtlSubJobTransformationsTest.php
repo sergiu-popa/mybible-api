@@ -480,6 +480,89 @@ final class EtlSubJobTransformationsTest extends TestCase
     }
 
     #[Test]
+    public function sabbath_school_questions_rewires_answers_post_mba_025_rename(): void
+    {
+        // Post-MBA-025 the legacy `sabbath_school_question_id` column has
+        // already been renamed to `segment_content_id`, but its values are
+        // still legacy question ids until this sub-job rewrites them. The
+        // rewire must use a bulk JOIN-UPDATE so that a newly-inserted
+        // content row whose id collides with another question's legacy id
+        // cannot bleed across the rewrite.
+        if (! Schema::hasColumn('sabbath_school_answers', 'segment_content_id')) {
+            $this->markTestSkipped('post-MBA-025 column shape not present in this branch.');
+        }
+
+        $userOne = User::factory()->create();
+        $userTwo = User::factory()->create();
+        $lesson = SabbathSchoolLesson::factory()->create();
+        $segment = SabbathSchoolSegment::factory()->forLesson($lesson)->create();
+
+        $q1 = DB::table('sabbath_school_questions')->insertGetId([
+            'sabbath_school_segment_id' => $segment->id,
+            'position' => 0,
+            'prompt' => 'Q1',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $q2 = DB::table('sabbath_school_questions')->insertGetId([
+            'sabbath_school_segment_id' => $segment->id,
+            'position' => 1,
+            'prompt' => 'Q2',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Two answers — one per question, each carrying the legacy
+        // question id in the renamed column.
+        DB::table('sabbath_school_answers')->insert([
+            [
+                'user_id' => $userOne->id,
+                'segment_content_id' => $q1,
+                'content' => 'A1',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'user_id' => $userTwo->id,
+                'segment_content_id' => $q2,
+                'content' => 'A2',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $this->runSubJob(EtlSabbathSchoolQuestionsJob::class);
+
+        $newContentForQ1 = (int) DB::table('sabbath_school_segment_contents')
+            ->where('segment_id', $segment->id)
+            ->where('title', sprintf('legacy_question_%d', $q1))
+            ->value('id');
+        $newContentForQ2 = (int) DB::table('sabbath_school_segment_contents')
+            ->where('segment_id', $segment->id)
+            ->where('title', sprintf('legacy_question_%d', $q2))
+            ->value('id');
+
+        $this->assertSame(
+            $newContentForQ1,
+            (int) DB::table('sabbath_school_answers')->where('user_id', $userOne->id)->value('segment_content_id'),
+            'A1 must be rewired to the content row created for Q1.',
+        );
+        $this->assertSame(
+            $newContentForQ2,
+            (int) DB::table('sabbath_school_answers')->where('user_id', $userTwo->id)->value('segment_content_id'),
+            'A2 must be rewired to the content row created for Q2.',
+        );
+
+        // Re-run is a no-op (rows no longer match a legacy id).
+        $this->dropImportJobs(EtlSabbathSchoolQuestionsJob::class::slug());
+        $this->runSubJob(EtlSabbathSchoolQuestionsJob::class);
+        $this->assertSame(
+            $newContentForQ1,
+            (int) DB::table('sabbath_school_answers')->where('user_id', $userOne->id)->value('segment_content_id'),
+        );
+    }
+
+    #[Test]
     public function sabbath_school_highlights_resolves_offsets_and_archives_unparseable(): void
     {
         $userId = User::factory()->create()->id;
@@ -615,8 +698,14 @@ final class EtlSubJobTransformationsTest extends TestCase
         $this->assertNotNull($row);
         $this->assertSame('educational_resource', $row->downloadable_type);
         $this->assertSame(42, (int) $row->downloadable_id);
+        $this->assertFalse(
+            Schema::hasColumn('resource_download', 'ip_address'),
+            'PII ip_address column must be dropped on a successful pass.',
+        );
 
-        // Idempotency: same probe rejects a second copy of the legacy row.
+        // Idempotency: same probe rejects a second copy of the legacy row,
+        // and the no-op re-run does not raise even though there is nothing
+        // left to drop.
         $this->dropImportJobs(EtlResourceDownloadsJob::class::slug());
         $this->runSubJob(EtlResourceDownloadsJob::class);
         $this->assertSame(1, DB::table('resource_downloads')->count());
@@ -721,5 +810,302 @@ final class EtlSubJobTransformationsTest extends TestCase
         // by the protocol test elsewhere; this asserts the no-source path.
         $job = $this->runSubJob(EtlHymnalStanzasJob::class);
         $this->assertTrue($job->status->isTerminal());
+    }
+
+    #[Test]
+    public function hymnal_stanzas_aggregates_verses_with_chorus_detection(): void
+    {
+        $bookId = DB::table('hymnal_books')->insertGetId([
+            'slug' => 'imnuri',
+            'name' => json_encode(['ro' => 'Imnuri']),
+            'language' => 'ro',
+            'position' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $songId = DB::table('hymnal_songs')->insertGetId([
+            'hymnal_book_id' => $bookId,
+            'number' => 1,
+            'title' => json_encode(['ro' => 'A song']),
+            'stanzas' => json_encode([]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Recreate the legacy `hymnal_verses` source table inline; MBA-031
+        // consumes it and rewrites songs.stanzas. Symfony stored the chorus
+        // as a verse with `number = 'C'`.
+        Schema::create('hymnal_verses', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('hymnal_song_id');
+            $table->string('number', 8);
+            $table->text('text');
+            $table->timestamps();
+        });
+        DB::table('hymnal_verses')->insert([
+            ['hymnal_song_id' => $songId, 'number' => '1', 'text' => 'verse 1', 'created_at' => now(), 'updated_at' => now()],
+            ['hymnal_song_id' => $songId, 'number' => 'C', 'text' => 'chorus', 'created_at' => now(), 'updated_at' => now()],
+            ['hymnal_song_id' => $songId, 'number' => '2', 'text' => 'verse 2', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $this->runSubJob(EtlHymnalStanzasJob::class);
+
+        $stanzas = json_decode((string) DB::table('hymnal_songs')->where('id', $songId)->value('stanzas'), true);
+        $this->assertIsArray($stanzas);
+        $this->assertArrayHasKey('ro', $stanzas);
+        $this->assertCount(3, $stanzas['ro']);
+        $this->assertSame(1, $stanzas['ro'][0]['index']);
+        $this->assertFalse($stanzas['ro'][0]['is_chorus']);
+        $this->assertNull($stanzas['ro'][1]['index']);
+        $this->assertTrue($stanzas['ro'][1]['is_chorus']);
+        $this->assertSame(2, $stanzas['ro'][2]['index']);
+    }
+
+    #[Test]
+    public function collections_parent_relinks_from_legacy_join_and_backfills_cdn_url(): void
+    {
+        if (! Schema::hasColumn('collection_topics', 'collection_id')
+            || ! Schema::hasColumn('collection_topics', 'image_cdn_url')
+            || ! Schema::hasColumn('collection_topics', 'image_path')) {
+            $this->markTestSkipped('post-reconcile collection_topics columns not present in this branch.');
+        }
+
+        config()->set('filesystems.disks.s3.cdn_url', 'https://cdn.example.com');
+
+        $topicId = DB::table('collection_topics')->insertGetId([
+            'language' => 'ro',
+            'name' => 'Topic',
+            'description' => 'desc',
+            'position' => 1,
+            'collection_id' => null,
+            'image_path' => 'topics/foo.jpg',
+            'image_cdn_url' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Schema::create('collection_topic_collection', function (Blueprint $table): void {
+            $table->unsignedBigInteger('collection_topic_id');
+            $table->unsignedBigInteger('collection_id');
+        });
+        DB::table('collection_topic_collection')->insert([
+            'collection_topic_id' => $topicId,
+            'collection_id' => 42,
+        ]);
+
+        $this->runSubJob(EtlCollectionsParentJob::class);
+
+        $row = DB::table('collection_topics')->where('id', $topicId)->first();
+        $this->assertNotNull($row);
+        $this->assertSame(42, (int) $row->collection_id, 'collection_id must be relinked from legacy join.');
+        $this->assertSame(
+            'https://cdn.example.com/topics/foo.jpg',
+            (string) $row->image_cdn_url,
+            'image_cdn_url must be backfilled from cdn base + image_path.',
+        );
+    }
+
+    #[Test]
+    public function sabbath_school_content_splits_legacy_sb_content_rows(): void
+    {
+        $lesson = SabbathSchoolLesson::factory()->create();
+        $segment = SabbathSchoolSegment::factory()->forLesson($lesson)->create([
+            'content' => 'unused-because-sb_content-wins',
+        ]);
+
+        Schema::create('sb_content', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('segment_id');
+            $table->string('type', 50);
+            $table->string('title', 128)->nullable();
+            $table->unsignedSmallInteger('position')->default(0);
+            $table->longText('content');
+            $table->timestamps();
+        });
+        DB::table('sb_content')->insert([
+            [
+                'segment_id' => $segment->id,
+                'type' => 'heading',
+                'title' => 'Heading One',
+                'position' => 0,
+                'content' => 'Heading body',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'segment_id' => $segment->id,
+                'type' => 'text',
+                'title' => null,
+                'position' => 1,
+                'content' => 'Body paragraph',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $this->runSubJob(EtlSabbathSchoolContentJob::class);
+
+        $rows = DB::table('sabbath_school_segment_contents')
+            ->where('segment_id', $segment->id)
+            ->orderBy('position')
+            ->get();
+
+        $this->assertCount(2, $rows, 'sb_content rows must win over the LONGTEXT fallback.');
+        $first = $rows->first();
+        $second = $rows->skip(1)->first();
+        $this->assertNotNull($first);
+        $this->assertNotNull($second);
+        $this->assertSame('heading', (string) $first->type);
+        $this->assertSame('Heading One', (string) $first->title);
+        $this->assertSame('text', (string) $second->type);
+    }
+
+    #[Test]
+    public function reading_plans_wraps_plain_string_name_into_locale_map(): void
+    {
+        // Insert a row whose `name` is a legacy plain string (the
+        // reconcile column type is JSON; on MySQL this stores raw bytes,
+        // which `wrapPlanText` detects as a non-locale-map and rewrites
+        // to {"ro": "..."}). Use update() to bypass JSON validation.
+        $planId = DB::table('reading_plans')->insertGetId([
+            'slug' => 'plan-wrap',
+            'name' => json_encode(['ro' => 'placeholder']),
+            'description' => json_encode(['ro' => 'placeholder']),
+            'image' => json_encode([]),
+            'thumbnail' => json_encode([]),
+            'status' => 'draft',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Force a string-shaped legacy value bypassing model casting via
+        // direct SQL.
+        DB::statement(
+            'UPDATE reading_plans SET name = ?, description = ? WHERE id = ?',
+            [json_encode('Bare title'), json_encode('Bare desc'), $planId],
+        );
+
+        $this->runSubJob(EtlReadingPlansJob::class);
+
+        $row = DB::table('reading_plans')->where('id', $planId)->first();
+        $this->assertNotNull($row);
+        $name = json_decode((string) $row->name, true);
+        $description = json_decode((string) $row->description, true);
+        $this->assertSame(['ro' => 'Bare title'], $name);
+        $this->assertSame(['ro' => 'Bare desc'], $description);
+    }
+
+    #[Test]
+    public function reading_plans_backfills_slug_when_missing(): void
+    {
+        $planId = DB::table('reading_plans')->insertGetId([
+            'slug' => '',
+            'name' => json_encode(['ro' => 'Sfânta Treime']),
+            'description' => json_encode(['ro' => 'desc']),
+            'image' => json_encode([]),
+            'thumbnail' => json_encode([]),
+            'status' => 'draft',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->runSubJob(EtlReadingPlansJob::class);
+
+        $slug = (string) DB::table('reading_plans')->where('id', $planId)->value('slug');
+        $this->assertNotSame('', $slug);
+        $this->assertSame(Str::slug('Sfânta Treime'), $slug);
+    }
+
+    #[Test]
+    public function devotional_types_seeds_from_devotionals_enum(): void
+    {
+        if (! Schema::hasTable('devotional_types') || ! Schema::hasTable('devotionals')) {
+            $this->markTestSkipped('devotional_types/devotionals not present in this branch.');
+        }
+
+        // The reconcile migration may have made `devotionals.type_id`
+        // NOT NULL; seed a placeholder devotional_types row so we can
+        // legally insert a devotional with a new (type, language) pair
+        // whose corresponding devotional_types row does not yet exist.
+        $placeholderId = DB::table('devotional_types')->insertGetId([
+            'slug' => 'placeholder',
+            'title' => 'Placeholder',
+            'language' => 'ro',
+            'position' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $payload = [
+            'date' => '2026-01-01',
+            'language' => 'ro',
+            'type' => 'evening',
+            'title' => 'A devotional',
+            'content' => 'body',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+        if (Schema::hasColumn('devotionals', 'type_id')) {
+            $payload['type_id'] = $placeholderId;
+        }
+        DB::table('devotionals')->insert($payload);
+
+        $this->runSubJob(EtlDevotionalTypesJob::class);
+
+        $typeRow = DB::table('devotional_types')
+            ->where('slug', 'evening')
+            ->where('language', 'ro')
+            ->first();
+        $this->assertNotNull(
+            $typeRow,
+            'seedTypesFromDevotionalsEnum must create a devotional_types row for the (type, language) pair.',
+        );
+    }
+
+    #[Test]
+    public function devotional_types_backfills_type_id_when_null(): void
+    {
+        if (
+            ! Schema::hasTable('devotional_types')
+            || ! Schema::hasTable('devotionals')
+            || ! Schema::hasColumn('devotionals', 'type_id')
+        ) {
+            $this->markTestSkipped('devotional_types/devotionals.type_id not present in this branch.');
+        }
+
+        // Pre-seed devotional_types so the enum-derived seed step is a
+        // no-op for this fixture, isolating the backfill branch.
+        $eveningId = DB::table('devotional_types')->insertGetId([
+            'slug' => 'evening',
+            'title' => 'Evening',
+            'language' => 'ro',
+            'position' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Insert a devotional with type_id=0 (the backfill matches both
+        // 0 and NULL — see EtlDevotionalTypesJob::backfillDevotionalTypeIds).
+        // The FK to devotional_types blocks the sentinel; turn FK checks
+        // off only for this one row, mirroring the cutover-time scenario
+        // where pending rows arrive with `type_id` not yet resolved.
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        try {
+            DB::statement(
+                'INSERT INTO devotionals (date, language, type_id, type, title, content, created_at, updated_at)
+                 VALUES (?, ?, 0, ?, ?, ?, ?, ?)',
+                ['2026-01-01', 'ro', 'evening', 'A devotional', 'body', now(), now()],
+            );
+        } finally {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        }
+
+        $this->runSubJob(EtlDevotionalTypesJob::class);
+
+        $this->assertSame(
+            $eveningId,
+            (int) DB::table('devotionals')->where('type', 'evening')->value('type_id'),
+            'devotionals.type_id must be backfilled to the matching devotional_types.id.',
+        );
     }
 }

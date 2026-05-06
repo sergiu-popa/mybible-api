@@ -68,8 +68,12 @@ final class EtlResourceDownloadsJob extends BaseEtlJob
             }
         }
 
-        if ($succeeded > 0 && Schema::hasColumn('resource_download', 'ip_address')) {
-            // PII removal — drop the legacy IP column once the data is moved.
+        // PII removal — drop the legacy IP column whenever it is still
+        // present. Gating on $succeeded > 0 would skip the drop on a
+        // re-run where the prior pass already moved every row, leaving
+        // the legacy PII column behind forever. The table itself is
+        // guaranteed by the early return above.
+        if (Schema::hasColumn('resource_download', 'ip_address')) {
             DB::statement('ALTER TABLE resource_download DROP COLUMN ip_address');
         }
 

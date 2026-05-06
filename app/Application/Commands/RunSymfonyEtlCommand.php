@@ -147,6 +147,16 @@ final class RunSymfonyEtlCommand extends Command
 
         try {
             DB::transaction(function () use ($class, $reporter, &$result): void {
+                // Wipe any prior ledger rows for this slug INSIDE the
+                // rolled-back transaction. The reporter's start() would
+                // otherwise surface a previous Succeeded/Partial row and
+                // the BaseEtlJob's isAlreadyTerminal() short-circuit would
+                // fire, leaving the dry-run summary reporting stale data
+                // from a real run instead of the freshly rehearsed pass.
+                // The deletion is reverted when DryRunRollback unwinds,
+                // so prior rows survive after the dry-run finishes.
+                ImportJob::query()->where('type', $class::slug())->delete();
+
                 /** @var BaseEtlJob $job */
                 $job = new $class;
                 $job->handle($reporter);

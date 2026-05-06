@@ -85,6 +85,42 @@ final class RunSymfonyEtlEndToEndTest extends TestCase
     }
 
     #[Test]
+    public function orchestrator_short_circuits_when_prior_run_already_terminal(): void
+    {
+        Bus::fake();
+
+        // First run lands the orchestrator ledger row in Running state;
+        // mark it Succeeded to simulate a previous successful pass.
+        $orchestrator = new RunSymfonyEtlJob(new EtlRunOptions(confirm: true));
+        $orchestrator->handle(app(EtlJobReporter::class));
+
+        ImportJob::query()->where('type', 'symfony_etl')->update([
+            'status' => ImportJobStatus::Succeeded,
+            'finished_at' => now(),
+        ]);
+
+        $startedBefore = DB::table('security_events')->where('event', 'symfony_etl_started')->count();
+
+        // Re-dispatch (e.g. operator runs `symfony:etl --resume` again
+        // after the chain already succeeded). The orchestrator must bail
+        // before emitting another security event.
+        (new RunSymfonyEtlJob(new EtlRunOptions(confirm: true, resume: true)))
+            ->handle(app(EtlJobReporter::class));
+
+        $startedAfter = DB::table('security_events')->where('event', 'symfony_etl_started')->count();
+        $this->assertSame(
+            $startedBefore,
+            $startedAfter,
+            'orchestrator must not emit a second symfony_etl_started event after a terminal run.',
+        );
+        $this->assertSame(
+            1,
+            ImportJob::query()->where('type', 'symfony_etl')->count(),
+            'no second orchestrator ledger row should appear on a re-run that already succeeded.',
+        );
+    }
+
+    #[Test]
     public function chain_failure_marks_orchestrator_failed(): void
     {
         Bus::fake();

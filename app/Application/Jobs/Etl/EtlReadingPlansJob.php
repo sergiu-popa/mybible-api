@@ -100,7 +100,13 @@ final class EtlReadingPlansJob extends BaseEtlJob
             return null;
         }
 
-        return json_encode(['ro' => $raw], JSON_UNESCAPED_UNICODE) ?: null;
+        // If the column already held a JSON-encoded scalar (MySQL JSON
+        // columns auto-quote strings: `"Bare title"`), unwrap to the
+        // underlying value before re-wrapping. Otherwise the legacy plain
+        // string is the value itself.
+        $value = is_string($decoded) ? $decoded : $raw;
+
+        return json_encode(['ro' => $value], JSON_UNESCAPED_UNICODE) ?: null;
     }
 
     private function backfillSlugs(): int

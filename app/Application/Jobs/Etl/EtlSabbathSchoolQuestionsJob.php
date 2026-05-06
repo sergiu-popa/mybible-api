@@ -13,13 +13,23 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Stage 2 — converts each `sabbath_school_questions` row into a
  * `sabbath_school_segment_contents` row of `type='question'`, then
- * rewires `sabbath_school_answers.segment_content_id` (FK rename
- * happened in MBA-025) onto the newly-inserted content row.
+ * rewires `sabbath_school_answers` from question-keyed to
+ * segment-content-keyed.
  *
- * Idempotent: tracks the question→content mapping inside the
- * `import_jobs.payload['question_to_content']` array and skips any
- * question already referenced by an existing content row of the same
- * segment+title pair.
+ * The MBA-025 reconcile renames the legacy
+ * `sabbath_school_answers.sabbath_school_question_id` column to
+ * `segment_content_id` while preserving its values, so by the time this
+ * sub-job runs the column already exists but still holds **legacy
+ * question IDs** that must be rewritten to the new content row IDs.
+ *
+ * Idempotency:
+ *   • Content rows are skipped when an existing `(segment_id,
+ *     title='legacy_question_<id>')` row already points at the same
+ *     question.
+ *   • Answer rewiring is computed as a (legacy_id → new_id) mapping
+ *     and applied via a single UPDATE-JOIN through a transient
+ *     mapping table — no intra-pass collisions, and re-runs are no-ops
+ *     because already-rewritten rows no longer match a legacy id.
  */
 final class EtlSabbathSchoolQuestionsJob extends BaseEtlJob
 {
@@ -41,19 +51,23 @@ final class EtlSabbathSchoolQuestionsJob extends BaseEtlJob
         $total = $questions->count();
         $processed = 0;
         $succeeded = 0;
+        /** @var array<int, int> $legacyToContent */
+        $legacyToContent = [];
 
         foreach ($questions as $question) {
             /** @var \stdClass $question */
             $processed++;
 
             $contentId = $this->resolveOrCreateContentRow($question);
-            $this->rewireAnswers((int) $question->id, $contentId);
+            $legacyToContent[(int) $question->id] = $contentId;
             $succeeded++;
 
             if ($processed % 25 === 0) {
                 $reporter->progress($importJob, $processed, $total);
             }
         }
+
+        $this->rewireAnswers($legacyToContent);
 
         return new EtlSubJobResult(
             processed: $processed,
@@ -92,22 +106,79 @@ final class EtlSabbathSchoolQuestionsJob extends BaseEtlJob
         ]);
     }
 
-    private function rewireAnswers(int $legacyQuestionId, int $segmentContentId): void
+    /**
+     * @param  array<int, int>  $legacyToContent  legacy question id → new content row id
+     */
+    private function rewireAnswers(array $legacyToContent): void
     {
-        if (! Schema::hasTable('sabbath_school_answers')) {
+        if ($legacyToContent === [] || ! Schema::hasTable('sabbath_school_answers')) {
             return;
         }
 
-        // Two possible shapes pre/post MBA-025: the answer table either
-        // still carries a legacy `sabbath_school_question_id` column or
-        // was already renamed to `segment_content_id`. Rewire whichever
-        // we find — but do not overwrite an answer that already points
-        // at a content row.
-        if (Schema::hasColumn('sabbath_school_answers', 'sabbath_school_question_id')) {
-            DB::table('sabbath_school_answers')
-                ->where('sabbath_school_question_id', $legacyQuestionId)
-                ->whereNull('segment_content_id')
-                ->update(['segment_content_id' => $segmentContentId]);
+        $column = $this->resolveAnswersTargetColumn();
+        if ($column === null) {
+            return;
         }
+
+        $mappingTable = $this->ensureMappingTable($legacyToContent);
+
+        try {
+            // Single UPDATE-JOIN: MySQL evaluates the join as a snapshot
+            // before applying any writes, so a `new_id` that happens to
+            // collide with another row's `legacy_id` cannot bleed across
+            // the rewrite.
+            DB::affectingStatement(sprintf(
+                'UPDATE sabbath_school_answers a
+                 JOIN %s m ON a.%s = m.legacy_id
+                 SET a.%s = m.new_id',
+                $mappingTable,
+                $column,
+                $column,
+            ));
+        } finally {
+            Schema::dropIfExists($mappingTable);
+        }
+    }
+
+    private function resolveAnswersTargetColumn(): ?string
+    {
+        // Pre-MBA-025 shape: legacy column still around.
+        if (Schema::hasColumn('sabbath_school_answers', 'sabbath_school_question_id')) {
+            return 'sabbath_school_question_id';
+        }
+
+        // Post-MBA-025 shape: column was renamed; values still carry
+        // legacy question ids until this sub-job rewrites them.
+        if (Schema::hasColumn('sabbath_school_answers', 'segment_content_id')) {
+            return 'segment_content_id';
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<int, int>  $legacyToContent
+     */
+    private function ensureMappingTable(array $legacyToContent): string
+    {
+        $table = 'tmp_etl_question_content_map_' . substr(md5(uniqid('', true)), 0, 8);
+
+        Schema::create($table, function ($blueprint): void {
+            $blueprint->unsignedBigInteger('legacy_id')->primary();
+            $blueprint->unsignedBigInteger('new_id');
+        });
+
+        $rows = [];
+        foreach ($legacyToContent as $legacy => $new) {
+            $rows[] = ['legacy_id' => $legacy, 'new_id' => $new];
+        }
+
+        // Bulk insert in chunks to keep the wire payload bounded for
+        // larger run sizes.
+        foreach (array_chunk($rows, 500) as $chunk) {
+            DB::table($table)->insert($chunk);
+        }
+
+        return $table;
     }
 }

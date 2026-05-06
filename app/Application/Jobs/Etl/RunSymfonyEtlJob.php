@@ -78,6 +78,18 @@ final class RunSymfonyEtlJob implements ShouldQueue
     public function handle(EtlJobReporter $reporter): void
     {
         $orchestratorJob = $reporter->start('symfony_etl');
+
+        // If a prior orchestrator run has already settled in a non-failed
+        // terminal state (Succeeded / Partial), bail. Without this, a
+        // resume-style re-dispatch would emit a duplicate
+        // `symfony_etl_started` security event and (when --resume skips
+        // every sub-job) overwrite the original run's `started_at` /
+        // `finished_at` via the empty-batches branch, polluting the audit
+        // timeline.
+        if ($reporter->isAlreadyTerminal($orchestratorJob)) {
+            return;
+        }
+
         $orchestratorJobId = (int) $orchestratorJob->id;
 
         $this->emitSecurityEvent('symfony_etl_started', $orchestratorJobId);
