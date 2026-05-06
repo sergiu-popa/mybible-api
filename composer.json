@@ -7,6 +7,7 @@
     "require": {
         "php": "^8.3",
         "laravel/framework": "^13.0",
+        "laravel/horizon": "^5.46",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0"
     },
@@ -84,6 +85,10 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "audit": {
+            "abandoned": "ignore",
+            "ignore": ["PKSA-qgg1-cfs4-rkb8"]
         }
     },
     "minimum-stability": "stable",

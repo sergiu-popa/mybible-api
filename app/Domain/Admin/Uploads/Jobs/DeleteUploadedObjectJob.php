@@ -31,7 +31,9 @@ final class DeleteUploadedObjectJob implements ShouldQueue
     public function __construct(
         public readonly string $disk,
         public readonly string $path,
-    ) {}
+    ) {
+        $this->onQueue('cleanup');
+    }
 
     public function handle(): void
     {

@@ -5,9 +5,9 @@ case "$1" in
     echo "Starting web application"
     exec /usr/bin/supervisord -c /etc/supervisor/conf.d/apache.conf
     ;;
-  "worker")
-    echo "Starting queue worker"
-    exec /usr/bin/supervisord -c /etc/supervisor/conf.d/worker.conf
+  "horizon")
+    echo "Starting Horizon"
+    exec /usr/bin/supervisord -c /etc/supervisor/conf.d/horizon.conf
     ;;
   *)
     echo "Starting web application"
