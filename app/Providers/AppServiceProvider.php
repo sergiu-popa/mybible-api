@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Application\Commands\InvalidateSymfonySessionsCommand;
+use App\Application\Commands\RunSymfonyEtlCommand;
 use App\Domain\AI\Prompts\Prompt;
 use App\Domain\AI\Prompts\PromptRegistry;
 use App\Domain\Analytics\Enums\EventSubjectType;
@@ -115,7 +117,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         if ($this->app->runningInConsole()) {
-            $this->commands([ClearCacheTagCommand::class]);
+            $this->commands([
+                ClearCacheTagCommand::class,
+                RunSymfonyEtlCommand::class,
+                InvalidateSymfonySessionsCommand::class,
+            ]);
         }
 
         // Tag-based invalidation is load-bearing across cached read endpoints.

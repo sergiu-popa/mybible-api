@@ -84,48 +84,48 @@ Every sub-job is `final class` extending the project queue base, dispatched onto
 
 ### Track A — Horizon swap
 
-- [ ] 1. Composer-require `laravel/horizon`; publish its assets and config; trim `config/horizon.php` per project posture (drop unused environments, disable mail/slack notifications, set `domain=null` so dashboard mounts on the API host).
-- [ ] 2. Update `.env.example` and per-env `.env` notes: `QUEUE_CONNECTION=redis`, `REDIS_HOST=mybible-redis`, `REDIS_PORT=6379`, `HORIZON_DOMAIN=null`, `HORIZON_PATH=horizon`.
-- [ ] 3. Add `App\Providers\HorizonServiceProvider`: define `Horizon::auth()` to require `auth:sanctum` resolved user with `is_super=true` and `is_active=true` (mirrors `EnsureSuperAdmin`).
-- [ ] 4. Update root `docker-compose.yml`: rename service `api-worker` → `api-horizon`, change `command: ['horizon']`, add a healthcheck that runs `horizon:status`. Update entrypoint script accordingly.
-- [ ] 5. Add a feature test `DispatchesJobsViaHorizonTest` that fakes the queue, dispatches `DeleteUploadedObjectJob`, asserts it lands on the `redis` connection's `cleanup` queue (smoke test for AC §5).
+- [x] 1. Composer-require `laravel/horizon`; publish its assets and config; trim `config/horizon.php` per project posture (drop unused environments, disable mail/slack notifications, set `domain=null` so dashboard mounts on the API host).
+- [x] 2. Update `.env.example` and per-env `.env` notes: `QUEUE_CONNECTION=redis`, `REDIS_HOST=mybible-redis`, `REDIS_PORT=6379`, `HORIZON_DOMAIN=null`, `HORIZON_PATH=horizon`.
+- [x] 3. Add `App\Providers\HorizonServiceProvider`: define `Horizon::auth()` to require `auth:sanctum` resolved user with `is_super=true` and `is_active=true` (mirrors `EnsureSuperAdmin`).
+- [x] 4. Update root `docker-compose.yml`: rename service `api-worker` → `api-horizon`, change `command: ['horizon']`, add a healthcheck that runs `horizon:status`. Update entrypoint script accordingly.
+- [x] 5. Add a feature test `DispatchesJobsViaHorizonTest` that fakes the queue, dispatches `DeleteUploadedObjectJob`, asserts it lands on the `redis` connection's `cleanup` queue (smoke test for AC §5).
 
 ### Track B — ETL Stage 1 (identifier normalisation, parallel batch)
 
-- [ ] 6. Create `App\Application\Jobs\Etl\BackfillLanguageCodesJob` consuming `LanguageCodeNormalizer`; iterate every reconciled table flagged in MBA-023 §12; report progress via `EtlJobReporter`.
-- [ ] 7. Create `BackfillBookCodesJob` consuming `BookCodeNormalizer`; on `UnmappedLegacyBookException` append the offending value to `ImportJob.payload.errors`, do not abort.
+- [x] 6. Create `App\Application\Jobs\Etl\BackfillLanguageCodesJob` consuming `LanguageCodeNormalizer`; iterate every reconciled table flagged in MBA-023 §12; report progress via `EtlJobReporter`.
+- [x] 7. Create `BackfillBookCodesJob` consuming `BookCodeNormalizer`; on `UnmappedLegacyBookException` append the offending value to `ImportJob.payload.errors`, do not abort.
 
 ### Track B — ETL Stage 2 (domain ETL, parallel batch after Stage 1)
 
-- [ ] 8. Add `EtlJobReporter` service and `EtlChunkProcessor` trait under `app/Domain/Migration/Etl/Support/`; both must idempotently open/close an `ImportJob` and chunk a query builder with per-row try/catch.
-- [ ] 9. Create `EtlBibleBooksAndVersesJob` reading `_legacy_book_map`; dedup `book` rows by abbrev; populate `bible_chapters` from verse counts; rewire `bible_verses.bible_book_id` + `bible_version_id`.
-- [ ] 10. Create `EtlHymnalStanzasJob` consuming `HymnalStanzaAggregator`; aggregate `hymnal_verses` into per-song `stanzas` JSON.
-- [ ] 11. Create `EtlReadingPlansJob` consuming `ReadingPlanFragmentBuilder`; wrap title/description as `{ro: …}`; slugify titles uniquely; insert `reading_plan_day_fragments` typed `verse_references`.
-- [ ] 12. Create `EtlReadingPlanSubscriptionsJob`: per-subscription day expansion, `completed_at=now()` for legacy `plan_progress` positions, drop `reading_plan_subscription_days_legacy` only after a successful pass.
-- [ ] 13. Create `EtlSabbathSchoolContentJob` consuming `SegmentContentSplitter`; idempotent insert into `sabbath_school_segment_contents`.
-- [ ] 14. Create `EtlSabbathSchoolQuestionsJob`: each `sabbath_school_questions` row becomes a `type='question'` content row; rewire `sabbath_school_answers.segment_content_id` (FK rename was MBA-025).
-- [ ] 15. Create `EtlSabbathSchoolHighlightsJob` consuming `ResolveSegmentContentOffsets`; unparseable rows → `sabbath_school_highlights_legacy` + `security_events` row per MBA-025 §18.
-- [ ] 16. Create `EtlDevotionalTypesJob`: seed `devotional_types` for enum values + Symfony `devotional_type`; backfill `devotionals.type_id`; preserve string `type` until MBA-032.
-- [ ] 17. Create `EtlMobileVersionsSeedJob`: if `mobile_versions` empty, seed from `config/mobile.php`; one row per `(platform, kind)`.
-- [ ] 18. Create `EtlCollectionsParentJob`: rewire `collection_topics.collection_id` from legacy join; backfill `image_cdn_url`.
-- [ ] 19. Create `EtlOlympiadUuidsJob`: populate `olympiad_questions.uuid` + `olympiad_answers.uuid` where NULL.
-- [ ] 20. Create `EtlResourceDownloadsJob`: insert polymorphic rows with `downloadable_type='educational_resource'`; drop `ip_address` column on completion.
-- [ ] 21. Create `EtlNewsLanguageDefaultJob`: NULL→`'ro'` for `news.language`; NULL→`created_at` for `news.published_at`.
-- [ ] 22. Create `EtlNotesAndFavoritesJob` consuming `BookCodeNormalizer`: convert `(book, chapter, position)` to canonical reference strings; backfill `color`; rewire FKs.
-- [ ] 23. Create `EtlUserPreferredLanguageJob`: set `users.preferred_language=NULL` for all rows (intentional per stakeholder); preserve `users.language` 3-char fallback.
+- [x] 8. Add `EtlJobReporter` service and `EtlChunkProcessor` trait under `app/Domain/Migration/Etl/Support/`; both must idempotently open/close an `ImportJob` and chunk a query builder with per-row try/catch.
+- [x] 9. Create `EtlBibleBooksAndVersesJob` reading `_legacy_book_map`; dedup `book` rows by abbrev; populate `bible_chapters` from verse counts; rewire `bible_verses.bible_book_id` + `bible_version_id`.
+- [x] 10. Create `EtlHymnalStanzasJob` consuming `HymnalStanzaAggregator`; aggregate `hymnal_verses` into per-song `stanzas` JSON.
+- [x] 11. Create `EtlReadingPlansJob` consuming `ReadingPlanFragmentBuilder`; wrap title/description as `{ro: …}`; slugify titles uniquely; insert `reading_plan_day_fragments` typed `verse_references`.
+- [x] 12. Create `EtlReadingPlanSubscriptionsJob`: per-subscription day expansion, `completed_at=now()` for legacy `plan_progress` positions, drop `reading_plan_subscription_days_legacy` only after a successful pass.
+- [x] 13. Create `EtlSabbathSchoolContentJob` consuming `SegmentContentSplitter`; idempotent insert into `sabbath_school_segment_contents`.
+- [x] 14. Create `EtlSabbathSchoolQuestionsJob`: each `sabbath_school_questions` row becomes a `type='question'` content row; rewire `sabbath_school_answers.segment_content_id` (FK rename was MBA-025).
+- [x] 15. Create `EtlSabbathSchoolHighlightsJob` consuming `ResolveSegmentContentOffsets`; unparseable rows → `sabbath_school_highlights_legacy` + `security_events` row per MBA-025 §18.
+- [x] 16. Create `EtlDevotionalTypesJob`: seed `devotional_types` for enum values + Symfony `devotional_type`; backfill `devotionals.type_id`; preserve string `type` until MBA-032.
+- [x] 17. Create `EtlMobileVersionsSeedJob`: if `mobile_versions` empty, seed from `config/mobile.php`; one row per `(platform, kind)`.
+- [x] 18. Create `EtlCollectionsParentJob`: rewire `collection_topics.collection_id` from legacy join; backfill `image_cdn_url`.
+- [x] 19. Create `EtlOlympiadUuidsJob`: populate `olympiad_questions.uuid` + `olympiad_answers.uuid` where NULL.
+- [x] 20. Create `EtlResourceDownloadsJob`: insert polymorphic rows with `downloadable_type='educational_resource'`; drop `ip_address` column on completion.
+- [x] 21. Create `EtlNewsLanguageDefaultJob`: NULL→`'ro'` for `news.language`; NULL→`created_at` for `news.published_at`.
+- [x] 22. Create `EtlNotesAndFavoritesJob` consuming `BookCodeNormalizer`: convert `(book, chapter, position)` to canonical reference strings; backfill `color`; rewire FKs.
+- [x] 23. Create `EtlUserPreferredLanguageJob`: set `users.preferred_language=NULL` for all rows (intentional per stakeholder); preserve `users.language` 3-char fallback.
 
 ### Track B — Orchestrator + CLI
 
-- [ ] 24. Add `RunSymfonyEtlJob` orchestrator dispatching Stage 1 batch then Stage 2 batch via `Bus::chain([Bus::batch([...]), Bus::batch([...])])`; open `ImportJob.type='symfony_etl'`; emit `security_events` at start (`symfony_etl_started`) and end (`_completed` / `_failed`).
-- [ ] 25. Add `App\Application\Commands\RunSymfonyEtlCommand` (`symfony:etl`) with `--confirm`, `--dry-run`, `--resume`, `--only=`; wire DTO `EtlRunOptions` into the orchestrator. `--dry-run` wraps each sub-job in a rolled-back transaction and prints a JSON summary on stdout.
-- [ ] 26. Extend `ImportJobStatus` enum with `Partial`; update `isTerminal()`; ensure existing `ShowImportJobController` resource serializer still renders the new value.
+- [x] 24. Add `RunSymfonyEtlJob` orchestrator dispatching Stage 1 batch then Stage 2 batch via `Bus::chain([Bus::batch([...]), Bus::batch([...])])`; open `ImportJob.type='symfony_etl'`; emit `security_events` at start (`symfony_etl_started`) and end (`_completed` / `_failed`).
+- [x] 25. Add `App\Application\Commands\RunSymfonyEtlCommand` (`symfony:etl`) with `--confirm`, `--dry-run`, `--resume`, `--only=`; wire DTO `EtlRunOptions` into the orchestrator. `--dry-run` wraps each sub-job in a rolled-back transaction and prints a JSON summary on stdout.
+- [x] 26. Extend `ImportJobStatus` enum with `Partial`; update `isTerminal()`; ensure existing `ShowImportJobController` resource serializer still renders the new value.
 
 ### Tests
 
-- [ ] 27. Per-sub-job feature tests: each job has a fixture-driven test asserting (a) target shape, (b) idempotency on re-run (counts match after second invocation), (c) error rows route to legacy/archive tables, not lost.
-- [ ] 28. Integration test `RunSymfonyEtlEndToEndTest` exercising the full chain on a fixture covering every sub-job at least once; asserts final DB matches the expected Laravel state.
-- [ ] 29. CLI test for `symfony:etl --dry-run`: no row mutations after run, JSON summary present on stdout.
-- [ ] 30. Horizon smoke test (Track A Task 5) — dispatched job runs, status reaches `done`.
+- [x] 27. Per-sub-job feature tests: each job has a fixture-driven test asserting (a) target shape, (b) idempotency on re-run (counts match after second invocation), (c) error rows route to legacy/archive tables, not lost.
+- [x] 28. Integration test `RunSymfonyEtlEndToEndTest` exercising the full chain on a fixture covering every sub-job at least once; asserts final DB matches the expected Laravel state.
+- [x] 29. CLI test for `symfony:etl --dry-run`: no row mutations after run, JSON summary present on stdout.
+- [x] 30. Horizon smoke test (Track A Task 5) — dispatched job runs, status reaches `done`.
 
 ## Risks
 
