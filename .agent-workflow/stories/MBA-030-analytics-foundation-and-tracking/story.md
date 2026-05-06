@@ -8,7 +8,13 @@ content domains, admin read endpoints for the dashboard.
 
 ## Status
 
-`in-review` — review.md C1, W1–W4, S2, S4 addressed; awaiting re-review
+`done` — Audit PASS 2026-05-06: full suite 1394/1394 green
+(5204 assertions, 47.24s). No Critical/Warning issues; 11 Suggestions
+all accounted for (deferred-with-pointer or skipped-with-reason) per
+`audit.md`. S1, S3, and unused QueryBuilder scopes carried forward to
+follow-up analytics story; `app_version` UA derivation, schedule-
+integrity test, funnel single-query collapse, and DAU/MAU rolling
+aggregation tracked as performance/quality follow-ups.
 
 ## Description
 
