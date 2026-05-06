@@ -8,7 +8,7 @@ content domains, admin read endpoints for the dashboard.
 
 ## Status
 
-`in-review`
+`in-review` — review.md C1, W1–W4, S2, S4 addressed; awaiting re-review
 
 ## Description
 

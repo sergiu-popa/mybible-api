@@ -44,6 +44,9 @@ final class FinishReadingPlanSubscriptionAction
         $subscription->completed_at = now();
         $subscription->save();
 
+        $subscription->loadMissing('readingPlan');
+        $plan = $subscription->readingPlan;
+
         $this->recordAnalyticsEvent->execute(
             eventType: EventType::ReadingPlanSubscriptionCompleted,
             context: new ResourceDownloadContextData(
@@ -53,6 +56,10 @@ final class FinishReadingPlanSubscriptionAction
                 source: null,
             ),
             subject: $subscription,
+            metadata: [
+                'plan_id' => (int) $plan->id,
+                'plan_slug' => (string) $plan->slug,
+            ],
         );
 
         return $this->withProgressCounts($subscription);

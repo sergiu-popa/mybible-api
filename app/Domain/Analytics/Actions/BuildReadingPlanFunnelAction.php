@@ -34,11 +34,12 @@ final class BuildReadingPlanFunnelAction
             ->whereBetween('occurred_at', [$query->range->from, $query->range->to]);
 
         if ($query->planId !== null) {
-            $planId = $query->planId;
-            $base->where(function ($q) use ($planId): void {
-                $q->where('subject_id', $planId)
-                    ->orWhereRaw("JSON_EXTRACT(metadata, '$.plan_id') = ?", [$planId]);
-            });
+            // All four reading_plan.subscription.* event types carry
+            // `plan_id` in their metadata payload (enforced by
+            // EventType::metadataRules() and the emission Actions).
+            // `subject_id` is the subscription id, not the plan id, so
+            // it cannot be used as the per-plan filter.
+            $base->whereRaw("JSON_EXTRACT(metadata, '$.plan_id') = ?", [$query->planId]);
         }
 
         $started = (int) (clone $base)

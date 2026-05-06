@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Domain\Analytics\Enums\EventSubjectType;
+use App\Domain\Analytics\Enums\EventType;
 use App\Domain\Analytics\Models\AnalyticsDailyRollup;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,8 +23,8 @@ final class AnalyticsDailyRollupFactory extends Factory
     {
         return [
             'date' => now()->toDateString(),
-            'event_type' => 'devotional.viewed',
-            'subject_type' => 'devotional',
+            'event_type' => EventType::DevotionalViewed->value,
+            'subject_type' => EventSubjectType::Devotional->value,
             'subject_id' => fake()->numberBetween(1, 1000),
             'language' => 'ro',
             'event_count' => fake()->numberBetween(1, 1000),

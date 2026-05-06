@@ -25,9 +25,10 @@ final class CompleteReadingPlanSubscriptionDayAction
         $day->completed_at = now();
         $day->save();
 
-        $day->loadMissing(['readingPlanDay', 'subscription']);
+        $day->loadMissing(['readingPlanDay', 'subscription.readingPlan']);
 
         $subscription = $day->subscription;
+        $plan = $subscription->readingPlan;
         $position = (int) ($day->readingPlanDay->position ?? 0);
         $start = Carbon::parse($subscription->start_date);
         $ageDays = max(0, (int) $start->diffInDays(now()));
@@ -42,6 +43,8 @@ final class CompleteReadingPlanSubscriptionDayAction
             ),
             subject: $subscription,
             metadata: [
+                'plan_id' => (int) $plan->id,
+                'plan_slug' => (string) $plan->slug,
                 'day_position' => $position,
                 'subscription_age_days' => $ageDays,
             ],

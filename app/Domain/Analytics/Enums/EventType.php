@@ -92,17 +92,24 @@ enum EventType: string
             ],
             self::ReadingPlanSubscriptionDayCompleted => [
                 'metadata' => ['required', 'array'],
+                'metadata.plan_id' => ['required', 'integer', 'min:1'],
+                'metadata.plan_slug' => ['required', 'string', 'max:128'],
                 'metadata.day_position' => ['required', 'integer', 'min:1'],
                 'metadata.subscription_age_days' => ['required', 'integer', 'min:0'],
             ],
             self::ReadingPlanSubscriptionAbandoned => [
                 'metadata' => ['required', 'array'],
+                'metadata.plan_id' => ['required', 'integer', 'min:1'],
+                'metadata.plan_slug' => ['required', 'string', 'max:128'],
                 'metadata.at_day_position' => ['required', 'integer', 'min:1'],
                 'metadata.total_days' => ['required', 'integer', 'min:1'],
             ],
-            default => [
-                'metadata' => ['nullable', 'array'],
+            self::ReadingPlanSubscriptionCompleted => [
+                'metadata' => ['required', 'array'],
+                'metadata.plan_id' => ['required', 'integer', 'min:1'],
+                'metadata.plan_slug' => ['required', 'string', 'max:128'],
             ],
+            default => [],
         };
     }
 }

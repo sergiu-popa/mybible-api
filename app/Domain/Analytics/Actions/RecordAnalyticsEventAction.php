@@ -11,6 +11,7 @@ use App\Domain\Analytics\Enums\EventType;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use InvalidArgumentException;
 
 /**
  * The single write entry point for analytics events. Dispatches one
@@ -37,9 +38,15 @@ final class RecordAnalyticsEventAction
 
         if ($subject !== null) {
             $alias = Relation::getMorphAlias($subject::class);
-            $subjectType = is_string($alias) && $alias !== $subject::class
-                ? $alias
-                : $subject::class;
+
+            if (! is_string($alias) || $alias === $subject::class) {
+                throw new InvalidArgumentException(sprintf(
+                    'Model class %s is not registered in the polymorphic morph map.',
+                    $subject::class,
+                ));
+            }
+
+            $subjectType = $alias;
             $subjectId = (int) $subject->getKey();
         }
 

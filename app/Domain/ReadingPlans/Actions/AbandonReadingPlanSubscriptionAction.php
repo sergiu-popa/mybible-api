@@ -30,6 +30,9 @@ final class AbandonReadingPlanSubscriptionAction
         $subscription->status = SubscriptionStatus::Abandoned;
         $subscription->save();
 
+        $subscription->loadMissing('readingPlan');
+        $plan = $subscription->readingPlan;
+
         $withCounts = $this->withProgressCounts($subscription);
 
         $totalDays = (int) ($withCounts->getAttribute('days_count') ?? 0);
@@ -47,6 +50,8 @@ final class AbandonReadingPlanSubscriptionAction
             ),
             subject: $subscription,
             metadata: [
+                'plan_id' => (int) $plan->id,
+                'plan_slug' => (string) $plan->slug,
                 'at_day_position' => $atDay,
                 'total_days' => max(1, $totalDays),
             ],

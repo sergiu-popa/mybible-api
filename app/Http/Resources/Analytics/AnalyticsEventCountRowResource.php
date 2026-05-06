@@ -17,20 +17,8 @@ final class AnalyticsEventCountRowResource extends JsonResource
         /** @var array<string, mixed> $row */
         $row = (array) $this->resource;
 
-        $out = [
-            'date' => $row['date'] ?? null,
-            'count' => (int) ($row['count'] ?? 0),
-        ];
-
-        if (array_key_exists('language', $row)) {
-            $out['language'] = $row['language'];
-        }
-
-        if (array_key_exists('subject_type', $row)) {
-            $out['subject_type'] = $row['subject_type'];
-            $out['subject_id'] = $row['subject_id'] ?? null;
-        }
-
-        return $out;
+        // Sentinel translation (''/0 → null) is owned by ListEventCountsAction;
+        // the resource is a flat passthrough.
+        return $row;
     }
 }

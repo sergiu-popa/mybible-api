@@ -30,6 +30,11 @@ final class IngestAnalyticsEventsRequest extends FormRequest
             'events' => ['required', 'array', 'min:1', 'max:100'],
             'events.*.event_type' => ['required', 'string', Rule::enum(EventType::class)],
             'events.*.subject_type' => ['nullable', 'string', Rule::enum(EventSubjectType::class)],
+            // subject_id is range-checked but not bound to an existing model
+            // by design: existence checks would require N domain queries per
+            // batch on the hot ingest path. Phantom subject_ids surface as
+            // unjoined rollup rows (acceptable trade-off; revisit if the
+            // dashboard surfaces them prominently).
             'events.*.subject_id' => ['nullable', 'integer', 'min:1'],
             'events.*.language' => ['nullable', 'string', 'size:2'],
             'events.*.metadata' => ['nullable', 'array'],
